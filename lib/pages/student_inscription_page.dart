@@ -2,8 +2,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/pages/student_connexion_page.dart';
-import 'package:dio/dio.dart';
-import 'package:togoschool/pages/services/api_service.dart';
 
 import '../components/header.dart';
 import '../components/role_toggle.dart';
@@ -23,7 +21,6 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
   String? selectedvalue = 'tle_D';
   final _formkey = GlobalKey<FormState>();
   final nomController = TextEditingController();
-  final ApiService _apiservice = ApiService();
   final prenomController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -120,38 +117,21 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                   ),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                   PrimaryButton(
-                    text: 'S\'inscrire',
-                    onPressed: () async {
-                      if (_formkey.currentState!.validate()) {
-                        try {
-                          final user = await _apiservice.registerStudent(
-                            nom: nomController.text,
-                            prenom: prenomController.text,
-                            classe:  selectedvalue!,
-                            email: emailController.text,
-                            password: passwordController.text,
-                          );
-
-                          // Affiche les données de l'utilisateur
-                          print("Utilisateur inscrit : $user");
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Inscription réussie, bienvenue ${user.nom} !")),
-                          );
-
-                          // Naviguez vers une autre page si nécessaire
-                          if (mounted) {
-                            Navigator.pushReplacement(
-                            context,
-                              MaterialPageRoute(builder: (context) => const StudentConnexionPage()),
-                          );
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Erreur lors de l'inscription: ${e.toString()}")),
-                          );
-                          }
-                        }
+                    text: 's\'inscrire',
+                    onPressed: () {
+                      if(_formkey.currentState!.validate()){
+                        final String nom = nomController.text.trim();
+                        final String prenom = prenomController.text.trim();
+                        final String email = emailController.text.trim();
+                        final String password = passwordController.text.trim();
+                        //snackbar de confirmation
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("connexion en cours.....\n Email: $email"),
+                            backgroundColor: Colors.green,
+                            duration: Duration(seconds: 2),
+                         ),
+                        );
                       }
                     },
                   ),

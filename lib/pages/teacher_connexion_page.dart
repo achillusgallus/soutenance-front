@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/header.dart';
@@ -31,6 +32,7 @@ class _TeacherConnexionPageState extends State<TeacherConnexionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: CupertinoColors.secondarySystemBackground,
       body: SafeArea(
       child: ListView(
         children: [
