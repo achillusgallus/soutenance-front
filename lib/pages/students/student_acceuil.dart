@@ -18,10 +18,19 @@ class StudentAcceuil extends StatefulWidget {
 }
 
 class _StudentAcceuilState extends State<StudentAcceuil> {
+
+  final List<Map<String, dynamic>> datalist = [
+    {'titre' : 'mathématique'},
+    {'titre' : 'anglais'},
+    {'titre' : 'français'},
+    {'titre' : 'histoire-géographie'},
+    {'titre' : 'phisique'},
+  ];
+  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: CupertinoColors.secondarySystemBackground,
+      backgroundColor: const Color.fromARGB(255, 216, 216, 219),
       body: SafeArea(
         child: ListView(
           children: [
@@ -94,8 +103,7 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                 )
               ],
             ),
-            DashCart(text: 'mathématique', number: 18, value: 30)
-          ],
+          ]
         )
         ),
     );

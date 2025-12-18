@@ -9,8 +9,9 @@ class TopHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     return Container(
+      padding: EdgeInsets.symmetric(vertical: 20),
       width: size.width,
-      height: size.height * 0.28,
+      // height: size.height,
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [Colors.blueAccent, CupertinoColors.activeGreen],

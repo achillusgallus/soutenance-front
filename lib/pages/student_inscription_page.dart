@@ -144,7 +144,7 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                           fontSize: 15,
                         ),
                       ),
-                      SizedBox(width: MediaQuery.of(context).size.width * 0.04),
+                      SizedBox(width: MediaQuery.of(context).size.width * 0.02),
                       TextButton(
                         onPressed: (){
                           Navigator.push(
@@ -154,7 +154,7 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                         },
                         child: Text(
                           "se connecter",
-                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 20),
+                          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.green, fontSize: 17),
                         ),
                       )
                     ],
@@ -181,7 +181,7 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
               color: const Color.fromARGB(255, 202, 109, 176),
               icon: FontAwesomeIcons.barsProgress,
               title: 'Suivi de progression',
-              subtitle: 'suivez votre évaluation et vos résultats par programme',
+              subtitle: 'suivez votre évaluation et améliorez vos performances',
             )
           ],
         ),

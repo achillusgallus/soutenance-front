@@ -1,33 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
-import 'dart:convert';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
-import 'package:togoschool/components/forgot_password.dart';
 import 'package:togoschool/components/header.dart';
 import 'package:togoschool/components/info_card.dart';
 import 'package:togoschool/components/primary_button.dart';
-import 'package:togoschool/components/role_toggle_student.dart';
-import 'package:togoschool/pages/student_inscription_page.dart';
 
-class TeacherConnexionPage extends StatefulWidget {
-  const TeacherConnexionPage({super.key});
+
+class ForgotPasswordPage extends StatefulWidget {
+  const ForgotPasswordPage({super.key});
 
   @override
-  State<TeacherConnexionPage> createState() => _TeacherConnexionPageState();
+  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
 }
 
-class _TeacherConnexionPageState extends State<TeacherConnexionPage> {
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
-  String? selectedvalue = 'tle_D';
   final _formkey = GlobalKey<FormState>();
-  final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final newpasswordController = TextEditingController();
 
   @override
   void dispose() {
     super.dispose();
-    emailController.dispose();
+    newpasswordController.dispose();
     passwordController.dispose();
   }
 
@@ -47,28 +43,14 @@ class _TeacherConnexionPageState extends State<TeacherConnexionPage> {
                 color: (Colors.white),
                 borderRadius: BorderRadius.circular(30),
               ),
-              child: Form(
+              child:Form(
                 key: _formkey,
                 child: Column(
                 children: [
-                  const RoleToggleStudent(),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                   CustomTextFormField(
-                    label: 'Email',
-                    hint: 'entrer votre email',
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "tu dois remplir le champ";
-                      }
-                      return null;
-                    },
-                    controller: emailController,
-                  ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                  CustomTextFormField(
-                    label: 'Mot de passe',
-                    hint: 'entrer votre mot de passe',
-                    obscureText: false,
+                    label: 'ancien mot de passe',
+                    hint: 'entrer votre ancien mot de passe',
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return "tu dois remplir le champ";
@@ -78,16 +60,29 @@ class _TeacherConnexionPageState extends State<TeacherConnexionPage> {
                     controller: passwordController,
                   ),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                  CustomTextFormField(
+                    label: 'nouveau mot de passe',
+                    hint: 'entrer votre nouveau mot de passe',
+                    obscureText: false,
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return "tu dois remplir le champ";
+                      }
+                      return null;
+                    },
+                    controller: newpasswordController,
+                  ),
+                  SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                   PrimaryButton(
-                    text: 'se connecter (POST)',
+                    text: 'modifier le mot de passe',
                     onPressed: () {
                       if(_formkey.currentState!.validate()){
-                        final String email = emailController.text.trim();
+                        final String newpassword = newpasswordController.text.trim();
                         final String password = passwordController.text.trim();
                         //snackbar de confirmation
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text("connexion en cours.....\n Email: $email"),
+                            content: Text("connexion en cours....."),
                             backgroundColor: Colors.green,
                             duration: Duration(seconds: 2),
                          ),
@@ -95,13 +90,6 @@ class _TeacherConnexionPageState extends State<TeacherConnexionPage> {
                       }
                     },
                   ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-                  Row(
-                    children: [
-                      SizedBox(width: MediaQuery.of(context).size.width * 0.04),
-                      ForgotPassword()
-                    ],
-                  )
                 ],
               ),
              ),

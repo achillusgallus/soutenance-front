@@ -2,11 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
+import 'package:togoschool/components/forgot_password.dart';
 import 'package:togoschool/components/header.dart';
 import 'package:togoschool/components/info_card.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/role_toggle.dart';
+import 'package:togoschool/pages/dashbord/student_dashboard_page.dart';
 import 'package:togoschool/pages/student_inscription_page.dart';
+import 'package:togoschool/service/api_service.dart';
 
 class StudentConnexionPage extends StatefulWidget {
   const StudentConnexionPage({super.key});
@@ -20,6 +23,28 @@ class _StudentConnexionPageState extends State<StudentConnexionPage> {
   final _formkey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final api = ApiService();
+
+  Future<bool> createUser(String email, String password) async {
+    try {
+      final response = await api.create("/login", {
+        "email": email,
+        "password": password,
+      });
+
+      if (response?.statusCode == 200) {
+        // Connexion réussie
+        return true;
+      } else {
+        return false;
+      }
+    } catch (e) {
+      print("Erreur: $e");
+      return false;
+    }
+  }
+
+
 
   @override
   void dispose() {
@@ -78,18 +103,36 @@ class _StudentConnexionPageState extends State<StudentConnexionPage> {
                   SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                   PrimaryButton(
                     text: 'se connecter',
-                    onPressed: () {
-                      if(_formkey.currentState!.validate()){
-                        final String email =emailController.text.trim();
+                    onPressed: () async {
+                      if (_formkey.currentState!.validate()) {
+                        final String email = emailController.text.trim();
                         final String password = passwordController.text.trim();
-                        //snackbar de confirmation
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("connexion en cours.....\n Email: $email"),
-                            backgroundColor: Colors.green,
-                            duration: Duration(seconds: 2),
-                         ),
-                        );
+                        // Appel API login
+                        final success = await createUser(email, password);
+
+                        if (success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Connexion réussie !"),
+                              backgroundColor: Colors.green,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+
+                          // Redirection vers la page d'accueil
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => StudentDashboardPage()),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Échec de la connexion"),
+                              backgroundColor: Colors.red,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
                       }
                     },
                   ),
@@ -116,7 +159,9 @@ class _StudentConnexionPageState extends State<StudentConnexionPage> {
                         ),
                       )
                     ],
-                  )
+                  ),
+                  
+                  ForgotPassword()
                 ],
               ),
              ),
@@ -140,7 +185,7 @@ class _StudentConnexionPageState extends State<StudentConnexionPage> {
               color: const Color.fromARGB(255, 202, 109, 176),
               icon: FontAwesomeIcons.barsProgress,
               title: 'Suivi de progression',
-              subtitle: 'suivez votre évaluation et vos résultats par programme',
+              subtitle: 'votre évaluation et vos résultats par programme',
             )
         ],
       ),
