@@ -1,30 +1,29 @@
-// This is a basic Flutter widget test.
-//
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
-
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:togoschool/main.dart';
+import 'package:togoschool/pages/dashbord/admin_dashboard_page.dart';
+import 'package:togoschool/pages/dashbord/student_dashboard_page.dart';
+import 'package:togoschool/pages/dashbord/teacher_dashboard_page.dart';
+import 'package:togoschool/pages/student_connexion_page.dart';
+
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  testWidgets('Connexion page is shown when not logged in', (WidgetTester tester) async {
+    await tester.pumpWidget(MyApp(isLoggedIn: false, roleId: null));
+    expect(find.byType(StudentConnexionPage), findsOneWidget);
+  });
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  testWidgets('Admin dashboard is shown when roleId = 1', (WidgetTester tester) async {
+    await tester.pumpWidget(MyApp(isLoggedIn: true, roleId: 1));
+    expect(find.byType(AdminDashboardPage), findsOneWidget);
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  testWidgets('Teacher dashboard is shown when roleId = 2', (WidgetTester tester) async {
+    await tester.pumpWidget(MyApp(isLoggedIn: true, roleId: 2));
+    expect(find.byType(TeacherDashboardPage), findsOneWidget);
+  });
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+  testWidgets('Student dashboard is shown when roleId = 3', (WidgetTester tester) async {
+    await tester.pumpWidget(MyApp(isLoggedIn: true, roleId: 3));
+    expect(find.byType(StudentDashboardPage), findsOneWidget);
   });
 }

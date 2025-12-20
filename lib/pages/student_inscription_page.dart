@@ -2,13 +2,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/pages/student_connexion_page.dart';
-
+import 'package:togoschool/service/api_service.dart';
 import '../components/header.dart';
 import '../components/role_toggle.dart';
 import '../components/custom_text_form_field.dart';
 import '../components/class_dropdown.dart';
 import '../components/primary_button.dart';
 import '../components/info_card.dart';
+
 
 class StudentInscriptionPage extends StatefulWidget {
   const StudentInscriptionPage({super.key});
@@ -24,6 +25,31 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
   final prenomController = TextEditingController();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
+  final api = ApiService();
+  
+
+  Future<bool> registerUser(String email, String password, String name, String surname, String classe) async {
+  try {
+    final response = await api.create("/register", {
+      "name": name,
+      "surname":surname,
+      "email": email,
+      "password": password,
+      "classe": selectedvalue,
+    });
+
+    if (response?.statusCode == 201) {
+      // Inscription réussie
+      return true;
+    } else {
+      return false;
+    }
+  } catch (e) {
+    print("Erreur: $e");
+    return false;
+  }
+}
+
 
   @override
   void dispose() {
@@ -118,20 +144,37 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                   SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                   PrimaryButton(
                     text: 's\'inscrire',
-                    onPressed: () {
-                      if(_formkey.currentState!.validate()){
-                        final String nom = nomController.text.trim();
-                        final String prenom = prenomController.text.trim();
+                    onPressed: () async {
+                      if (_formkey.currentState!.validate()) {
+                        final String name = nomController.text.trim();
+                        final String surname = prenomController.text.trim();
                         final String email = emailController.text.trim();
                         final String password = passwordController.text.trim();
-                        //snackbar de confirmation
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text("connexion en cours.....\n Email: $email"),
-                            backgroundColor: Colors.green,
-                            duration: Duration(seconds: 2),
-                         ),
-                        );
+                        // Appel API login
+                        final success = await registerUser(email, password, name, surname, selectedvalue!);
+                        if (success) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Connexion réussie !"),
+                              backgroundColor: Colors.green,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+
+                          // Redirection vers la page d'accueil
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => StudentConnexionPage()),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text("Échec de l'inscription"),
+                              backgroundColor: Colors.red,
+                              duration: Duration(seconds: 2),
+                            ),
+                          );
+                        }
                       }
                     },
                   ),

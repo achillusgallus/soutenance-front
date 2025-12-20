@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/components/button_card.dart';
 import 'package:togoschool/components/dash_header.dart';
-import 'package:flutter/cupertino.dart';
-import 'package:togoschool/components/student/dash_cart.dart';
 import 'package:togoschool/pages/dashbord/admin_dashboard_page.dart';
 import 'package:togoschool/pages/dashbord/student_dashboard_page.dart';
 import 'package:togoschool/pages/dashbord/teacher_dashboard_page.dart';

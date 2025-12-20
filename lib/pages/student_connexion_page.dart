@@ -10,6 +10,7 @@ import 'package:togoschool/components/role_toggle.dart';
 import 'package:togoschool/pages/dashbord/student_dashboard_page.dart';
 import 'package:togoschool/pages/student_inscription_page.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/service/token_storage.dart';
 
 class StudentConnexionPage extends StatefulWidget {
   const StudentConnexionPage({super.key});
@@ -25,7 +26,7 @@ class _StudentConnexionPageState extends State<StudentConnexionPage> {
   final passwordController = TextEditingController();
   final api = ApiService();
 
-  Future<bool> createUser(String email, String password) async {
+  Future<Map<String, dynamic>?> createUser(String email, String password) async {
     try {
       final response = await api.create("/login", {
         "email": email,
@@ -33,14 +34,15 @@ class _StudentConnexionPageState extends State<StudentConnexionPage> {
       });
 
       if (response?.statusCode == 200) {
+        await TokenStorage.saveToken(response?.data["token"]);
         // Connexion réussie
-        return true;
+        return response?.data;
       } else {
-        return false;
+        return null;
       }
     } catch (e) {
       print("Erreur: $e");
-      return false;
+      return null;
     }
   }
 
@@ -108,9 +110,9 @@ class _StudentConnexionPageState extends State<StudentConnexionPage> {
                         final String email = emailController.text.trim();
                         final String password = passwordController.text.trim();
                         // Appel API login
-                        final success = await createUser(email, password);
+                        final userData = await createUser(email, password);
 
-                        if (success) {
+                        if (userData != null && userData["user"]["role_id"] == 3) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text("Connexion réussie !"),

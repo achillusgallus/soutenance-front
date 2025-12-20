@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:togoschool/service/token_storage.dart';
 
 class ApiService {
   late Dio dio;
@@ -6,7 +7,7 @@ class ApiService {
   ApiService() {
     dio = Dio(
       BaseOptions(
-        baseUrl: "http://127.0.0.1:8000/api",
+        baseUrl: "http://10.0.2.2:8000/api",
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 10),
         headers: {"Content-Type": "application/json"},
@@ -20,7 +21,11 @@ class ApiService {
     ));
 
     dio.interceptors.add(InterceptorsWrapper(
-      onRequest: (options, handler) {
+      onRequest: (options, handler) async{
+        final token = await TokenStorage.getToken();
+        if (token != null) {
+          options.headers["Authorization"] = "Bearer $token";
+        }
         // Tu peux modifier la requête ici si besoin
         return handler.next(options);
       },
