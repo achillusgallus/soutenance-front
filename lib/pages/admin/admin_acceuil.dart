@@ -5,7 +5,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/pages/admin/add_forum.dart';
 import 'package:togoschool/pages/admin/add_matiere_page.dart';
 import 'package:togoschool/pages/admin/add_teacher.dart';
-import 'package:togoschool/pages/admin/admin_parameter.dart';
 import 'package:togoschool/pages/admin/admin_professeur.dart';
 import 'package:togoschool/pages/admin/admin_matiere.dart';
 import 'package:togoschool/pages/admin/admin_student_page.dart';
@@ -48,352 +47,427 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
     getTeachers();
   }
 
-  Future<List<dynamic>> getTeachers() async {
+  Future<void> getTeachers() async {
     try {
-      final response = await api.read("/admin/users");
-      final responseMatieres = await api.read("/admin/matieres");
+      final results = await Future.wait([
+        api.read("/admin/users"),
+        api.read("/admin/matieres"),
+      ]);
+
+      if (!mounted) return;
+
       setState(() {
-        final List<dynamic> allUsers = response?.data ?? [];
+        final List<dynamic> allUsers = results[0]?.data ?? [];
         teachers = allUsers.where((user) => user['role_id'] == 2).toList();
-        matieres = responseMatieres?.data ?? [];
+        matieres = results[1]?.data ?? [];
         isLoading = false;
       });
-      return teachers;
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
-      return [];
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white70,
+      backgroundColor: const Color(
+        0xFFF5F5F5,
+      ), // Slightly off-white for professional look
       body: SafeArea(
-        child: ListView(
-          children: [
-            DashHeader(
-              color1: Colors.blueAccent,
-              color2: Colors.green,
-              title: 'Bonjour cher administrateur',
-              title1: '6',
-              title2: '12',
-              title3: '45%',
-              subtitle: 'admnistration du système',
-              subtitle1: 'matières',
-              subtitle2: ' les cours',
-              subtitle3: 'Progression',
-            ),
-            Container(
-              margin: EdgeInsets.only(top: 10),
-              // width: double.infinity,
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      Text(
-                        'Action rapides',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
+        child: RefreshIndicator(
+          onRefresh: getTeachers,
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 20),
+            children: [
+              DashHeader(
+                color1: Colors.blueAccent,
+                color2: Colors.green,
+                title: 'Bonjour Administrateur',
+                title1: matieres.length.toString(),
+                title2: teachers.length.toString(),
+                title3: '45%',
+                subtitle: 'Supervision du système',
+                subtitle1: 'Matières',
+                subtitle2: 'Enseignants',
+                subtitle3: 'Progression',
+              ),
+              const SizedBox(height: 20),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'ACTIONS RAPIDES',
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        letterSpacing: 1.2,
                       ),
-                      TextButton.icon(
-                        icon: const Icon(
-                          FontAwesomeIcons.gear,
-                          color: Color.fromARGB(255, 50, 6, 132),
-                        ),
-                        label: Text(
-                          '',
-                          style: TextStyle(
-                            color: Color.fromARGB(255, 50, 6, 132),
-                            fontWeight: FontWeight.bold,
-                            fontSize: 20,
+                    ),
+                    IconButton(
+                      icon: const Icon(
+                        FontAwesomeIcons.magnifyingGlass,
+                        size: 20,
+                        color: Colors.black54,
+                      ),
+                      onPressed: () {
+                        // TODO: Implement search
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: [
+                    ButtonCard(
+                      icon: FontAwesomeIcons.book,
+                      title: 'Créer',
+                      color: Colors.blueAccent,
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddMatierePage(),
                           ),
-                        ),
-                        onPressed: () {
-                          Navigator.push(
+                        );
+                        getTeachers();
+                      },
+                    ),
+                    ButtonCard(
+                      icon: FontAwesomeIcons.userGraduate,
+                      title: 'Créer',
+                      color: Colors.green,
+                      onTap: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddTeacherPage(),
+                          ),
+                        );
+                        getTeachers();
+                      },
+                    ),
+                    ButtonCard(
+                      icon: FontAwesomeIcons.circleUser,
+                      title: 'Voir',
+                      color: const Color.fromARGB(255, 216, 34, 180),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AdminStudentPage(),
+                          ),
+                        );
+                      },
+                    ),
+                    ButtonCard(
+                      icon: FontAwesomeIcons.message,
+                      title: 'Créer',
+                      color: const Color.fromARGB(255, 181, 114, 14),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddForumPage(),
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 30),
+
+              // Teachers Section
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "ENSEIGNANTS RECENTS",
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey[700],
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    if (teachers.length > 5)
+                      TextButton(
+                        onPressed: () async {
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const AdminParameter(),
+                              builder: (context) => const AdminProfesseur(),
+                            ),
+                          );
+                          getTeachers();
+                        },
+                        child: const Text("Voir tout"),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              if (isLoading)
+                const SizedBox(
+                  height: 150,
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (teachers.isEmpty)
+                Container(
+                  height: 150,
+                  alignment: Alignment.center,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.person_off_outlined,
+                        size: 50,
+                        color: Colors.grey[400],
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "Aucun enseignant trouvé",
+                        style: TextStyle(color: Colors.grey[600]),
+                      ),
+                    ],
+                  ),
+                )
+              else
+                SizedBox(
+                  height: 180,
+                  child: ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: teachers.length > 5 ? 5 : teachers.length,
+                    itemBuilder: (context, index) {
+                      var teacher = teachers[index];
+                      var color = cardColors[index % cardColors.length];
+                      return Container(
+                        width: 150,
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 4,
+                        ),
+                        child: Card(
+                          elevation: 2,
+                          shadowColor: Colors.black12,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircleAvatar(
+                                  radius: 28,
+                                  backgroundColor: color.withOpacity(0.15),
+                                  child: Icon(
+                                    Icons.person,
+                                    color: color,
+                                    size: 28,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  "${teacher['name'] ?? ''} ${teacher['surname'] ?? ''}",
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "${teacher['email'] ?? ''}",
+                                  textAlign: TextAlign.center,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    color: Colors.grey[600],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+
+              const SizedBox(height: 30),
+
+              // Matieres Section
+              if (!isLoading && matieres.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "MATIÈRES",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[700],
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          if (matieres.length > 1)
+                            TextButton(
+                              onPressed: () async {
+                                await Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const AdminMatiere(),
+                                  ),
+                                );
+                                getTeachers();
+                              },
+                              child: const Text("Voir tout"),
+                            ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 160,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: matieres.length > 5 ? 5 : matieres.length,
+                        itemBuilder: (context, index) {
+                          var matiere = matieres[index];
+                          var color =
+                              MatiereColors[index % MatiereColors.length];
+
+                          // Try to find professor name if user_name is missing
+                          String profName = matiere['user_name'] ?? '';
+                          if (profName.isEmpty && matiere['user_id'] != null) {
+                            var prof = teachers.firstWhere(
+                              (t) => t['id'] == matiere['user_id'],
+                              orElse: () => null,
+                            );
+                            if (prof != null) {
+                              profName = "${prof['name']} ${prof['surname']}";
+                            }
+                          }
+                          if (profName.isEmpty) profName = "Non attribué";
+
+                          return Container(
+                            width: 140,
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                            child: Card(
+                              elevation: 2,
+                              shadowColor: Colors.black12,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topLeft,
+                                    end: Alignment.bottomRight,
+                                    colors: [
+                                      color.withOpacity(0.1),
+                                      color.withOpacity(0.05),
+                                    ],
+                                  ),
+                                ),
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Container(
+                                      padding: const EdgeInsets.all(8),
+                                      decoration: BoxDecoration(
+                                        color: Colors.white,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: color.withOpacity(0.2),
+                                            blurRadius: 8,
+                                            offset: const Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Icon(
+                                        Icons.book,
+                                        color: color,
+                                        size: 20,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "${matiere['nom'] ?? ''}",
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.person_outline,
+                                          size: 10,
+                                          color: Colors.grey[600],
+                                        ),
+                                        const SizedBox(width: 2),
+                                        Flexible(
+                                          child: Text(
+                                            profName,
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 10,
+                                              color: Colors.grey[600],
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
+                                ),
+                              ),
                             ),
                           );
                         },
                       ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                ButtonCard(
-                  icon: FontAwesomeIcons.book,
-                  title: 'créer',
-                  color: Colors.blueAccent,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddMatierePage(),
-                      ),
-                    );
-                  },
-                ),
-                ButtonCard(
-                  icon: FontAwesomeIcons.userGraduate,
-                  title: 'créer',
-                  color: Colors.green,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddTeacherPage(),
-                      ),
-                    );
-                  },
-                ),
-                ButtonCard(
-                  icon: FontAwesomeIcons.circleUser,
-                  title: 'voir',
-                  color: const Color.fromARGB(255, 216, 34, 180),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AdminStudentPage(),
-                      ),
-                    );
-                  },
-                ),
-                ButtonCard(
-                  icon: FontAwesomeIcons.message,
-                  title: 'créer',
-                  color: const Color.fromARGB(255, 181, 114, 14),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const AddForumPage(),
-                      ),
-                    );
-                  },
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            if (isLoading)
-              const Center(child: CircularProgressIndicator())
-            else if (teachers.isEmpty)
-              const Center(child: Text("Aucun enseignant trouvé"))
-            else
-              Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text(
-                          "Enseignants",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      if (teachers.length > 5)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const AdminProfesseur(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              "Voir tout",
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 200,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: teachers.length > 5 ? 5 : teachers.length,
-                      itemBuilder: (context, index) {
-                        var teacher = teachers[index]; // Map dynamique
-                        var color =
-                            cardColors[index %
-                                cardColors.length]; // variation auto
-                        return Container(
-                          width: 160,
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          child: Card(
-                            color: color.withOpacity(0.2), // couleur douce
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(12.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  CircleAvatar(
-                                    radius: 30,
-                                    backgroundColor: color,
-                                    child: const Icon(
-                                      Icons.person,
-                                      color: Colors.white,
-                                      size: 30,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Text(
-                                    "${teacher['name'] ?? ''} ${teacher['surname'] ?? ''}",
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    "${teacher['email'] ?? ''}",
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
                     ),
-                  ),
-                ],
-              ),
-            // Matieres Section
-            if (!isLoading && matieres.isNotEmpty)
-              Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Text(
-                          "Matières",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                      ),
-                      if (matieres.length > 1)
-                        Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const AdminMatiere(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              "Voir tout",
-                              style: TextStyle(
-                                color: Colors.blue,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 10),
-                  SizedBox(
-                    height: 180,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: matieres.length > 5 ? 5 : matieres.length,
-                      itemBuilder: (context, index) {
-                        var matiere = matieres[index];
-                        var color = MatiereColors[index % MatiereColors.length];
-                        return Container(
-                          width: 140,
-                          margin: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          child: Card(
-                            color: color.withOpacity(0.2),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  CircleAvatar(
-                                    radius: 25,
-                                    backgroundColor: color,
-                                    child: const Icon(
-                                      Icons.book,
-                                      color: Colors.white,
-                                      size: 20,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    "${matiere['nom'] ?? ''}",
-                                    textAlign: TextAlign.center,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-          ],
+                  ],
+                ),
+            ],
+          ),
         ),
       ),
     );

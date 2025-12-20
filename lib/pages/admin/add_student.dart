@@ -22,6 +22,8 @@ class _AddStudentState extends State<AddStudent> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final api = ApiService();
+  bool isSaving = false;
+  bool _obscurePassword = true;
 
   bool get isEditMode => widget.Student != null;
 
@@ -32,12 +34,10 @@ class _AddStudentState extends State<AddStudent> {
       _nameController.text = widget.Student!['name'] ?? '';
       _surnameController.text = widget.Student!['surname'] ?? '';
       _emailController.text = widget.Student!['email'] ?? '';
-      // Password is usually not pre-filled for security, or handled differently.
-      // Leaving it empty for now, user can enter new password to change it.
     }
   }
 
-  Future<bool> AddStudent(
+  Future<bool> AddStudentAPI(
     String name,
     String surname,
     String email,
@@ -51,15 +51,10 @@ class _AddStudentState extends State<AddStudent> {
         "email": email,
         "password": password,
         "classe": classe,
+        "role_id": 3, // Assuming students are role 3
       });
-
-      if (response?.statusCode == 201 || response?.statusCode == 200) {
-        return true;
-      } else {
-        return false;
-      }
+      return response?.statusCode == 201 || response?.statusCode == 200;
     } catch (e) {
-      print("Erreur: $e");
       return false;
     }
   }
@@ -79,19 +74,11 @@ class _AddStudentState extends State<AddStudent> {
         "email": email,
         "classe": classe,
       };
-      if (password.isNotEmpty) {
-        data["password"] = password;
-      }
+      if (password.isNotEmpty) data["password"] = password;
 
       final response = await api.update("/admin/users/$id", data);
-
-      if (response?.statusCode == 200) {
-        return true;
-      } else {
-        return false;
-      }
+      return response?.statusCode == 200;
     } catch (e) {
-      print("Erreur: $e");
       return false;
     }
   }
@@ -108,156 +95,185 @@ class _AddStudentState extends State<AddStudent> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white70,
+      backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
-        child: ListView(
+        child: Column(
           children: [
             FormHeader(
-              title: isEditMode
-                  ? 'Modifier l\'etudiant'
-                  : 'Création un etudiant',
-              onBack: () {
-                Navigator.pop(context);
-              },
+              title: isEditMode ? 'Modifier l\'élève' : 'Nouvel Étudiant',
+              onBack: () => Navigator.pop(context),
             ),
-            SizedBox(height: 60),
-            Container(
-              margin: EdgeInsets.all(30),
-              padding: EdgeInsets.all(30),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: (Colors.white),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    CustomTextFormField(
-                      label: 'Nom de l\'élève',
-                      hint: 'entrer le nom de l\'élève',
-                      obscureText: false,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "tu dois remplir le champ";
-                        }
-                        return null;
-                      },
-                      controller: _nameController,
-                    ),
-                    SizedBox(height: 16),
-                    CustomTextFormField(
-                      label: 'Prenom de l\'élève',
-                      hint: 'entrer le prenom de l\'élève',
-                      obscureText: false,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "tu dois remplir le champ";
-                        }
-                        return null;
-                      },
-                      controller: _surnameController,
-                    ),
-                    SizedBox(height: 16),
-                    ClassDropdown(
-                      value: selectedvalue,
-                      onChanged: (value) {
-                        setState(() {
-                          selectedvalue = value!;
-                        });
-                      },
-                    ),
-                    SizedBox(height: 16),
-                    CustomTextFormField(
-                      label: 'Email de l\'élève',
-                      hint: 'entrer l\'email de l\'élève',
-                      obscureText: false,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "tu dois remplir le champ";
-                        }
-                        return null;
-                      },
-                      controller: _emailController,
-                    ),
-                    SizedBox(height: 24),
-                    CustomTextFormField(
-                      label: 'Mot de passe',
-                      hint: isEditMode
-                          ? 'laisser vide pour ne pas changer'
-                          : 'entrer le mot de passe de l\'élève',
-                      obscureText: false,
-                      validator: (value) {
-                        if (!isEditMode && (value == null || value.isEmpty)) {
-                          return "tu dois remplir le champ";
-                        }
-                        return null;
-                      },
-                      controller: _passwordController,
-                    ),
-                    SizedBox(height: 24),
-                    PrimaryButton(
-                      text: isEditMode ? 'Modifier' : 'Créer un élève',
-                      onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
-                          final String name = _nameController.text.trim();
-                          final String surname = _surnameController.text.trim();
-                          final String email = _emailController.text.trim();
-                          final String password = _passwordController.text.trim();
-                          final String classe = selectedvalue ?? 'tle_D';
-                          bool success;
-                          if (isEditMode) {
-                            success = await updateStudent(
-                              widget.Student!['id'],
-                              name,
-                              surname,
-                              email,
-                              password,
-                              classe,
-                            );
-                          } else {
-                            success = await AddStudent(
-                              name,
-                              surname,
-                              email,
-                              password,
-                              classe,
-                            );
-                          }
-                          if (success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isEditMode
-                                      ? "Élève modifié avec succès !"
-                                      : "Élève créé avec succès !",
-                                ),
-                                backgroundColor: Colors.green,
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isEditMode
+                              ? "Édition du profil"
+                              : "Informations Personnelles",
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          "Gérez les informations d'accès et d'identité de l'élève.",
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        CustomTextFormField(
+                          label: 'Nom',
+                          hint: 'Nom de famille',
+                          prefixIcon: Icons.person_outline,
+                          validator: (value) => (value == null || value.isEmpty)
+                              ? "Le nom est requis"
+                              : null,
+                          controller: _nameController,
+                        ),
+                        const SizedBox(height: 20),
+                        CustomTextFormField(
+                          label: 'Prénom',
+                          hint: 'Prénom de l\'élève',
+                          prefixIcon: Icons.person_outline,
+                          validator: (value) => (value == null || value.isEmpty)
+                              ? "Le prénom est requis"
+                              : null,
+                          controller: _surnameController,
+                        ),
+                        const SizedBox(height: 20),
+                        ClassDropdown(
+                          value: selectedvalue,
+                          onChanged: (value) =>
+                              setState(() => selectedvalue = value),
+                        ),
+                        const SizedBox(height: 20),
+                        CustomTextFormField(
+                          label: 'Email',
+                          hint: 'exemple@ecole.com',
+                          prefixIcon: Icons.email_outlined,
+                          keyboardType: TextInputType.emailAddress,
+                          validator: (value) => (value == null || value.isEmpty)
+                              ? "L'email est requis"
+                              : null,
+                          controller: _emailController,
+                        ),
+                        const SizedBox(height: 20),
+                        CustomTextFormField(
+                          label: 'Mot de passe',
+                          hint: isEditMode
+                              ? 'Laisser vide pour ne pas changer'
+                              : 'Entrer un mot de passe',
+                          prefixIcon: Icons.lock_outline,
+                          obscureText: _obscurePassword,
+                          suffixIcon: IconButton(
+                            icon: Icon(
+                              _obscurePassword
+                                  ? Icons.visibility_off
+                                  : Icons.visibility,
+                            ),
+                            onPressed: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
+                          ),
+                          validator: (value) =>
+                              (!isEditMode && (value == null || value.isEmpty))
+                              ? "Le mot de passe est requis"
+                              : null,
+                          controller: _passwordController,
+                        ),
+                        const SizedBox(height: 40),
+                        PrimaryButton(
+                          text: isEditMode ? 'ENREGISTRER' : 'CRÉER L\'ÉLÈVE',
+                          isLoading: isSaving,
+                          onPressed: () async {
+                            if (_formKey.currentState!.validate()) {
+                              setState(() => isSaving = true);
 
-                            Navigator.pop(
-                              context,
-                              true,
-                            ); // Return true to indicate success
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isEditMode
-                                      ? "Échec de la modification"
-                                      : "Échec de la création",
-                                ),
-                                backgroundColor: Colors.red,
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        }
-                      },
+                              final String name = _nameController.text.trim();
+                              final String surname = _surnameController.text
+                                  .trim();
+                              final String email = _emailController.text.trim();
+                              final String password = _passwordController.text
+                                  .trim();
+                              final String classe = selectedvalue ?? 'tle_D';
+
+                              bool success;
+                              if (isEditMode) {
+                                success = await updateStudent(
+                                  widget.Student!['id'],
+                                  name,
+                                  surname,
+                                  email,
+                                  password,
+                                  classe,
+                                );
+                              } else {
+                                success = await AddStudentAPI(
+                                  name,
+                                  surname,
+                                  email,
+                                  password,
+                                  classe,
+                                );
+                              }
+
+                              if (!mounted) return;
+                              setState(() => isSaving = false);
+
+                              if (success) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      isEditMode
+                                          ? "Élève mis à jour !"
+                                          : "Élève créé !",
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                                Navigator.pop(context, true);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Une erreur est survenue"),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),

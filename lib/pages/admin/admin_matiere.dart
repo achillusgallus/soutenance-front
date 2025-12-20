@@ -1,3 +1,4 @@
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/pages/admin/add_matiere_page.dart';
@@ -38,9 +39,11 @@ class _AdminMatiereState extends State<AdminMatiere> {
         isLoading = false;
       });
     } catch (e) {
-      setState(() {
-        isLoading = false;
-      });
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+        });
+      }
     }
   }
 
@@ -69,101 +72,222 @@ class _AdminMatiereState extends State<AdminMatiere> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
         child: Column(
           children: [
             FormHeader(title: 'Matières', onBack: () => Navigator.pop(context)),
             Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : matieres.isEmpty
-                  ? const Center(child: Text("Aucune matière trouvée"))
-                  : ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: matieres.length,
-                      itemBuilder: (context, index) {
-                        var matiere = matieres[index];
-                        var color = matiereColors[index % matiereColors.length];
-                        return Container(
-                          margin: const EdgeInsets.only(bottom: 16),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(20),
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.grey.withOpacity(0.1),
-                                spreadRadius: 1,
-                                blurRadius: 10,
-                                offset: const Offset(0, 4),
-                              ),
-                            ],
+              child: RefreshIndicator(
+                onRefresh: getMatieres,
+                child: Column(
+                  children: [
+                    // Search Bar
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          decoration: InputDecoration(
+                            icon: Icon(
+                              FontAwesomeIcons.magnifyingGlass,
+                              color: Colors.grey[400],
+                              size: 18,
+                            ),
+                            hintText: "Rechercher une matière...",
+                            hintStyle: TextStyle(color: Colors.grey[400]),
+                            border: InputBorder.none,
                           ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16),
-                            leading: Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: color.withOpacity(0.1),
-                                shape: BoxShape.circle,
-                              ),
-                              child: Icon(Icons.book, color: color),
-                            ),
-                            title: Text(
-                              "${matiere['nom'] ?? 'Sans nom'}",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                                color: Colors.black87,
-                              ),
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
+                          onChanged: (value) {
+                            // TODO: Implement local search
+                          },
+                        ),
+                      ),
+                    ),
+
+                    // List
+                    Expanded(
+                      child: isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : matieres.isEmpty
+                          ? Center(
                               child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  Icon(
+                                    Icons.library_books_outlined,
+                                    size: 60,
+                                    color: Colors.grey[400],
+                                  ),
+                                  const SizedBox(height: 16),
                                   Text(
-                                    "${matiere['description'] ?? 'Pas de description'}",
+                                    "Aucune matière trouvée",
                                     style: TextStyle(
                                       color: Colors.grey[600],
-                                      height: 1.5,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
                                     ),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  if (matiere['user_name'] != null)
-                                    Padding(
-                                      padding: const EdgeInsets.only(top: 4.0),
-                                      child: Text(
-                                        "Prof: ${matiere['user_name']}",
-                                        style: TextStyle(
-                                          fontSize: 12,
-                                          color: color,
-                                          fontWeight: FontWeight.w600,
+                                ],
+                              ),
+                            )
+                          : ListView.builder(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: matieres.length,
+                              itemBuilder: (context, index) {
+                                var matiere = matieres[index];
+                                var color =
+                                    matiereColors[index % matiereColors.length];
+                                return Container(
+                                  margin: const EdgeInsets.only(bottom: 16),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white,
+                                    borderRadius: BorderRadius.circular(20),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: Colors.black.withOpacity(0.05),
+                                        blurRadius: 15,
+                                        offset: const Offset(0, 5),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    borderRadius: BorderRadius.circular(20),
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(20),
+                                      onTap: null, // Optional: Detail view
+                                      child: Padding(
+                                        padding: const EdgeInsets.all(16),
+                                        child: Row(
+                                          children: [
+                                            Container(
+                                              width: 50,
+                                              height: 50,
+                                              decoration: BoxDecoration(
+                                                color: color.withOpacity(0.1),
+                                                shape: BoxShape.circle,
+                                              ),
+                                              child: Icon(
+                                                Icons.book,
+                                                color: color,
+                                                size: 24,
+                                              ),
+                                            ),
+                                            const SizedBox(width: 16),
+                                            Expanded(
+                                              child: Column(
+                                                crossAxisAlignment:
+                                                    CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    "${matiere['nom'] ?? 'Sans nom'}",
+                                                    style: const TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 16,
+                                                      color: Colors.black87,
+                                                    ),
+                                                  ),
+                                                  const SizedBox(height: 4),
+                                                  Text(
+                                                    "${matiere['description'] ?? 'Pas de description'}",
+                                                    style: TextStyle(
+                                                      color: Colors.grey[600],
+                                                      fontSize: 13,
+                                                      height: 1.4,
+                                                    ),
+                                                    maxLines: 2,
+                                                    overflow:
+                                                        TextOverflow.ellipsis,
+                                                  ),
+                                                  Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(
+                                                          top: 6.0,
+                                                        ),
+                                                    child: Row(
+                                                      children: [
+                                                        Icon(
+                                                          Icons.person_outline,
+                                                          size: 14,
+                                                          color:
+                                                              matiere['user_name'] !=
+                                                                  null
+                                                              ? color
+                                                              : Colors.grey,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        Text(
+                                                          "Prof: ${matiere['user_name'] ?? 'Non attribué'}",
+                                                          style: TextStyle(
+                                                            fontSize: 12,
+                                                            color:
+                                                                matiere['user_name'] !=
+                                                                    null
+                                                                ? color
+                                                                : Colors.grey,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                            Column(
+                                              children: [
+                                                IconButton(
+                                                  icon: const Icon(
+                                                    Icons.edit_outlined,
+                                                    size: 20,
+                                                  ),
+                                                  color: Colors.blue,
+                                                  tooltip: "Modifier",
+                                                  onPressed: () =>
+                                                      updateMatiere(matiere),
+                                                ),
+                                                IconButton(
+                                                  icon: const Icon(
+                                                    Icons.delete_outline,
+                                                    size: 20,
+                                                  ),
+                                                  color: Colors.red[300],
+                                                  tooltip: "Supprimer",
+                                                  onPressed: () =>
+                                                      deleteMatiere(
+                                                        matiere['id'],
+                                                      ),
+                                                ),
+                                              ],
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
-                                ],
-                              ),
+                                  ),
+                                );
+                              },
                             ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit_outlined),
-                                  color: Colors.blue,
-                                  onPressed: () => updateMatiere(matiere),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  color: Colors.red[300],
-                                  onPressed: () => deleteMatiere(matiere['id']),
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
                     ),
+                  ],
+                ),
+              ),
             ),
           ],
         ),

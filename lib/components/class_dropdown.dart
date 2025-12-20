@@ -4,14 +4,37 @@ class ClassDropdown extends StatelessWidget {
   final String? value;
   final ValueChanged<String?>? onChanged;
 
-  const ClassDropdown({super.key, required this.value, required this.onChanged});
+  const ClassDropdown({
+    super.key,
+    required this.value,
+    required this.onChanged,
+  });
 
   @override
   Widget build(BuildContext context) {
     return DropdownButtonFormField<String>(
       decoration: InputDecoration(
-        labelText: 'classe',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+        labelText: 'Classe',
+        prefixIcon: const Icon(
+          Icons.school_outlined,
+          color: Colors.blueAccent,
+          size: 20,
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[200]!),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.blueAccent, width: 2),
+        ),
+        labelStyle: TextStyle(color: Colors.grey[600], fontSize: 14),
       ),
       initialValue: value,
       items: [

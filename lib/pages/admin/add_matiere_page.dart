@@ -18,6 +18,7 @@ class _AddMatierePageState extends State<AddMatierePage> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _userNameController = TextEditingController();
   final api = ApiService();
+  bool isSaving = false;
 
   bool get isEditMode => widget.matiere != null;
 
@@ -42,14 +43,8 @@ class _AddMatierePageState extends State<AddMatierePage> {
         "description": description,
         "user_name": username,
       });
-
-      if (response?.statusCode == 201 || response?.statusCode == 200) {
-        return true;
-      } else {
-        return false;
-      }
+      return response?.statusCode == 201 || response?.statusCode == 200;
     } catch (e) {
-      print("Erreur: $e");
       return false;
     }
   }
@@ -66,14 +61,8 @@ class _AddMatierePageState extends State<AddMatierePage> {
         "description": description,
         "user_name": username,
       });
-
-      if (response?.statusCode == 200) {
-        return true;
-      } else {
-        return false;
-      }
+      return response?.statusCode == 200;
     } catch (e) {
-      print("Erreur: $e");
       return false;
     }
   }
@@ -89,130 +78,157 @@ class _AddMatierePageState extends State<AddMatierePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white70,
+      backgroundColor: const Color(0xFFF5F5F5),
       body: SafeArea(
-        child: ListView(
+        child: Column(
           children: [
             FormHeader(
-              title: isEditMode
-                  ? 'Modifier la matière'
-                  : 'Ajouter une nouvelle matière',
-              onBack: () {
-                Navigator.pop(context);
-              },
+              title: isEditMode ? 'Modifier la matière' : 'Nouvelle Matière',
+              onBack: () => Navigator.pop(context),
             ),
-            SizedBox(height: 150),
-            Container(
-              margin: EdgeInsets.all(30),
-              padding: EdgeInsets.all(30),
-              width: double.infinity,
-              decoration: BoxDecoration(
-                color: (Colors.white),
-                borderRadius: BorderRadius.circular(30),
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  children: [
-                    CustomTextFormField(
-                      label: 'Nom de la matière',
-                      hint: 'entrer le nom de la matière',
-                      obscureText: false,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "tu dois remplir le champ";
-                        }
-                        return null;
-                      },
-                      controller: _nameController,
-                    ),
-                    SizedBox(height: 16),
-                    CustomTextFormField(
-                      label: 'Description de la matière',
-                      hint: 'entrer la description de la matière',
-                      obscureText: false,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "tu dois remplir le champ";
-                        }
-                        return null;
-                      },
-                      controller: _descriptionController,
-                    ),
-                    SizedBox(height: 16),
-                    CustomTextFormField(
-                      label: 'Professeur de la matière',
-                      hint: 'entrer le professeur de la matière',
-                      obscureText: false,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return "tu dois remplir le champ";
-                        }
-                        return null;
-                      },
-                      controller: _userNameController,
-                    ),
-                    SizedBox(height: 24),
-                    PrimaryButton(
-                      text: isEditMode ? 'Modifier' : 'Ajouter matière',
-                      onPressed: () async {
-                        if (_formKey.currentState!.validate()) {
-                          final String name = _nameController.text.trim();
-                          final String description = _descriptionController.text
-                              .trim();
-                          final String username = _userNameController.text
-                              .trim();
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(24),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isEditMode
+                              ? "Modifier les détails"
+                              : "Informations Générales",
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          isEditMode
+                              ? "Mettez à jour les informations de cette matière."
+                              : "Entrez le nom et la description de la nouvelle matière.",
+                          style: TextStyle(
+                            color: Colors.grey[600],
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(height: 32),
+                        CustomTextFormField(
+                          label: 'Nom de la matière',
+                          hint: 'Ex: Mathématiques',
+                          prefixIcon: Icons.book_outlined,
+                          validator: (value) {
+                            if (value == null || value.isEmpty)
+                              return "Le nom est requis";
+                            return null;
+                          },
+                          controller: _nameController,
+                        ),
+                        const SizedBox(height: 20),
+                        CustomTextFormField(
+                          label: 'Description',
+                          hint: 'Brève description du cours...',
+                          prefixIcon: Icons.description_outlined,
+                          validator: (value) {
+                            if (value == null || value.isEmpty)
+                              return "La description est requise";
+                            return null;
+                          },
+                          controller: _descriptionController,
+                        ),
+                        const SizedBox(height: 20),
+                        CustomTextFormField(
+                          label: 'Professeur',
+                          hint: 'Nom du professeur assigné',
+                          prefixIcon: Icons.person_outlined,
+                          validator: (value) {
+                            if (value == null || value.isEmpty)
+                              return "Le professeur est requis";
+                            return null;
+                          },
+                          controller: _userNameController,
+                        ),
+                        const SizedBox(height: 40),
+                        PrimaryButton(
+                          text: isEditMode ? 'ENREGISTRER' : 'AJOUTER MATIÈRE',
+                          isLoading: isSaving,
+                          onPressed: () async {
+                            if (_formKey.currentState!.validate()) {
+                              setState(() => isSaving = true);
 
-                          bool success;
-                          if (isEditMode) {
-                            success = await updateMatiere(
-                              widget.matiere!['id'],
-                              name,
-                              description,
-                              username,
-                            );
-                          } else {
-                            success = await addMatiere(
-                              name,
-                              description,
-                              username,
-                            );
-                          }
+                              final String name = _nameController.text.trim();
+                              final String description = _descriptionController
+                                  .text
+                                  .trim();
+                              final String username = _userNameController.text
+                                  .trim();
 
-                          if (success) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isEditMode
-                                      ? "Matière modifiée avec succès !"
-                                      : "Matière ajoutée avec succès !",
-                                ),
-                                backgroundColor: Colors.green,
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
+                              bool success;
+                              if (isEditMode) {
+                                success = await updateMatiere(
+                                  widget.matiere!['id'],
+                                  name,
+                                  description,
+                                  username,
+                                );
+                              } else {
+                                success = await addMatiere(
+                                  name,
+                                  description,
+                                  username,
+                                );
+                              }
 
-                            // Wait until the SnackBar is dismissed before navigating
-                            // await snack.closed; // Can cause delay, just pop with true
+                              if (!mounted) return;
+                              setState(() => isSaving = false);
 
-                            Navigator.pop(context, true);
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  isEditMode
-                                      ? "Échec de la modification"
-                                      : "Échec de l'ajout",
-                                ),
-                                backgroundColor: Colors.red,
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        }
-                      },
+                              if (success) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(
+                                      isEditMode
+                                          ? "Matière modifiée !"
+                                          : "Matière ajoutée !",
+                                    ),
+                                    backgroundColor: Colors.green,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                                Navigator.pop(context, true);
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                    content: Text("Une erreur est survenue"),
+                                    backgroundColor: Colors.red,
+                                    behavior: SnackBarBehavior.floating,
+                                  ),
+                                );
+                              }
+                            }
+                          },
+                        ),
+                      ],
                     ),
-                  ],
+                  ),
                 ),
               ),
             ),
