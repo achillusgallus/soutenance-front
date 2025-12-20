@@ -1,46 +1,56 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/components/class_dropdown.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
+
 import 'package:togoschool/service/api_service.dart';
 
-class AddMatierePage extends StatefulWidget {
-  final Map<String, dynamic>? matiere;
-  const AddMatierePage({super.key, this.matiere});
+class AddStudent extends StatefulWidget {
+  final Map<String, dynamic>? Student;
+  const AddStudent({super.key, this.Student});
 
   @override
-  State<AddMatierePage> createState() => _AddMatierePageState();
+  State<AddStudent> createState() => _AddStudentState();
 }
 
-class _AddMatierePageState extends State<AddMatierePage> {
+class _AddStudentState extends State<AddStudent> {
   final _formKey = GlobalKey<FormState>();
+  String? selectedvalue = 'tle_D';
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _userNameController = TextEditingController();
+  final TextEditingController _surnameController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   final api = ApiService();
 
-  bool get isEditMode => widget.matiere != null;
+  bool get isEditMode => widget.Student != null;
 
   @override
   void initState() {
     super.initState();
     if (isEditMode) {
-      _nameController.text = widget.matiere!['nom'] ?? '';
-      _descriptionController.text = widget.matiere!['description'] ?? '';
-      _userNameController.text = widget.matiere!['user_name'] ?? '';
+      _nameController.text = widget.Student!['name'] ?? '';
+      _surnameController.text = widget.Student!['surname'] ?? '';
+      _emailController.text = widget.Student!['email'] ?? '';
+      // Password is usually not pre-filled for security, or handled differently.
+      // Leaving it empty for now, user can enter new password to change it.
     }
   }
 
-  Future<bool> addMatiere(
+  Future<bool> AddStudent(
     String name,
-    String description,
-    String username,
+    String surname,
+    String email,
+    String password,
+    String classe,
   ) async {
     try {
-      final response = await api.create("/admin/matieres", {
-        "nom": name,
-        "description": description,
-        "user_name": username,
+      final response = await api.create("/admin/users", {
+        "name": name,
+        "surname": surname,
+        "email": email,
+        "password": password,
+        "classe": classe,
       });
 
       if (response?.statusCode == 201 || response?.statusCode == 200) {
@@ -54,18 +64,26 @@ class _AddMatierePageState extends State<AddMatierePage> {
     }
   }
 
-  Future<bool> updateMatiere(
+  Future<bool> updateStudent(
     int id,
     String name,
-    String description,
-    String username,
+    String surname,
+    String email,
+    String password,
+    String classe,
   ) async {
     try {
-      final response = await api.update("/admin/matieres/$id", {
-        "nom": name,
-        "description": description,
-        "user_name": username,
-      });
+      final data = {
+        "name": name,
+        "surname": surname,
+        "email": email,
+        "classe": classe,
+      };
+      if (password.isNotEmpty) {
+        data["password"] = password;
+      }
+
+      final response = await api.update("/admin/users/$id", data);
 
       if (response?.statusCode == 200) {
         return true;
@@ -81,8 +99,9 @@ class _AddMatierePageState extends State<AddMatierePage> {
   @override
   void dispose() {
     _nameController.dispose();
-    _descriptionController.dispose();
-    _userNameController.dispose();
+    _surnameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -95,13 +114,13 @@ class _AddMatierePageState extends State<AddMatierePage> {
           children: [
             FormHeader(
               title: isEditMode
-                  ? 'Modifier la matière'
-                  : 'Ajouter une nouvelle matière',
+                  ? 'Modifier l\'etudiant'
+                  : 'Création un etudiant',
               onBack: () {
                 Navigator.pop(context);
               },
             ),
-            SizedBox(height: 150),
+            SizedBox(height: 60),
             Container(
               margin: EdgeInsets.all(30),
               padding: EdgeInsets.all(30),
@@ -115,8 +134,8 @@ class _AddMatierePageState extends State<AddMatierePage> {
                 child: Column(
                   children: [
                     CustomTextFormField(
-                      label: 'Nom de la matière',
-                      hint: 'entrer le nom de la matière',
+                      label: 'Nom de l\'élève',
+                      hint: 'entrer le nom de l\'élève',
                       obscureText: false,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -128,8 +147,8 @@ class _AddMatierePageState extends State<AddMatierePage> {
                     ),
                     SizedBox(height: 16),
                     CustomTextFormField(
-                      label: 'Description de la matière',
-                      hint: 'entrer la description de la matière',
+                      label: 'Prenom de l\'élève',
+                      hint: 'entrer le prenom de l\'élève',
                       obscureText: false,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -137,12 +156,21 @@ class _AddMatierePageState extends State<AddMatierePage> {
                         }
                         return null;
                       },
-                      controller: _descriptionController,
+                      controller: _surnameController,
+                    ),
+                    SizedBox(height: 16),
+                    ClassDropdown(
+                      value: selectedvalue,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedvalue = value!;
+                        });
+                      },
                     ),
                     SizedBox(height: 16),
                     CustomTextFormField(
-                      label: 'Professeur de la matière',
-                      hint: 'entrer le professeur de la matière',
+                      label: 'Email de l\'élève',
+                      hint: 'entrer l\'email de l\'élève',
                       obscureText: false,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
@@ -150,59 +178,76 @@ class _AddMatierePageState extends State<AddMatierePage> {
                         }
                         return null;
                       },
-                      controller: _userNameController,
+                      controller: _emailController,
+                    ),
+                    SizedBox(height: 24),
+                    CustomTextFormField(
+                      label: 'Mot de passe',
+                      hint: isEditMode
+                          ? 'laisser vide pour ne pas changer'
+                          : 'entrer le mot de passe de l\'élève',
+                      obscureText: false,
+                      validator: (value) {
+                        if (!isEditMode && (value == null || value.isEmpty)) {
+                          return "tu dois remplir le champ";
+                        }
+                        return null;
+                      },
+                      controller: _passwordController,
                     ),
                     SizedBox(height: 24),
                     PrimaryButton(
-                      text: isEditMode ? 'Modifier' : 'Ajouter matière',
+                      text: isEditMode ? 'Modifier' : 'Créer un élève',
                       onPressed: () async {
                         if (_formKey.currentState!.validate()) {
                           final String name = _nameController.text.trim();
-                          final String description = _descriptionController.text
-                              .trim();
-                          final String username = _userNameController.text
-                              .trim();
-
+                          final String surname = _surnameController.text.trim();
+                          final String email = _emailController.text.trim();
+                          final String password = _passwordController.text.trim();
+                          final String classe = selectedvalue ?? 'tle_D';
                           bool success;
                           if (isEditMode) {
-                            success = await updateMatiere(
-                              widget.matiere!['id'],
+                            success = await updateStudent(
+                              widget.Student!['id'],
                               name,
-                              description,
-                              username,
+                              surname,
+                              email,
+                              password,
+                              classe,
                             );
                           } else {
-                            success = await addMatiere(
+                            success = await AddStudent(
                               name,
-                              description,
-                              username,
+                              surname,
+                              email,
+                              password,
+                              classe,
                             );
                           }
-
                           if (success) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
                                   isEditMode
-                                      ? "Matière modifiée avec succès !"
-                                      : "Matière ajoutée avec succès !",
+                                      ? "Élève modifié avec succès !"
+                                      : "Élève créé avec succès !",
                                 ),
                                 backgroundColor: Colors.green,
                                 duration: Duration(seconds: 2),
                               ),
                             );
 
-                            // Wait until the SnackBar is dismissed before navigating
-                            // await snack.closed; // Can cause delay, just pop with true
-
-                            Navigator.pop(context, true);
+                            Navigator.pop(
+                              context,
+                              true,
+                            ); // Return true to indicate success
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
                               SnackBar(
                                 content: Text(
                                   isEditMode
                                       ? "Échec de la modification"
-                                      : "Échec de l'ajout",
+                                      : "Échec de la création",
                                 ),
                                 backgroundColor: Colors.red,
                                 duration: Duration(seconds: 2),

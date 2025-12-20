@@ -7,7 +7,8 @@ import 'package:togoschool/pages/admin/add_matiere_page.dart';
 import 'package:togoschool/pages/admin/add_teacher.dart';
 import 'package:togoschool/pages/admin/admin_parameter.dart';
 import 'package:togoschool/pages/admin/admin_professeur.dart';
-import 'package:togoschool/pages/students/student_cours.dart';
+import 'package:togoschool/pages/admin/admin_matiere.dart';
+import 'package:togoschool/pages/admin/admin_student_page.dart';
 import 'package:togoschool/service/api_service.dart';
 
 class AdminAcceuil extends StatefulWidget {
@@ -28,8 +29,18 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
     Colors.teal,
   ];
 
+  final List<Color> MatiereColors = [
+    const Color.fromARGB(255, 206, 88, 14),
+    const Color.fromARGB(255, 53, 4, 252),
+    const Color.fromARGB(255, 143, 221, 156),
+    const Color.fromARGB(255, 176, 39, 39),
+    const Color.fromARGB(255, 223, 82, 255),
+    const Color.fromARGB(255, 186, 210, 7),
+  ];
+
   bool isLoading = true;
   List<dynamic> teachers = [];
+  List<dynamic> matieres = [];
 
   @override
   void initState() {
@@ -40,9 +51,11 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
   Future<List<dynamic>> getTeachers() async {
     try {
       final response = await api.read("/admin/users");
+      final responseMatieres = await api.read("/admin/matieres");
       setState(() {
         final List<dynamic> allUsers = response?.data ?? [];
         teachers = allUsers.where((user) => user['role_id'] == 2).toList();
+        matieres = responseMatieres?.data ?? [];
         isLoading = false;
       });
       return teachers;
@@ -122,7 +135,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
               children: [
                 ButtonCard(
                   icon: FontAwesomeIcons.book,
-                  title: 'matières',
+                  title: 'créer',
                   color: Colors.blueAccent,
                   onTap: () {
                     Navigator.push(
@@ -135,7 +148,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                 ),
                 ButtonCard(
                   icon: FontAwesomeIcons.userGraduate,
-                  title: 'ajouter',
+                  title: 'créer',
                   color: Colors.green,
                   onTap: () {
                     Navigator.push(
@@ -148,20 +161,20 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                 ),
                 ButtonCard(
                   icon: FontAwesomeIcons.circleUser,
-                  title: 'élèves',
+                  title: 'voir',
                   color: const Color.fromARGB(255, 216, 34, 180),
                   onTap: () {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const StudentCours(),
+                        builder: (context) => const AdminStudentPage(),
                       ),
                     );
                   },
                 ),
                 ButtonCard(
                   icon: FontAwesomeIcons.message,
-                  title: 'forum',
+                  title: 'créer',
                   color: const Color.fromARGB(255, 181, 114, 14),
                   onTap: () {
                     Navigator.push(
@@ -273,6 +286,102 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
                                     style: const TextStyle(fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            // Matieres Section
+            if (!isLoading && matieres.isNotEmpty)
+              Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Padding(
+                        padding: EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Text(
+                          "Matières",
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                      if (matieres.length > 1)
+                        Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AdminMatiere(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "Voir tout",
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  SizedBox(
+                    height: 180,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: matieres.length > 5 ? 5 : matieres.length,
+                      itemBuilder: (context, index) {
+                        var matiere = matieres[index];
+                        var color = MatiereColors[index % MatiereColors.length];
+                        return Container(
+                          width: 140,
+                          margin: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          child: Card(
+                            color: color.withOpacity(0.2),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(100),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(4.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 25,
+                                    backgroundColor: color,
+                                    child: const Icon(
+                                      Icons.book,
+                                      color: Colors.white,
+                                      size: 20,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    "${matiere['nom'] ?? ''}",
+                                    textAlign: TextAlign.center,
+                                    maxLines: 2,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
                                   ),
                                 ],
                               ),
