@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/pages/admin/add_forum.dart';
 import 'package:togoschool/pages/admin/add_matiere_page.dart';
 import 'package:togoschool/pages/admin/add_teacher.dart';
+import 'package:togoschool/pages/admin/admin_forum_page.dart';
 import 'package:togoschool/pages/admin/admin_parameter.dart';
 import 'package:togoschool/pages/admin/admin_professeur.dart';
 import 'package:togoschool/pages/admin/admin_matiere.dart';
@@ -41,6 +42,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
   bool isLoading = true;
   List<dynamic> teachers = [];
   List<dynamic> matieres = [];
+  List<dynamic> forums = [];
 
   @override
   void initState() {
@@ -61,8 +63,16 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
         final List<dynamic> allUsers = results[0]?.data ?? [];
         teachers = allUsers.where((user) => user['role_id'] == 2).toList();
         matieres = results[1]?.data ?? [];
-        isLoading = false;
       });
+
+      // Fetch forums separately as it's a new feature
+      final forumRes = await api.read("/admin/forums");
+      if (mounted) {
+        setState(() {
+          forums = forumRes?.data ?? [];
+          isLoading = false;
+        });
+      }
     } catch (e) {
       if (!mounted) return;
       setState(() {
@@ -463,6 +473,92 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                                       ],
                                     ),
                                   ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+              const SizedBox(height: 30),
+
+              // Recent Forums Section
+              if (!isLoading && forums.isNotEmpty)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "FORUMS RÉCENTS",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.grey[700],
+                              letterSpacing: 1.0,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const AdminForumPage(),
+                                ),
+                              );
+                            },
+                            child: const Text("Voir tout"),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      height: 120,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: forums.length > 5 ? 5 : forums.length,
+                        itemBuilder: (context, index) {
+                          var forum = forums[index];
+                          return Container(
+                            width: 200,
+                            margin: const EdgeInsets.symmetric(
+                              horizontal: 6,
+                              vertical: 4,
+                            ),
+                            child: Card(
+                              elevation: 2,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Center(
+                                child: ListTile(
+                                  leading: const Icon(
+                                    Icons.forum,
+                                    color: Colors.orange,
+                                  ),
+                                  title: Text(
+                                    forum['titre'] ?? '',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    forum['matiere_nom'] ?? '',
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: const TextStyle(fontSize: 11),
+                                  ),
                                 ),
                               ),
                             ),

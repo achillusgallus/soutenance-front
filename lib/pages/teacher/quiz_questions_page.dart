@@ -25,14 +25,33 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
   }
 
   Future<void> _loadQuestions() async {
+    if (!mounted) return;
     setState(() => isLoading = true);
     try {
       final res = await api.read(
         "/professeur/quiz/${widget.quiz['id']}/questions",
       );
+
+      List<dynamic> fetchedQuestions = res?.data ?? [];
+
+      // Si les questions n'ont pas de réponses incluses, on les récupère une par une
+      for (int i = 0; i < fetchedQuestions.length; i++) {
+        final q = fetchedQuestions[i];
+        if (q['reponses'] == null || (q['reponses'] as List).isEmpty) {
+          try {
+            final respRes = await api.read(
+              "/professeur/questions/${q['id']}/reponses",
+            );
+            fetchedQuestions[i]['reponses'] = respRes?.data ?? [];
+          } catch (e) {
+            fetchedQuestions[i]['reponses'] = [];
+          }
+        }
+      }
+
       if (mounted) {
         setState(() {
-          questions = res?.data ?? [];
+          questions = fetchedQuestions;
           isLoading = false;
         });
       }
@@ -84,6 +103,8 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
 
     // Initialiser les réponses existantes ou une liste vide
     List<Map<String, dynamic>> answers = [];
+    List<int> deletedAnswerIds = [];
+
     if (question != null && question['reponses'] != null) {
       answers = List<Map<String, dynamic>>.from(
         question['reponses'].map(
@@ -198,9 +219,14 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
                                       Icons.remove_circle_outline,
                                       color: Colors.red,
                                     ),
-                                    onPressed: () => setInternalState(
-                                      () => answers.removeAt(index),
-                                    ),
+                                    onPressed: () => setInternalState(() {
+                                      if (answers[index]['id'] != null) {
+                                        deletedAnswerIds.add(
+                                          answers[index]['id'],
+                                        );
+                                      }
+                                      answers.removeAt(index);
+                                    }),
                                   ),
                                 ],
                               ),
@@ -229,41 +255,131 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
                         isLoading: isSavingLocal,
                         onPressed: () async {
                           if (titleController.text.isEmpty) return;
+                          if (answers.isEmpty) return;
 
                           setInternalState(() => isSavingLocal = true);
                           try {
-                            final data = {
+                            final questionData = {
                               'question': titleController.text,
                               'type': 'qcm',
-                              'reponses': answers
-                                  .map(
-                                    (a) => {
-                                      'reponse': a['controller'].text,
-                                      'est_correcte': a['est_correcte'],
-                                    },
-                                  )
-                                  .toList(),
                             };
 
+                            int? questionId;
                             if (question == null) {
-                              await api.create(
+                              final res = await api.create(
                                 "/professeur/quiz/${widget.quiz['id']}/questions",
-                                data,
+                                questionData,
                               );
+
+                              // Extraction robuste de l'ID depuis la réponse du serveur
+                              final resData = res?.data;
+                              if (resData != null) {
+                                if (resData is Map) {
+                                  // Certains serveurs enveloppent dans 'data', d'autres non
+                                  final actualData = resData.containsKey('data')
+                                      ? resData['data']
+                                      : resData;
+                                  if (actualData['id'] != null) {
+                                    questionId = int.tryParse(
+                                      actualData['id'].toString(),
+                                    );
+                                  } else if (resData['id'] != null) {
+                                    questionId = int.tryParse(
+                                      resData['id'].toString(),
+                                    );
+                                  }
+                                }
+                              }
                             } else {
                               await api.update(
                                 "/professeur/quiz/${widget.quiz['id']}/questions/${question['id']}",
-                                data,
+                                questionData,
+                              );
+                              questionId = int.tryParse(
+                                question['id'].toString(),
                               );
                             }
-                            Navigator.pop(ctx);
-                            _loadQuestions();
+
+                            if (questionId == null) {
+                              throw Exception(
+                                "L'enregistrement de la question a réussi mais l'ID n'a pas pu être récupéré.",
+                              );
+                            }
+
+                            // Gérer les suppressions de réponses si on est en mode édition
+                            for (var id in deletedAnswerIds) {
+                              try {
+                                await api.delete("/professeur/reponses/$id");
+                              } catch (e) {
+                                // On continue même si la suppression échoue
+                                print("Erreur suppression réponse: $e");
+                              }
+                            }
+
+                            // Gérer les ajouts/modifications de réponses
+                            int answerIndex = 1;
+                            for (var a in answers) {
+                              final String reponseText = a['controller'].text
+                                  .trim();
+                              if (reponseText.isEmpty) continue;
+
+                              final reponseData = {
+                                'reponse': reponseText,
+                                'est_correcte': a['est_correcte']
+                                    ? true
+                                    : false,
+                                'question_id': questionId,
+                              };
+
+                              try {
+                                if (a['id'] == null) {
+                                  // Nouvelle réponse
+                                  await api.create(
+                                    "/professeur/questions/$questionId/reponses",
+                                    reponseData,
+                                  );
+                                } else {
+                                  // Mise à jour réponse existante
+                                  await api.update(
+                                    "/professeur/reponses/${a['id']}",
+                                    reponseData,
+                                  );
+                                }
+                              } catch (e) {
+                                print("Erreur sur l'option $answerIndex : $e");
+                                // On peut choisir d'arrêter ou de continuer. Ici on lance une exception pour alerter.
+                                throw Exception(
+                                  "Erreur sur l'option $answerIndex : $e",
+                                );
+                              }
+                              answerIndex++;
+                            }
+
+                            if (mounted) {
+                              Navigator.pop(ctx);
+                              _loadQuestions(); // Recharger la liste
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(
+                                  content: Text(
+                                    "Question et réponses enregistrées !",
+                                  ),
+                                  backgroundColor: Colors.green,
+                                ),
+                              );
+                            }
                           } catch (e) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(content: Text("Erreur: $e")),
-                            );
+                            if (mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(
+                                  content: Text("Échec : $e"),
+                                  duration: const Duration(seconds: 5),
+                                ),
+                              );
+                            }
                           } finally {
-                            setInternalState(() => isSavingLocal = false);
+                            if (mounted) {
+                              setInternalState(() => isSavingLocal = false);
+                            }
                           }
                         },
                       ),
@@ -324,45 +440,130 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
       itemCount: questions.length,
       itemBuilder: (context, index) {
         final q = questions[index];
-        return Container(
+        final List<dynamic> answers = q['reponses'] ?? [];
+
+        return Card(
           margin: const EdgeInsets.only(bottom: 12),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
+          shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
-          child: Row(
-            children: [
-              CircleAvatar(
-                backgroundColor: Colors.blueAccent.withOpacity(0.1),
-                child: Text(
-                  "${index + 1}",
-                  style: const TextStyle(color: Colors.blueAccent),
+          elevation: 0,
+          child: ExpansionTile(
+            leading: CircleAvatar(
+              backgroundColor: Colors.blueAccent.withOpacity(0.1),
+              child: Text(
+                "${index + 1}",
+                style: const TextStyle(
+                  color: Colors.blueAccent,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(width: 16),
-              Expanded(
+            ),
+            title: Text(
+              q['question'] ?? 'Question sans titre',
+              style: const TextStyle(fontWeight: FontWeight.bold),
+            ),
+            subtitle: Text(
+              "${answers.length} réponse(s) - ${q['type']?.toString().toUpperCase() ?? 'QCM'}",
+              style: TextStyle(color: Colors.grey[600], fontSize: 12),
+            ),
+            children: [
+              const Divider(height: 1),
+              Padding(
+                padding: const EdgeInsets.all(16),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      q['question'] ?? 'Question sans titre',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      q['type']?.toString().toUpperCase() ?? 'QCM',
-                      style: TextStyle(color: Colors.grey[600], fontSize: 12),
+                    ...answers.map((a) {
+                      final bool isCorrect =
+                          a['est_correcte'] == 1 || a['est_correcte'] == true;
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 10,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isCorrect
+                                ? Colors.green.withOpacity(0.05)
+                                : Colors.red.withOpacity(0.05),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: isCorrect
+                                  ? Colors.green.withOpacity(0.2)
+                                  : Colors.red.withOpacity(0.2),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                isCorrect ? Icons.check_circle : Icons.cancel,
+                                size: 20,
+                                color: isCorrect ? Colors.green : Colors.red,
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  a['reponse'] ?? '',
+                                  style: TextStyle(
+                                    fontWeight: isCorrect
+                                        ? FontWeight.bold
+                                        : FontWeight.normal,
+                                    color: isCorrect
+                                        ? Colors.green[800]
+                                        : Colors.red[800],
+                                    fontSize: 14,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }),
+                    const SizedBox(height: 16),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        ElevatedButton.icon(
+                          onPressed: () => _showQuestionForm(question: q),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blueAccent,
+                            foregroundColor: Colors.white,
+                            elevation: 0,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          icon: const Icon(Icons.edit, size: 18),
+                          label: const Text("Modifier"),
+                        ),
+                        const SizedBox(width: 12),
+                        OutlinedButton.icon(
+                          onPressed: () => _deleteQuestion(q['id']),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: Colors.red,
+                            side: const BorderSide(color: Colors.red),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                          ),
+                          icon: const Icon(Icons.delete, size: 18),
+                          label: const Text("Supprimer"),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.edit, size: 20),
-                onPressed: () => _showQuestionForm(question: q),
-              ),
-              IconButton(
-                icon: const Icon(Icons.delete, color: Colors.red, size: 20),
-                onPressed: () => _deleteQuestion(q['id']),
               ),
             ],
           ),
