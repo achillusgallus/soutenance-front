@@ -244,6 +244,31 @@ class _AdminMatiereState extends State<AdminMatiere> {
                                                                 FontWeight.w600,
                                                           ),
                                                         ),
+                                                        const SizedBox(
+                                                          width: 8,
+                                                        ),
+                                                        const Icon(
+                                                          Icons.school_outlined,
+                                                          size: 14,
+                                                          color:
+                                                              Colors.blueAccent,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        Text(
+                                                          matiere['classe'] ??
+                                                              'N/A',
+                                                          style:
+                                                              const TextStyle(
+                                                                fontSize: 12,
+                                                                color: Colors
+                                                                    .blueAccent,
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                        ),
                                                       ],
                                                     ),
                                                   ),

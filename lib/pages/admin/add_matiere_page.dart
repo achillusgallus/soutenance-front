@@ -20,6 +20,17 @@ class _AddMatierePageState extends State<AddMatierePage> {
   final api = ApiService();
   bool isSaving = false;
 
+  final List<String> classes = [
+    'tle_D',
+    'tle_A4',
+    'tle_C',
+    'pre_D',
+    'pre_A4',
+    'pre_C',
+    'troisieme',
+  ];
+  String? _selectedClasse;
+
   bool get isEditMode => widget.matiere != null;
 
   @override
@@ -29,6 +40,7 @@ class _AddMatierePageState extends State<AddMatierePage> {
       _nameController.text = widget.matiere!['nom'] ?? '';
       _descriptionController.text = widget.matiere!['description'] ?? '';
       _userNameController.text = widget.matiere!['user_name'] ?? '';
+      _selectedClasse = widget.matiere!['classe'];
     }
   }
 
@@ -36,12 +48,14 @@ class _AddMatierePageState extends State<AddMatierePage> {
     String name,
     String description,
     String username,
+    String classe,
   ) async {
     try {
       final response = await api.create("/admin/matieres", {
         "nom": name,
         "description": description,
         "user_name": username,
+        "classe": classe,
       });
       return response?.statusCode == 201 || response?.statusCode == 200;
     } catch (e) {
@@ -54,12 +68,14 @@ class _AddMatierePageState extends State<AddMatierePage> {
     String name,
     String description,
     String username,
+    String classe,
   ) async {
     try {
       final response = await api.update("/admin/matieres/$id", {
         "nom": name,
         "description": description,
         "user_name": username,
+        "classe": classe,
       });
       return response?.statusCode == 200;
     } catch (e) {
@@ -161,11 +177,45 @@ class _AddMatierePageState extends State<AddMatierePage> {
                           hint: 'Nom du professeur assigné',
                           prefixIcon: Icons.person_outlined,
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return "Le professeur est requis";
+                            }
                             return null;
                           },
                           controller: _userNameController,
+                        ),
+                        const SizedBox(height: 20),
+                        DropdownButtonFormField<String>(
+                          value: _selectedClasse,
+                          decoration: InputDecoration(
+                            labelText: 'Classe',
+                            prefixIcon: const Icon(
+                              Icons.class_outlined,
+                              color: Colors.blueAccent,
+                            ),
+                            filled: true,
+                            fillColor: Colors.grey[50],
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          items: classes.map((String c) {
+                            return DropdownMenuItem<String>(
+                              value: c,
+                              child: Text(c),
+                            );
+                          }).toList(),
+                          onChanged: (String? value) {
+                            setState(() {
+                              _selectedClasse = value;
+                            });
+                          },
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return "La classe est requise";
+                            }
+                            return null;
+                          },
                         ),
                         const SizedBox(height: 40),
                         PrimaryButton(
@@ -189,12 +239,14 @@ class _AddMatierePageState extends State<AddMatierePage> {
                                   name,
                                   description,
                                   username,
+                                  _selectedClasse!,
                                 );
                               } else {
                                 success = await addMatiere(
                                   name,
                                   description,
                                   username,
+                                  _selectedClasse!,
                                 );
                               }
 

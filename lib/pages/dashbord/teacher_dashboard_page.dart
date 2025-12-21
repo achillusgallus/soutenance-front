@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/components/navbar.dart';
+import 'package:togoschool/pages/teacher/teacher_quiz.dart';
+import 'package:togoschool/pages/teacher/teacher_forum.dart';
 import 'package:togoschool/pages/teacher/teach_cours.dart';
 import 'package:togoschool/pages/teacher/teacher_acceuil.dart';
 import 'package:togoschool/pages/teacher/teacher_eleves.dart';
@@ -12,37 +14,45 @@ class TeacherDashboardPage extends StatefulWidget {
 }
 
 class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
+  int _currentIndex = 0;
 
-   int _currentIndex = 0;
-
-   final List<Widget> _pages = [
-    const TeacherAcceuil(),
-    const TeachCours(),
-    const TeacherEleves()
-   ];
-
-    final List<NavigationBarItem> _navItems = [
+  final List<NavigationBarItem> _navItems = [
     NavigationBarItem(icon: Icons.home, label: "Accueil"),
-    NavigationBarItem(icon: Icons.book, label: "cours"),
-    NavigationBarItem(icon: Icons.person_4, label: "élèves"),
+    NavigationBarItem(icon: Icons.book, label: "Cours"),
+    NavigationBarItem(icon: Icons.quiz, label: "Quiz"),
+    NavigationBarItem(icon: Icons.forum, label: "Forum"),
+    NavigationBarItem(icon: Icons.person_add, label: "Élèves"),
   ];
 
-    void _onTabChanged(int index) {
+  void _onTabChanged(int index) {
     setState(() {
       _currentIndex = index;
     });
   }
 
+  late final List<Widget> _pages;
+
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: SafeArea(
-      child: _pages[_currentIndex],
-    ),
-    bottomNavigationBar: Navbar(
-      items: _navItems,
-      onTabChanged: _onTabChanged,
-    ),
-  );
-}
+  void initState() {
+    super.initState();
+    _pages = [
+      const TeacherAcceuil(),
+      const TeachCours(),
+      const TeacherQuiz(),
+      const TeacherForum(),
+      const TeacherEleves(),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(child: _pages[_currentIndex]),
+      bottomNavigationBar: Navbar(
+        items: _navItems,
+        currentIndex: _currentIndex,
+        onTabChanged: _onTabChanged,
+      ),
+    );
+  }
 }

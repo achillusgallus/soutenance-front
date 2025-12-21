@@ -5,6 +5,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/pages/admin/add_forum.dart';
 import 'package:togoschool/pages/admin/add_matiere_page.dart';
 import 'package:togoschool/pages/admin/add_teacher.dart';
+import 'package:togoschool/pages/admin/admin_parameter.dart';
 import 'package:togoschool/pages/admin/admin_professeur.dart';
 import 'package:togoschool/pages/admin/admin_matiere.dart';
 import 'package:togoschool/pages/admin/admin_student_page.dart';
@@ -111,12 +112,17 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                     ),
                     IconButton(
                       icon: const Icon(
-                        FontAwesomeIcons.magnifyingGlass,
+                        FontAwesomeIcons.user,
                         size: 20,
                         color: Colors.black54,
                       ),
                       onPressed: () {
-                        // TODO: Implement search
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AdminParameter(),
+                          ),
+                        );
                       },
                     ),
                   ],

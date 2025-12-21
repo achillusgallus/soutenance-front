@@ -12,11 +12,13 @@ class NavigationBarItem {
 class Navbar extends StatefulWidget {
   final List<NavigationBarItem> items;
   final Function(int) onTabChanged;
+  final int currentIndex;
 
   const Navbar({
     super.key,
     required this.items,
     required this.onTabChanged,
+    this.currentIndex = 0,
   });
 
   @override
@@ -24,23 +26,23 @@ class Navbar extends StatefulWidget {
 }
 
 class _NavbarState extends State<Navbar> {
-  int _currentIndex = 0;
-
   @override
   Widget build(BuildContext context) {
     return BottomNavigationBar(
-      currentIndex: _currentIndex,
+      type: BottomNavigationBarType.fixed,
+      currentIndex: widget.currentIndex,
+      selectedItemColor: Colors.blueAccent,
+      unselectedItemColor: Colors.grey,
       onTap: (index) {
-        setState(() {
-          _currentIndex = index;
-        });
-        widget.onTabChanged(index); // Notifier le parent du changement
+        widget.onTabChanged(index);
       },
       items: widget.items
-          .map((item) => BottomNavigationBarItem(
-                icon: Icon(item.icon),
-                label: item.label,
-              ))
+          .map(
+            (item) => BottomNavigationBarItem(
+              icon: Icon(item.icon),
+              label: item.label,
+            ),
+          )
           .toList(),
     );
   }

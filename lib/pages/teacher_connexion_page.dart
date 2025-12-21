@@ -20,14 +20,16 @@ class TeacherConnexionPage extends StatefulWidget {
 }
 
 class _TeacherConnexionPageState extends State<TeacherConnexionPage> {
-
   String? selectedvalue = 'tle_D';
   final _formkey = GlobalKey<FormState>();
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final api = ApiService();
 
-    Future<Map<String, dynamic>?> createUser(String email, String password) async {
+  Future<Map<String, dynamic>?> createUser(
+    String email,
+    String password,
+  ) async {
     try {
       final response = await api.create("/login", {
         "email": email,
@@ -37,7 +39,8 @@ class _TeacherConnexionPageState extends State<TeacherConnexionPage> {
       if (response?.statusCode == 200) {
         final token = response?.data["token"];
         await TokenStorage.saveToken(response?.data["token"]);
-        await TokenStorage.saveRole(response?.data["user"]["role_id"]); 
+        await TokenStorage.saveRole(response?.data["user"]["role_id"]);
+        await TokenStorage.saveUserId(response?.data["user"]["id"]);
         // Connexion réussie
         return response?.data;
       } else {
@@ -61,10 +64,10 @@ class _TeacherConnexionPageState extends State<TeacherConnexionPage> {
     return Scaffold(
       backgroundColor: CupertinoColors.secondarySystemBackground,
       body: SafeArea(
-      child: ListView(
-        children: [
-          const TopHeader(),
-          Container(
+        child: ListView(
+          children: [
+            const TopHeader(),
+            Container(
               margin: EdgeInsets.all(30),
               padding: EdgeInsets.all(30),
               width: double.infinity,
@@ -75,90 +78,107 @@ class _TeacherConnexionPageState extends State<TeacherConnexionPage> {
               child: Form(
                 key: _formkey,
                 child: Column(
-                children: [
-                  const RoleToggleStudent(),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                  CustomTextFormField(
-                    label: 'Email',
-                    hint: 'entrer votre email',
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "tu dois remplir le champ";
-                      }
-                      return null;
-                    },
-                    controller: emailController,
-                  ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                  CustomTextFormField(
-                    label: 'Mot de passe',
-                    hint: 'entrer votre mot de passe',
-                    obscureText: false,
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return "tu dois remplir le champ";
-                      }
-                      return null;
-                    },
-                    controller: passwordController,
-                  ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                  PrimaryButton(
-                    text: 'se connecter',
-                    onPressed: () async {
-                      if (_formkey.currentState!.validate()) {
-                        final String email = emailController.text.trim();
-                        final String password = passwordController.text.trim();
-                        // Appel API login
-                        final userData = await createUser(email, password);
+                  children: [
+                    const RoleToggleStudent(),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                    CustomTextFormField(
+                      label: 'Email',
+                      hint: 'entrer votre email',
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "tu dois remplir le champ";
+                        }
+                        return null;
+                      },
+                      controller: emailController,
+                    ),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                    CustomTextFormField(
+                      label: 'Mot de passe',
+                      hint: 'entrer votre mot de passe',
+                      obscureText: false,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return "tu dois remplir le champ";
+                        }
+                        return null;
+                      },
+                      controller: passwordController,
+                    ),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.02),
+                    PrimaryButton(
+                      text: 'se connecter',
+                      onPressed: () async {
+                        if (_formkey.currentState!.validate()) {
+                          final String email = emailController.text.trim();
+                          final String password = passwordController.text
+                              .trim();
+                          // Appel API login
+                          final userData = await createUser(email, password);
 
-                        if (userData != null && userData["user"]["role_id"] == 2) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Connexion réussie professeur !"),
-                              backgroundColor: Colors.green,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
+                          if (userData != null &&
+                              userData["user"]["role_id"] == 2) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Connexion réussie professeur !"),
+                                backgroundColor: Colors.green,
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
 
-                          // Redirection vers la page d'accueil
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => TeacherDashboardPage()),
-                          );
-                        } else if (userData != null && userData["user"]["role_id"] == 1){
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("connexion réussie administrateur !"),
-                              backgroundColor: const Color.fromARGB(255, 114, 104, 225),
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(builder: (context) => AdminDashboardPage()),
-                          );} else {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text("Échec de la connexion"),
-                              backgroundColor: Colors.red,
-                              duration: Duration(seconds: 2),
-                            ),
-                          );
-                      }
-                      }
-                    },
-                  ),
-                  SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-                  Row(
-                    children: [
-                      SizedBox(width: MediaQuery.of(context).size.width * 0.04),
-                      ForgotPassword()
-                    ],
-                  )
-                ],
+                            // Redirection vers la page d'accueil
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TeacherDashboardPage(),
+                              ),
+                            );
+                          } else if (userData != null &&
+                              userData["user"]["role_id"] == 1) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  "connexion réussie administrateur !",
+                                ),
+                                backgroundColor: const Color.fromARGB(
+                                  255,
+                                  114,
+                                  104,
+                                  225,
+                                ),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => AdminDashboardPage(),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text("Échec de la connexion"),
+                                backgroundColor: Colors.red,
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    ),
+                    SizedBox(height: MediaQuery.of(context).size.height * 0.01),
+                    Row(
+                      children: [
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.04,
+                        ),
+                        ForgotPassword(),
+                      ],
+                    ),
+                  ],
+                ),
               ),
-             ),
             ),
 
             InfoCard(
@@ -180,10 +200,10 @@ class _TeacherConnexionPageState extends State<TeacherConnexionPage> {
               icon: FontAwesomeIcons.barsProgress,
               title: 'Suivi de progression',
               subtitle: 'votre évaluation et vos résultats par programme',
-            )
-        ],
+            ),
+          ],
+        ),
       ),
-      )
     );
   }
 }

@@ -7,14 +7,14 @@ import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/pages/student_connexion_page.dart';
 
-class AdminParameter extends StatefulWidget {
-  const AdminParameter({super.key});
+class TeacherParameter extends StatefulWidget {
+  const TeacherParameter({super.key});
 
   @override
-  State<AdminParameter> createState() => _AdminParameterState();
+  State<TeacherParameter> createState() => _TeacherParameterState();
 }
 
-class _AdminParameterState extends State<AdminParameter> {
+class _TeacherParameterState extends State<TeacherParameter> {
   final api = ApiService();
   Map<String, dynamic>? profileData;
   bool isLoading = true;
@@ -174,16 +174,12 @@ class _AdminParameterState extends State<AdminParameter> {
       children: [
         const CircleAvatar(
           radius: 50,
-          backgroundColor: Color(0xFFE3F2FD),
-          child: Icon(
-            FontAwesomeIcons.userLarge,
-            size: 40,
-            color: Colors.blueAccent,
-          ),
+          backgroundColor: Color(0xFFE8F5E9),
+          child: Icon(FontAwesomeIcons.userTie, size: 40, color: Colors.green),
         ),
         const SizedBox(height: 16),
         Text(
-          '${profileData?['name'] ?? 'Nom'} ${profileData?['surname'] ?? ''}',
+          '${profileData?['name'] ?? 'Professeur'} ${profileData?['surname'] ?? ''}',
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         Text(
@@ -231,7 +227,7 @@ class _AdminParameterState extends State<AdminParameter> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Informations Personnelles",
+            "Informations du Compte",
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 24),
