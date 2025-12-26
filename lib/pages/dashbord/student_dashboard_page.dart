@@ -3,6 +3,8 @@ import 'package:togoschool/components/navbar.dart';
 import 'package:togoschool/pages/students/student_acceuil.dart';
 import 'package:togoschool/pages/students/student_cours.dart';
 import 'package:togoschool/pages/students/student_forum.dart';
+import 'package:togoschool/pages/students/student_profil.dart';
+import 'package:togoschool/pages/students/student_quiz_page.dart';
 
 class StudentDashboardPage extends StatefulWidget {
   const StudentDashboardPage({super.key});
@@ -12,37 +14,45 @@ class StudentDashboardPage extends StatefulWidget {
 }
 
 class _StudentDashboardPageState extends State<StudentDashboardPage> {
+  int _currentIndex = 0;
 
-   int _currentIndex = 0;
-
-   final List<Widget> _pages = [
-    const StudentAcceuil(),
-    const StudentCours(),
-    const StudentForum()
-   ];
-
-    final List<NavigationBarItem> _navItems = [
-    NavigationBarItem(icon: Icons.home, label: "Accueil"),
-    NavigationBarItem(icon: Icons.play_lesson, label: "cours"),
-    NavigationBarItem(icon: Icons.message, label: "forum"),
+  final List<NavigationBarItem> _navItems = [
+    NavigationBarItem(icon: Icons.home_outlined, label: "Accueil"),
+    NavigationBarItem(icon: Icons.play_lesson_outlined, label: "Cours"),
+    NavigationBarItem(icon: Icons.quiz_outlined, label: "Quiz"),
+    NavigationBarItem(icon: Icons.forum_outlined, label: "Forum"),
+    NavigationBarItem(icon: Icons.person_outline, label: "Profil"),
   ];
 
-    void _onTabChanged(int index) {
+  void _onTabChanged(int index) {
     setState(() {
       _currentIndex = index;
     });
   }
 
+  late final List<Widget> _pages;
+
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: SafeArea(
-      child: _pages[_currentIndex],
-    ),
-    bottomNavigationBar: Navbar(
-      items: _navItems,
-      onTabChanged: _onTabChanged,
-    ),
-  );
-}
+  void initState() {
+    super.initState();
+    _pages = [
+      const StudentAcceuil(),
+      const StudentCours(),
+      const StudentQuizPage(),
+      const StudentForum(),
+      const StudentProfil(),
+    ];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(child: _pages[_currentIndex]),
+      bottomNavigationBar: Navbar(
+        items: _navItems,
+        currentIndex: _currentIndex,
+        onTabChanged: _onTabChanged,
+      ),
+    );
+  }
 }

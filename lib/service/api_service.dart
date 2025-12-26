@@ -67,7 +67,7 @@ class ApiService {
   }
 
   // CREATE
-  Future<Response?> create(String endpoint, Object data) async {
+  Future<Response?> create(String endpoint, dynamic data) async {
     try {
       return await dio.post(endpoint, data: data);
     } on DioException catch (e) {
@@ -85,7 +85,7 @@ class ApiService {
   }
 
   // UPDATE
-  Future<Response?> update(String endpoint, Object data) async {
+  Future<Response?> update(String endpoint, dynamic data) async {
     try {
       return await dio.put(endpoint, data: data);
     } on DioException catch (e) {

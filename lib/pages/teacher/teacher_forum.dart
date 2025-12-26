@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:togoschool/components/custom_text_form_field.dart';
-import 'package:togoschool/components/form_header.dart';
-import 'package:togoschool/components/primary_button.dart';
-// import 'package:togoschool/service/api_service.dart'; // Supprimé
+import 'package:togoschool/components/dash_header.dart';
+import 'package:togoschool/pages/forum/forum_chat_page.dart';
+import 'package:togoschool/service/api_service.dart';
 
 class TeacherForum extends StatefulWidget {
   const TeacherForum({super.key});
@@ -12,8 +11,8 @@ class TeacherForum extends StatefulWidget {
 }
 
 class _TeacherForumState extends State<TeacherForum> {
-  // final api = ApiService(); // Supprimé
-  bool isLoading = false; // Initialisé à false
+  final api = ApiService();
+  bool isLoading = true;
   List<dynamic> topics = [];
 
   @override
@@ -23,114 +22,85 @@ class _TeacherForumState extends State<TeacherForum> {
   }
 
   Future<void> _loadTopics() async {
-    // Les appels d'API ont été supprimés par l'utilisateur
-  }
-
-  void _showReplyDialog(dynamic topic) {
-    final replyController = TextEditingController();
-    bool isSaving = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (ctx) => StatefulBuilder(
-        builder: (ctx, setInternalState) => Padding(
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom,
-            left: 24,
-            right: 24,
-            top: 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                "Répondre à: ${topic['titre']}",
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 16),
-              CustomTextFormField(
-                label: "Votre réponse",
-                hint: "Écrivez votre message ici...",
-                controller: replyController,
-              ),
-              const SizedBox(height: 24),
-              PrimaryButton(
-                text: "ENVOYER",
-                isLoading: isSaving,
-                onPressed: () async {
-                  if (replyController.text.isEmpty) return;
-                  // L'appel d'envoi de réponse API a été supprimé par l'utilisateur
-                  Navigator.pop(ctx);
-                },
-              ),
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
-    );
+    setState(() => isLoading = true);
+    try {
+      final res = await api.read("/professeur/forums/sujets");
+      if (mounted) {
+        setState(() {
+          topics = res?.data ?? [];
+          isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) setState(() => isLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: Column(
-        children: [
-          FormHeader(
-            title: "Forum Enseignant",
-            onBack: () => Navigator.pop(context),
-          ),
-          Expanded(
-            child: RefreshIndicator(
-              onRefresh: _loadTopics,
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildTopicsList(),
+      backgroundColor: const Color(0xFFF1F5F9),
+      body: SafeArea(
+        child: Column(
+          children: [
+            const DashHeader(
+              color1: Color(0xFF6366F1),
+              color2: Color(0xFF4F46E5),
+              title: "Forum Professeur",
+              subtitle: "Répondez aux questions des élèves",
+              title1: "0",
+              subtitle1: "Total",
+              title2: "0",
+              subtitle2: "Nouveaux",
+              title3: "0",
+              subtitle3: "Répondus",
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _loadTopics,
+                child: isLoading
+                    ? const Center(child: CircularProgressIndicator())
+                    : topics.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: topics.length,
+                        itemBuilder: (context, index) {
+                          final t = topics[index];
+                          return _buildTopicCard(t);
+                        },
+                      ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildTopicsList() {
-    if (topics.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.forum_outlined, size: 80, color: Colors.grey[300]),
-            const SizedBox(height: 16),
-            const Text(
-              "Aucun sujet de discussion affecté",
-              style: TextStyle(color: Colors.grey),
+  Widget _buildTopicCard(dynamic topic) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      elevation: 0,
+      color: Colors.white,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => ForumChatPage(
+                topicId: topic['id'],
+                topicTitle: topic['titre'],
+                isTeacher: true,
+              ),
             ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: topics.length,
-      itemBuilder: (context, index) {
-        final t = topics[index];
-        return Container(
-          margin: const EdgeInsets.only(bottom: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-          ),
+          ).then((_) => _loadTopics());
+        },
+        borderRadius: BorderRadius.circular(16),
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -138,22 +108,30 @@ class _TeacherForumState extends State<TeacherForum> {
                 children: [
                   CircleAvatar(
                     backgroundColor: Colors.blueAccent.withOpacity(0.1),
-                    child: const Icon(Icons.person, color: Colors.blueAccent),
+                    radius: 18,
+                    child: const Icon(
+                      Icons.person_outline,
+                      size: 18,
+                      color: Colors.blueAccent,
+                    ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          t['user']?['name'] ?? 'Élève',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          topic['user_name'] ?? 'Élève',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
                         ),
                         Text(
-                          t['created_at'] ?? 'Aujourd\'hui',
+                          topic['created_at_human'] ?? '',
                           style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 12,
+                            color: Colors.grey[500],
+                            fontSize: 11,
                           ),
                         ),
                       ],
@@ -165,51 +143,79 @@ class _TeacherForumState extends State<TeacherForum> {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: Colors.blueAccent.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      t['matiere']?['nom'] ?? 'Matière',
+                      topic['matiere_nom'] ?? 'Matière',
                       style: const TextStyle(
-                        color: Colors.blueAccent,
-                        fontSize: 10,
+                        color: Colors.orange,
                         fontWeight: FontWeight.bold,
+                        fontSize: 10,
                       ),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Text(
-                t['titre'] ?? 'Pas de titre',
+                topic['titre'] ?? 'Sans titre',
                 style: const TextStyle(
-                  fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  fontSize: 15,
                 ),
               ),
-              const SizedBox(height: 8),
-              Text(
-                t['description'] ?? '',
-                style: TextStyle(color: Colors.grey[700]),
-              ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Row(
-                mainAxisAlignment: MainAxisAlignment.end,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  TextButton.icon(
-                    onPressed: () => _showReplyDialog(t),
-                    icon: const Icon(Icons.reply, size: 16),
-                    label: const Text("Répondre"),
-                    style: TextButton.styleFrom(
-                      foregroundColor: Colors.blueAccent,
+                  Row(
+                    children: [
+                      const Icon(
+                        Icons.chat_bubble_outline,
+                        size: 14,
+                        color: Colors.grey,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        "${topic['messages_count'] ?? 0} messages",
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Text(
+                    "RÉPONDRE",
+                    style: TextStyle(
+                      color: Color(0xFF6366F1),
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
                     ),
                   ),
                 ],
               ),
             ],
           ),
-        );
-      },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.forum_outlined, size: 80, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          const Text(
+            "Aucun sujet de discussion disponible",
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
+      ),
     );
   }
 }

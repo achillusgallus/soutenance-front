@@ -116,6 +116,8 @@ class _TeacherConnexionPageState extends State<TeacherConnexionPage> {
                           // Appel API login
                           final userData = await createUser(email, password);
 
+                          if (!mounted) return;
+
                           if (userData != null &&
                               userData["user"]["role_id"] == 2) {
                             ScaffoldMessenger.of(context).showSnackBar(
