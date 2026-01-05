@@ -41,6 +41,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
 
   bool isLoading = true;
   List<dynamic> teachers = [];
+  List<dynamic> students = [];
   List<dynamic> matieres = [];
   List<dynamic> forums = [];
 
@@ -62,10 +63,10 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
       setState(() {
         final List<dynamic> allUsers = results[0]?.data ?? [];
         teachers = allUsers.where((user) => user['role_id'] == 2).toList();
+        students = allUsers.where((user) => user['role_id'] == 3).toList();
         matieres = results[1]?.data ?? [];
       });
 
-      // Fetch forums separately as it's a new feature
       final forumRes = await api.read("/admin/forums");
       if (mounted) {
         setState(() {
@@ -86,7 +87,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
     return Scaffold(
       backgroundColor: const Color(
         0xFFF5F5F5,
-      ), // Slightly off-white for professional look
+      ),
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: getTeachers,
@@ -99,11 +100,11 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                 title: 'Bonjour Administrateur',
                 title1: matieres.length.toString(),
                 title2: teachers.length.toString(),
-                title3: '45%',
+                title3: students.length.toString(),
                 subtitle: 'Supervision du système',
                 subtitle1: 'Matières',
                 subtitle2: 'Enseignants',
-                subtitle3: 'Progression',
+                subtitle3: 'Elèves',
               ),
               const SizedBox(height: 20),
               Padding(
@@ -217,7 +218,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                         letterSpacing: 1.0,
                       ),
                     ),
-                    if (teachers.length > 5)
+                    if (teachers.isNotEmpty)
                       TextButton(
                         onPressed: () async {
                           await Navigator.push(
@@ -347,7 +348,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                               letterSpacing: 1.0,
                             ),
                           ),
-                          if (matieres.length > 1)
+                          if (matieres.isNotEmpty)
                             TextButton(
                               onPressed: () async {
                                 await Navigator.push(

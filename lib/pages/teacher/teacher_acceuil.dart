@@ -20,6 +20,7 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
   final api = ApiService();
   List<dynamic> matieres = [];
   List<dynamic> cours = [];
+  List<dynamic> quiz = [];
   Map<String, dynamic>? profileData;
   bool isLoading = true;
 
@@ -56,12 +57,14 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
         getMatieresByUser(),
         api.read("/me"),
         api.read("/professeur/cours"),
+        api.read("/professeur/quiz"),
       ]);
 
       setState(() {
         matieres = results[0] as List<dynamic>;
         profileData = (results[1] as dynamic)?.data;
         cours = (results[2] as dynamic)?.data ?? [];
+        quiz = (results[3] as dynamic)?.data ?? [];
         isLoading = false;
       });
     } catch (e) {
@@ -101,70 +104,89 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: IntrinsicHeight(
-          child: Row(
-            children: [
-              Container(width: 6, color: color),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        matiere['nom'] ?? 'Sans nom',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF2D3142),
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        matiere['description'] ??
-                            'Pas de description available',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[600],
-                          height: 1.4,
-                        ),
-                        maxLines: 4,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: color.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Text(
-                          matiere['classe'] ?? 'Classe non définie',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                            color: color,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () async {
+            await Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => TeachCours(
+                  filterSubjectId: matiere['id'],
+                  filterSubjectName: matiere['nom'],
+                ),
+              ),
+            );
+            // Refresh data when returning, in case a course was added/deleted
+            _refreshData();
+          },
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(16),
+            child: IntrinsicHeight(
+              child: Row(
+                children: [
+                  Container(width: 6, color: color),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            matiere['nom'] ?? 'Sans nom',
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF2D3142),
+                            ),
                           ),
-                        ),
+                          const SizedBox(height: 6),
+                          Text(
+                            matiere['description'] ??
+                                'Pas de description available',
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: Colors.grey[600],
+                              height: 1.4,
+                            ),
+                            maxLines: 4,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: color.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              matiere['classe'] ?? 'Classe non définie',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: color,
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 12.0),
+                    child: Icon(
+                      Icons.arrow_forward_ios,
+                      size: 16,
+                      color: Colors.grey[400],
+                    ),
+                  ),
+                ],
               ),
-              Padding(
-                padding: const EdgeInsets.only(right: 12.0),
-                child: Icon(
-                  Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Colors.grey[400],
-                ),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -189,11 +211,11 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
                 title: 'Bonjour Mr/Mme ${profileData?['name'] ?? 'Enseignant'}',
                 title1: matieres.length.toString(),
                 title2: cours.length.toString(),
-                title3: '---',
+                title3: quiz.length.toString(),
                 subtitle: 'Votre espace enseignant',
                 subtitle1: 'Mes Matières',
                 subtitle2: 'Mes Cours',
-                subtitle3: 'Stats',
+                subtitle3: 'Mes Quiz',
               ),
               const SizedBox(height: 20),
               Padding(

@@ -10,8 +10,14 @@ import 'package:path/path.dart' as p;
 class AddCoursePage extends StatefulWidget {
   final Map<String, dynamic>? course;
   final List<dynamic> subjects;
+  final int? initialSubjectId;
 
-  const AddCoursePage({super.key, this.course, required this.subjects});
+  const AddCoursePage({
+    super.key,
+    this.course,
+    required this.subjects,
+    this.initialSubjectId,
+  });
 
   @override
   State<AddCoursePage> createState() => _AddCoursePageState();
@@ -37,8 +43,13 @@ class _AddCoursePageState extends State<AddCoursePage> {
       // On ne peut pas facilement restaurer un fichier local depuis un lien URL
       _linkController.text = widget.course!['fichier'] ?? '';
       _selectedSubjectId = widget.course!['matiere_id'];
-    } else if (widget.subjects.isNotEmpty) {
-      _selectedSubjectId = widget.subjects[0]['id'];
+    } else {
+      // Use initialSubjectId if provided, otherwise default to first subject
+      if (widget.initialSubjectId != null) {
+        _selectedSubjectId = widget.initialSubjectId;
+      } else if (widget.subjects.isNotEmpty) {
+        _selectedSubjectId = widget.subjects[0]['id'];
+      }
     }
   }
 

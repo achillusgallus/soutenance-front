@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:togoschool/pages/student_connexion_page.dart';
+import 'package:togoschool/pages/teacher_connexion_page.dart';
 
 
 class RoleToggleStudent extends StatelessWidget {
@@ -19,7 +20,7 @@ class RoleToggleStudent extends StatelessWidget {
             onPressed: () {
               Navigator.push(
               context, 
-               MaterialPageRoute(builder: (context) => StudentConnexionPage())
+               MaterialPageRoute(builder: (context) => TeacherConnexionPage())
               );
             },
             style: ElevatedButton.styleFrom(
@@ -31,7 +32,7 @@ class RoleToggleStudent extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
-                'ELEVE',
+                'PROFESSEUR',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 20,
@@ -40,18 +41,25 @@ class RoleToggleStudent extends StatelessWidget {
               ),
             ),
           ),
-          Container(
-            margin: EdgeInsets.only(left: 10),
-            padding: EdgeInsets.all(1),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            child: Text(
-              'professeur',
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-                color: const Color.fromARGB(255, 3, 3, 3),
+          TextButton(
+            onPressed: () {
+              Navigator.push(
+              context, 
+               MaterialPageRoute(builder: (context) => StudentConnexionPage())
+              );
+            },
+            child: Container(
+              padding: EdgeInsets.all(1),
+              decoration: BoxDecoration(
+                border: null,
+              ),
+              child: Text(
+                'ELEVE',
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 18,
+                  color: const Color.fromARGB(255, 28, 28, 28),
+                ),
               ),
             ),
           ),

@@ -1,25 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/dash_header.dart';
-import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/pages/forum/forum_chat_page.dart';
 import 'package:togoschool/service/api_service.dart';
 
-class ForumTopicListPage extends StatefulWidget {
+class TeacherTopicListPage extends StatefulWidget {
   final int forumId;
   final String forumTitle;
 
-  const ForumTopicListPage({
+  const TeacherTopicListPage({
     super.key,
     required this.forumId,
     required this.forumTitle,
   });
 
   @override
-  State<ForumTopicListPage> createState() => _ForumTopicListPageState();
+  State<TeacherTopicListPage> createState() => _TeacherTopicListPageState();
 }
 
-class _ForumTopicListPageState extends State<ForumTopicListPage> {
+class _TeacherTopicListPageState extends State<TeacherTopicListPage> {
   final api = ApiService();
   bool isLoading = true;
   List<dynamic> topics = [];
@@ -33,6 +31,7 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
   Future<void> _fetchTopics() async {
     setState(() => isLoading = true);
     try {
+      // Reusing the general endpoint to get topics for this forum
       final res = await api.read("/forums/${widget.forumId}/sujets");
       if (mounted) {
         setState(() {
@@ -43,83 +42,11 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
     } catch (e) {
       if (mounted) {
         setState(() => isLoading = false);
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Erreur: $e")));
       }
     }
-  }
-
-  void _showAddTopicDialog() {
-    final titleController = TextEditingController();
-    final subjectController = TextEditingController();
-    bool isSaving = false;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => StatefulBuilder(
-        builder: (ctx, setInternalState) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
-          ),
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom,
-            left: 24,
-            right: 24,
-            top: 24,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                "Nouveau sujet de discussion",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 24),
-              CustomTextFormField(
-                label: "Titre du sujet",
-                hint: "Quel est votre problème ?",
-                controller: titleController,
-              ),
-              const SizedBox(height: 16),
-              const SizedBox(height: 16),
-              CustomTextFormField(
-                label: "Message / Description",
-                hint: "Décrivez votre sujet...",
-                controller: subjectController,
-                maxLines: 3,
-              ),
-              const SizedBox(height: 32),
-              PrimaryButton(
-                text: "CRÉER LA DISCUSSION",
-                isLoading: isSaving,
-                onPressed: () async {
-                  if (titleController.text.isEmpty) return;
-                  setInternalState(() => isSaving = true);
-                  try {
-                    await api.create("/forums/sujets", {
-                      "forum_id": widget.forumId,
-                      "titre": titleController.text.trim(),
-                      "contenu": subjectController.text.trim(),
-                    });
-                    Navigator.pop(ctx);
-                    _fetchTopics();
-                  } catch (e) {
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text("Erreur: $e")));
-                  } finally {
-                    setInternalState(() => isSaving = false);
-                  }
-                },
-              ),
-              const SizedBox(height: 32),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   @override
@@ -130,10 +57,10 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
         child: Column(
           children: [
             DashHeader(
-              color1: const Color(0xFFF59E0B),
-              color2: const Color(0xFFD97706),
+              color1: const Color(0xFF6366F1),
+              color2: const Color(0xFF4F46E5),
               title: widget.forumTitle,
-              subtitle: 'Discussions en cours',
+              subtitle: 'Questions des élèves',
               title1: topics.length.toString(),
               subtitle1: 'Sujets',
               title2: "",
@@ -162,11 +89,6 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
             ),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddTopicDialog,
-        backgroundColor: Colors.orange,
-        child: const Icon(Icons.add_comment),
       ),
     );
   }
@@ -201,13 +123,38 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
                 const Spacer(),
                 const Icon(Icons.access_time, size: 14, color: Colors.grey),
                 const SizedBox(width: 4),
+                // Handling potential missing created_at_human if sticking to raw student endpoint
                 Text(
-                  topic['created_at_human'] ?? '',
+                  topic['created_at_human'] ?? 'Récemment',
                   style: const TextStyle(fontSize: 12),
                 ),
               ],
             ),
+            if (topic['contenu'] != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                topic['contenu'],
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
           ],
+        ),
+        trailing: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          decoration: BoxDecoration(
+            color: Colors.blueAccent.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Text(
+            "Répondre",
+            style: TextStyle(
+              color: Colors.blueAccent,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
         onTap: () {
           Navigator.push(
@@ -216,6 +163,7 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
               builder: (context) => ForumChatPage(
                 topicId: topic['id'],
                 topicTitle: topic['titre'],
+                isTeacher: true, // IMPORTANT: Enable teacher mode
               ),
             ),
           );
@@ -230,19 +178,14 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(
-            Icons.speaker_notes_off_outlined,
+            Icons.question_answer_outlined,
             size: 64,
             color: Colors.grey[300],
           ),
           const SizedBox(height: 16),
           const Text(
-            "Aucune discussion dans ce forum",
+            "Aucune question pour le moment",
             style: TextStyle(color: Colors.grey),
-          ),
-          const SizedBox(height: 8),
-          TextButton(
-            onPressed: _showAddTopicDialog,
-            child: const Text("Démarrer la première discussion"),
           ),
         ],
       ),

@@ -2,6 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:open_filex/open_filex.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:dio/dio.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter/foundation.dart';
 
 class StudentCours extends StatefulWidget {
   final int? matiereId; // Optional: filter by specific subject
@@ -403,11 +408,141 @@ class _StudentCoursState extends State<StudentCours> {
     );
   }
 
+  Future<void> _downloadAndOpenFile(String fileUrl, String fileName) async {
+    // Construction de l'URL complète
+    String fullUrl = fileUrl;
+    if (!fileUrl.startsWith('http')) {
+      // Ajustez l'URL de base selon votre configuration backend
+      fullUrl = "http://10.0.2.2:8000/storage/$fileUrl";
+    }
+
+    try {
+      if (kIsWeb) {
+        // Sur le Web, on ouvre simplement l'URL dans un nouvel onglet
+        final Uri uri = Uri.parse(fullUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          throw "Impossible d'ouvrir l'URL $fullUrl";
+        }
+        return;
+      }
+
+      // Afficher un indicateur de chargement (Mobile uniquement)
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 15),
+              Expanded(
+                child: Text(
+                  "Téléchargement de $fileName...",
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      // Obtenir le répertoire temporaire pour stocker le fichier
+      final tempDir = await getTemporaryDirectory();
+      final filePath = "${tempDir.path}/$fileName";
+
+      // Télécharger le fichier
+      await Dio().download(
+        fullUrl,
+        filePath,
+        options: Options(
+          receiveTimeout: const Duration(seconds: 30),
+          sendTimeout: const Duration(seconds: 30),
+          followRedirects: true,
+          headers: {
+            'User-Agent':
+                'Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.99 Mobile Safari/537.36',
+          },
+        ),
+      );
+
+      // Ouvrir le fichier
+      final result = await OpenFilex.open(filePath);
+
+      if (result.type != ResultType.done) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Erreur lors de l'ouverture : ${result.message}"),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print("DEBUG - Download error: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Erreur de téléchargement : $e")),
+        );
+      }
+    }
+  }
+
+  Future<void> _launchFile(String fileUrl) async {
+    // Construct the full URL. Assuming the file path is relative to the base URL's storage.
+    // Adjust the base URL as per your backend configuration.
+    // If fileUrl is already absolute, use it directly.
+    String fullUrl = fileUrl;
+    if (!fileUrl.startsWith('http')) {
+      // Example: http://10.0.2.2:8000/storage/cours_files/filename.pdf
+      // Adjust the path prefix based on how your backend serves files
+      fullUrl = "http://10.0.2.2:8000/storage/$fileUrl";
+    }
+
+    print("DEBUG: Attempting to launch URL: $fullUrl");
+
+    final Uri uri = Uri.parse(fullUrl);
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        print("DEBUG: canLaunchUrl returned true");
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        print("DEBUG: canLaunchUrl returned false for $fullUrl");
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text("Impossible d'ouvrir le fichier : $fullUrl"),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print("DEBUG: Exception launching URL: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Erreur lors de l'ouverture : $e")),
+        );
+      }
+    }
+  }
+
   Widget _buildFileAction(dynamic course) {
+    // Check if file exists in the course object
+    if (course['fichier'] == null) return const SizedBox.shrink();
+
     final fileName = course['fichier']?.split('/').last ?? 'Fichier';
     final fileType = course['fichier_type'] ?? '';
     final isVideo = fileType.contains('video');
     final isPdf = fileType.contains('pdf');
+    final String fileUrl = course['fichier'];
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -450,14 +585,7 @@ class _StudentCoursState extends State<StudentCours> {
                 ),
               ),
               IconButton(
-                onPressed: () {
-                  // TODO: Implement file viewing/download
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text("Fonctionnalité de visualisation à venir"),
-                    ),
-                  );
-                },
+                onPressed: () => _downloadAndOpenFile(fileUrl, fileName),
                 icon: Icon(
                   isVideo ? Icons.play_arrow : Icons.visibility,
                   color: Colors.blueAccent,

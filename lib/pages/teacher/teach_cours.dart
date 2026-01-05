@@ -4,7 +4,10 @@ import 'package:togoschool/pages/teacher/add_course_page.dart';
 import 'package:togoschool/service/api_service.dart';
 
 class TeachCours extends StatefulWidget {
-  const TeachCours({super.key});
+  final int? filterSubjectId;
+  final String? filterSubjectName;
+
+  const TeachCours({super.key, this.filterSubjectId, this.filterSubjectName});
 
   @override
   State<TeachCours> createState() => _TeachCoursState();
@@ -87,8 +90,12 @@ class _TeachCoursState extends State<TeachCours> {
       body: Column(
         children: [
           FormHeader(
-            title: "Gestion des Cours",
-            onBack: () => Navigator.pop(context),
+            title: widget.filterSubjectName != null
+                ? "Cours - ${widget.filterSubjectName}"
+                : "Gestion des Cours",
+            onBack: Navigator.canPop(context)
+                ? () => Navigator.pop(context)
+                : null,
           ),
           Expanded(
             child: RefreshIndicator(
@@ -105,7 +112,10 @@ class _TeachCoursState extends State<TeachCours> {
           final result = await Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => AddCoursePage(subjects: subjects),
+              builder: (context) => AddCoursePage(
+                subjects: subjects,
+                initialSubjectId: widget.filterSubjectId,
+              ),
             ),
           );
           if (result == true) _loadData();
@@ -118,16 +128,23 @@ class _TeachCoursState extends State<TeachCours> {
   }
 
   Widget _buildGroupedCourseList() {
-    if (subjects.isEmpty) {
+    // Filter subjects if a filter ID is provided
+    final displaySubjects = widget.filterSubjectId != null
+        ? subjects.where((s) => s['id'] == widget.filterSubjectId).toList()
+        : subjects;
+
+    if (displaySubjects.isEmpty) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(Icons.school_outlined, size: 80, color: Colors.grey[300]),
             const SizedBox(height: 16),
-            const Text(
-              "Aucune matière affectée",
-              style: TextStyle(color: Colors.grey),
+            Text(
+              widget.filterSubjectId != null
+                  ? "Cette matière n'a pas été trouvée"
+                  : "Aucune matière affectée",
+              style: const TextStyle(color: Colors.grey),
             ),
           ],
         ),
@@ -136,9 +153,9 @@ class _TeachCoursState extends State<TeachCours> {
 
     return ListView.builder(
       padding: const EdgeInsets.all(20),
-      itemCount: subjects.length,
+      itemCount: displaySubjects.length,
       itemBuilder: (context, index) {
-        final subject = subjects[index];
+        final subject = displaySubjects[index];
         final subjectCourses = courses.where((c) {
           // Verify both int and string IDs just in case
           return c['matiere_id'].toString() == subject['id'].toString();

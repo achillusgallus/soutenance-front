@@ -16,6 +16,7 @@ class _TeacherQuizState extends State<TeacherQuiz> {
   bool isLoading = true;
   List<dynamic> quizzes = [];
   List<dynamic> subjects = [];
+  final Map<int, int> _questionCounts = {};
 
   @override
   void initState() {
@@ -37,6 +38,9 @@ class _TeacherQuizState extends State<TeacherQuiz> {
           quizzes = results[1]?.data ?? [];
           isLoading = false;
         });
+
+        // Fetch question counts after loading quizzes
+        _fetchQuestionCounts();
       }
     } catch (e) {
       if (mounted) {
@@ -44,6 +48,23 @@ class _TeacherQuizState extends State<TeacherQuiz> {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("Erreur de chargement: $e")));
+      }
+    }
+  }
+
+  Future<void> _fetchQuestionCounts() async {
+    for (var quiz in quizzes) {
+      try {
+        final quizId = quiz['id'];
+        final response = await api.read("/professeur/quiz/$quizId/questions");
+        if (response != null && mounted) {
+          final List<dynamic> questions = response.data ?? [];
+          setState(() {
+            _questionCounts[quizId] = questions.length;
+          });
+        }
+      } catch (e) {
+        print("Erreur fetching questions for quiz ${quiz['id']}: $e");
       }
     }
   }
@@ -87,7 +108,12 @@ class _TeacherQuizState extends State<TeacherQuiz> {
       backgroundColor: const Color(0xFFF5F5F5),
       body: Column(
         children: [
-          FormHeader(title: "Mes Quiz", onBack: () => Navigator.pop(context)),
+          FormHeader(
+            title: "Mes Quiz",
+            onBack: Navigator.canPop(context)
+                ? () => Navigator.pop(context)
+                : null,
+          ),
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadData,
@@ -133,6 +159,9 @@ class _TeacherQuizState extends State<TeacherQuiz> {
   }
 
   Widget _buildQuizCard(dynamic quiz) {
+    final int quizId = quiz['id'];
+    final int? questionCount = _questionCounts[quizId];
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -204,7 +233,9 @@ class _TeacherQuizState extends State<TeacherQuiz> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "${quiz['questions_count'] ?? (quiz['questions'] is List ? (quiz['questions'] as List).length : 0)} questions",
+                questionCount != null
+                    ? "$questionCount questions"
+                    : "Chargement...",
                 style: TextStyle(color: Colors.grey[600]),
               ),
               TextButton.icon(

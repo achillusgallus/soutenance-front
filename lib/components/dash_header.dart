@@ -11,6 +11,7 @@ class DashHeader extends StatelessWidget {
   final String subtitle1;
   final String subtitle2;
   final String subtitle3;
+  final VoidCallback? onBack;
 
   const DashHeader({
     super.key,
@@ -24,6 +25,7 @@ class DashHeader extends StatelessWidget {
     required this.subtitle1,
     required this.subtitle2,
     required this.subtitle3,
+    this.onBack,
   });
 
   Widget _buildAnimatedText(String text) {
@@ -65,6 +67,14 @@ class DashHeader extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.start,
         children: [
+          if (onBack != null)
+            Align(
+              alignment: Alignment.topLeft,
+              child: IconButton(
+                icon: const Icon(Icons.arrow_back, color: Colors.white),
+                onPressed: onBack,
+              ),
+            ),
           Column(
             children: [
               Text(

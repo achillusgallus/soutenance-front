@@ -106,7 +106,7 @@ class _ForumListPageState extends State<ForumListPage> {
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
         ),
         subtitle: Text(
-          "Matière: ${forum['matiere_nom'] ?? 'N/A'}",
+          "Matière: ${forum['matiere_nom'] ?? forum['matiere']?['nom'] ?? '---'}",
           style: TextStyle(color: Colors.grey[600]),
         ),
         trailing: const Icon(

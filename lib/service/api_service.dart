@@ -1,15 +1,41 @@
+import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:togoschool/service/token_storage.dart';
+import 'package:flutter/foundation.dart';
 
 class ApiService {
   late Dio dio;
 
   ApiService() {
+
+    String baseUrl;
+
+    // Déterminez l'URL de base en fonction de l'environnement
+    if (kIsWeb) {
+      // Pour le navigateur web (Flutter web), utilisez localhost
+      baseUrl = "http://localhost:8000/api";
+    } else if (Platform.isAndroid) {
+      // Pour Android (émulateur), utilisez l'IP spéciale
+      baseUrl = "http://10.0.2.2:8000/api";
+      
+      // Si vous voulez supporter un appareil Android physique en développement, 
+      // vous devriez utiliser votre IP locale réelle ici (par exemple 192.168.1.XX)
+      // baseUrl = "192.168.1.xx"; 
+    
+    } else if (Platform.isIOS) {
+      // Pour iOS (simulateur), utilisez localhost
+      baseUrl = "http://localhost:8000/api";
+    } else {
+      // Cas par défaut (Desktop, etc.)
+      baseUrl = "http://localhost:8000/api";
+    }
+
+
     dio = Dio(
       BaseOptions(
-        baseUrl: "http://10.0.2.2:8000/api",
+        baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
+        receiveTimeout: const Duration(seconds: 60),
         headers: {
           "Content-Type": "application/json",
           "Accept": "application/json",

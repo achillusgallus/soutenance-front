@@ -3,13 +3,10 @@ import 'package:flutter/material.dart';
 
 class FormHeader extends StatelessWidget {
   final String title;
-  final VoidCallback onBack;
+  final VoidCallback? onBack;
 
-  const FormHeader({
-    Key? key,
-    required this.title,
-    required this.onBack,
-  }) : super(key: key);
+  const FormHeader({Key? key, required this.title, this.onBack})
+    : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -26,21 +23,23 @@ class FormHeader extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: [        // Bouton retour
-            IconButton(
-              icon: Icon(Icons.arrow_back, color: Colors.white),
-              onPressed: onBack,
-            ),
+            children: [
+              // Bouton retour
+              if (onBack != null)
+                IconButton(
+                  icon: Icon(Icons.arrow_back, color: Colors.white),
+                  onPressed: onBack!,
+                ),
 
-            // Titre dynamique
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+              // Titre dynamique
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-            ),
             ],
           ),
         ],

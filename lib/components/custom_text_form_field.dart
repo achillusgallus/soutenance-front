@@ -20,13 +20,17 @@ class CustomTextFormField extends StatelessWidget {
     this.prefixIcon,
     this.keyboardType,
     this.suffixIcon,
+    this.maxLines = 1,
   });
+
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
     return TextFormField(
       controller: controller,
       obscureText: obscureText,
+      maxLines: maxLines,
       keyboardType: keyboardType,
       decoration: InputDecoration(
         labelText: label,
