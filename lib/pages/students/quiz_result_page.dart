@@ -19,7 +19,9 @@ class QuizResultPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final percentage = (correctAnswers / totalQuestions * 100).toInt();
+    final percentage = totalQuestions == 0
+        ? 0
+        : (correctAnswers / totalQuestions * 100).toInt();
     final isPassed = percentage >= 50;
 
     return Scaffold(
@@ -304,7 +306,9 @@ class QuizResultPage extends StatelessWidget {
             Expanded(
               child: OutlinedButton(
                 onPressed: () {
-                  Navigator.pop(context); // Retour à la page du quiz
+                  Navigator.pop(
+                    context,
+                  ); // Retour à la page du quiz (ou liste si pushReplacement)
                 },
                 style: OutlinedButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
@@ -327,8 +331,9 @@ class QuizResultPage extends StatelessWidget {
             Expanded(
               child: ElevatedButton(
                 onPressed: () {
-                  Navigator.pop(context);
-                  Navigator.pop(context); // Retour à la liste des quiz
+                  Navigator.pop(
+                    context,
+                  ); // Un seul pop suffit si pushReplacement a été utilisé
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green,

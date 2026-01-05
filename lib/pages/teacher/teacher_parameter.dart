@@ -97,7 +97,8 @@ class _TeacherParameterState extends State<TeacherParameter> {
         data["password"] = _passwordController.text.trim();
       }
 
-      final response = await api.update("/me", data);
+      data["_method"] = "PUT";
+      final response = await api.create("/me", data);
       if (response?.statusCode == 200) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -108,7 +109,12 @@ class _TeacherParameterState extends State<TeacherParameter> {
           );
           setState(() {
             isEditing = false;
-            profileData = response?.data;
+            // The backend returns {'user': {...}} on update but just {...} on read
+            if (response?.data is Map && response?.data.containsKey('user')) {
+              profileData = response?.data['user'];
+            } else {
+              profileData = response?.data;
+            }
           });
         }
       }

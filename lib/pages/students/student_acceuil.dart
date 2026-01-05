@@ -20,6 +20,8 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
   String studentName = "Étudiant";
   String studentClasse = "";
   List<dynamic> matieres = [];
+  int quizCount = 0;
+  int forumCount = 0;
 
   @override
   void initState() {
@@ -40,52 +42,39 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
           studentName = userData['name'] ?? "Étudiant";
           studentClasse = userData['classe'] ?? "";
         });
-        print("DEBUG - Student Name: $studentName");
-        print("DEBUG - Student Classe: '$studentClasse'");
       }
 
-      // 2. Récupérer les matières filtrées par le backend selon la classe de l'élève
-      final matieresResponse = await api.read("/student/matieres");
-      if (matieresResponse != null && matieresResponse.data != null) {
-        // Le backend retourne soit { data: [...] } (paginé) soit directement [...]
-        final dynamic responseData = matieresResponse.data;
-        List<dynamic> fetchedMatieres = [];
+      // 2. Récupérer les données en parallèle
+      final results = await Future.wait([
+        api.read("/student/matieres"),
+        api.read("/quiz"),
+        api.read("/forums"),
+      ]);
 
-        if (responseData is Map && responseData.containsKey('data')) {
-          // Réponse paginée
-          fetchedMatieres = responseData['data'] ?? [];
-        } else if (responseData is List) {
-          // Réponse directe
-          fetchedMatieres = responseData;
-        }
-
-        print(
-          "DEBUG - Total matieres fetched from backend: ${fetchedMatieres.length}",
-        );
-
+      if (mounted) {
         setState(() {
-          matieres = fetchedMatieres;
-          isLoading = false;
-        });
+          // Matières
+          final matieresRes = results[0]?.data;
+          if (matieresRes is Map && matieresRes.containsKey('data')) {
+            matieres = matieresRes['data'] ?? [];
+          } else if (matieresRes is List) {
+            matieres = matieresRes;
+          }
 
-        // Afficher les matières reçues pour vérification
-        for (var m in matieres) {
-          print("DEBUG - Matiere reçue: ${m['nom']}, Classe: ${m['classe']}");
-        }
-      } else {
-        print("DEBUG - No matieres response received");
-        setState(() {
+          // Quiz
+          final quizRes = results[1]?.data;
+          quizCount = quizRes is List ? quizRes.length : 0;
+
+          // Forums
+          final forumsRes = results[2]?.data;
+          forumCount = forumsRes is List ? forumsRes.length : 0;
+
           isLoading = false;
-          matieres = [];
         });
       }
     } catch (e) {
-      if (mounted) {
-        setState(() {
-          isLoading = false;
-        });
-      }
-      print("Erreur lors de la récupération des données: $e");
+      if (mounted) setState(() => isLoading = false);
+      debugPrint("Erreur Acceuil: $e");
     }
   }
 
@@ -107,9 +96,9 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
               subtitle: 'Prêt à apprendre aujourd\'hui ?',
               title1: matieres.length.toString(),
               subtitle1: 'Matières',
-              title2: '0',
+              title2: quizCount.toString(),
               subtitle2: 'Quiz',
-              title3: '0',
+              title3: forumCount.toString(),
               subtitle3: 'Forums',
             ),
             const SizedBox(height: 24),

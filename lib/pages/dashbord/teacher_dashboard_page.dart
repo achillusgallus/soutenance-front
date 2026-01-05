@@ -40,7 +40,7 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
       const TeachCours(),
       const TeacherQuiz(),
       const TeacherForum(),
-      const TeacherEleves(),
+      TeacherEleves(onBack: () => _onTabChanged(0)),
     ];
   }
 

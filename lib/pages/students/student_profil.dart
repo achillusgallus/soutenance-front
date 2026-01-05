@@ -97,7 +97,8 @@ class _StudentProfilState extends State<StudentProfil> {
         data["password"] = _passwordController.text.trim();
       }
 
-      final response = await api.update("/me", data);
+      data["_method"] = "PUT";
+      final response = await api.create("/me", data);
       if (response?.statusCode == 200) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -108,7 +109,12 @@ class _StudentProfilState extends State<StudentProfil> {
           );
           setState(() {
             isEditing = false;
-            profileData = response?.data;
+            // The backend returns {'user': {...}} on update but just {...} on read
+            if (response?.data is Map && response?.data.containsKey('user')) {
+              profileData = response?.data['user'];
+            } else {
+              profileData = response?.data;
+            }
           });
         }
       }
@@ -175,11 +181,15 @@ class _StudentProfilState extends State<StudentProfil> {
         const CircleAvatar(
           radius: 50,
           backgroundColor: Color(0xFFE8F5E9),
-          child: Icon(FontAwesomeIcons.userTie, size: 40, color: Colors.green),
+          child: Icon(
+            FontAwesomeIcons.userGraduate,
+            size: 40,
+            color: Colors.green,
+          ),
         ),
         const SizedBox(height: 16),
         Text(
-          '${profileData?['name'] ?? 'Professeur'} ${profileData?['surname'] ?? ''}',
+          '${profileData?['name'] ?? 'Élève'} ${profileData?['surname'] ?? ''}',
           style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
         ),
         Text(
