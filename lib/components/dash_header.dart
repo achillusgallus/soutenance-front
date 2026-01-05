@@ -34,6 +34,7 @@ class DashHeader extends StatelessWidget {
       return TweenAnimationBuilder<int>(
         tween: IntTween(begin: 0, end: value),
         duration: const Duration(seconds: 2),
+        curve: Curves.easeOutExpo,
         builder: (context, value, child) {
           return Text(
             value.toString(),
@@ -41,6 +42,7 @@ class DashHeader extends StatelessWidget {
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
+              fontSize: 20,
             ),
           );
         },
@@ -52,6 +54,7 @@ class DashHeader extends StatelessWidget {
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.bold,
+          fontSize: 20,
         ),
       );
     }
@@ -60,95 +63,153 @@ class DashHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       decoration: BoxDecoration(
-        gradient: LinearGradient(colors: [color1, color2]),
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [color1, color2],
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color1.withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
       ),
-      padding: const EdgeInsets.all(25),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.start,
+      child: Stack(
         children: [
-          if (onBack != null)
-            Align(
-              alignment: Alignment.topLeft,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.white),
-                onPressed: onBack,
+          // Decorative background elements
+          Positioned(
+            top: -50,
+            right: -50,
+            child: Container(
+              width: 150,
+              height: 150,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.1),
               ),
             ),
-          Column(
-            children: [
-              Text(
-                title,
-                textAlign: TextAlign.right,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 25,
-                ),
-              ),
-              Text(
-                subtitle,
-                textAlign: TextAlign.left,
-                style: const TextStyle(color: Colors.white, fontSize: 15),
-              ),
-            ],
           ),
-          SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.white.withOpacity(0.3),
-                ),
-                child: Column(
+          Positioned(
+            bottom: -30,
+            left: -30,
+            child: Container(
+              width: 100,
+              height: 100,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.white.withOpacity(0.05),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(25, 40, 25, 35),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (onBack != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back_ios,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      onPressed: onBack,
+                      constraints: const BoxConstraints(),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildAnimatedText(title1),
-                    Text(
-                      subtitle1,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 26,
+                              letterSpacing: -0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            subtitle,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.8),
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.notifications_none,
+                        color: Colors.white,
+                      ),
                     ),
                   ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.white.withOpacity(0.3),
-                ),
-                child: Column(
+                const SizedBox(height: 35),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildAnimatedText(title2),
-                    Text(
-                      subtitle2,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white),
-                    ),
+                    _buildMetricItem(title1, subtitle1),
+                    _buildMetricDivider(),
+                    _buildMetricItem(title2, subtitle2),
+                    _buildMetricDivider(),
+                    _buildMetricItem(title3, subtitle3),
                   ],
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(10),
-                  color: Colors.white.withOpacity(0.3),
-                ),
-                child: Column(
-                  children: [
-                    _buildAnimatedText(title3),
-                    Text(
-                      subtitle3,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetricDivider() {
+    return Container(
+      height: 30,
+      width: 1,
+      color: Colors.white.withOpacity(0.2),
+    );
+  }
+
+  Widget _buildMetricItem(String value, String label) {
+    return Expanded(
+      child: Column(
+        children: [
+          _buildAnimatedText(value),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
           ),
         ],
       ),

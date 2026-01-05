@@ -85,187 +85,228 @@ class _AddTeacherPageState extends State<AddTeacherPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: Column(
-          children: [
-            FormHeader(
-              title: isEditMode
-                  ? 'Modifier le professeur'
-                  : 'Nouveau Professeur',
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 32,
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: Column(
+        children: [
+          FormHeader(
+            title: isEditMode ? 'MODIFIER LE PROFESSEUR' : 'NOUVEAU PROFESSEUR',
+            onBack: () => Navigator.pop(context),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6366F1).withOpacity(0.08),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1).withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.person_add_alt_1_rounded,
+                              color: Color(0xFF6366F1),
+                              size: 24,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isEditMode
+                                      ? "Édition du profil"
+                                      : "Informations du Compte",
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Configurez les accès pour ce professeur.",
+                                  style: TextStyle(
+                                    color: const Color(0xFF64748B),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isEditMode
-                              ? "Édition de l'enseignant"
-                              : "Informations du Compte",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
+                      const SizedBox(height: 32),
+                      CustomTextFormField(
+                        label: 'NOM',
+                        hint: 'Nom de famille',
+                        prefixIcon: Icons.person_outline_rounded,
+                        controller: _nameController,
+                        validator: (value) => (value == null || value.isEmpty)
+                            ? "Le nom est requis"
+                            : null,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextFormField(
+                        label: 'PRÉNOM',
+                        hint: 'Prénom du professeur',
+                        prefixIcon: Icons.person_outline_rounded,
+                        controller: _surnameController,
+                        validator: (value) => (value == null || value.isEmpty)
+                            ? "Le prénom est requis"
+                            : null,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextFormField(
+                        label: 'EMAIL PROFESSIONNEL',
+                        hint: 'prof@togoschool.com',
+                        prefixIcon: Icons.email_outlined,
+                        keyboardType: TextInputType.emailAddress,
+                        controller: _emailController,
+                        validator: (value) => (value == null || value.isEmpty)
+                            ? "L'email est requis"
+                            : null,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextFormField(
+                        label: 'MOT DE PASSE',
+                        hint: isEditMode
+                            ? 'Laisser vide pour ne pas changer'
+                            : 'Entrer un mot de passe',
+                        prefixIcon: Icons.lock_outline_rounded,
+                        obscureText: _obscurePassword,
+                        controller: _passwordController,
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _obscurePassword
+                                ? Icons.visibility_off_rounded
+                                : Icons.visibility_rounded,
+                            color: const Color(0xFF94A3B8),
+                            size: 20,
+                          ),
+                          onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          "Configurez les accès pour ce membre du corps enseignant.",
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        CustomTextFormField(
-                          label: 'Nom',
-                          hint: 'Nom de famille',
-                          prefixIcon: Icons.person_outline,
-                          validator: (value) => (value == null || value.isEmpty)
-                              ? "Le nom est requis"
-                              : null,
-                          controller: _nameController,
-                        ),
-                        const SizedBox(height: 20),
-                        CustomTextFormField(
-                          label: 'Prénom',
-                          hint: 'Prénom du professeur',
-                          prefixIcon: Icons.person_outline,
-                          validator: (value) => (value == null || value.isEmpty)
-                              ? "Le prénom est requis"
-                              : null,
-                          controller: _surnameController,
-                        ),
-                        const SizedBox(height: 20),
-                        CustomTextFormField(
-                          label: 'Email professionnel',
-                          hint: 'prof@ecole.com',
-                          prefixIcon: Icons.email_outlined,
-                          keyboardType: TextInputType.emailAddress,
-                          validator: (value) => (value == null || value.isEmpty)
-                              ? "L'email est requis"
-                              : null,
-                          controller: _emailController,
-                        ),
-                        const SizedBox(height: 20),
-                        CustomTextFormField(
-                          label: 'Mot de passe',
-                          hint: isEditMode
-                              ? 'Laisser vide pour ne pas changer'
-                              : 'Entrer un mot de passe',
-                          prefixIcon: Icons.lock_outline,
-                          obscureText: _obscurePassword,
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _obscurePassword
-                                  ? Icons.visibility_off
-                                  : Icons.visibility,
-                            ),
-                            onPressed: () => setState(
-                              () => _obscurePassword = !_obscurePassword,
-                            ),
-                          ),
-                          validator: (value) =>
-                              (!isEditMode && (value == null || value.isEmpty))
-                              ? "Le mot de passe est requis"
-                              : null,
-                          controller: _passwordController,
-                        ),
-                        const SizedBox(height: 40),
-                        PrimaryButton(
-                          text: isEditMode
-                              ? 'ENREGISTRER'
-                              : 'CRÉER LE PROFESSEUR',
-                          isLoading: isSaving,
-                          onPressed: () async {
-                            if (_formKey.currentState!.validate()) {
-                              setState(() => isSaving = true);
+                        validator: (value) =>
+                            (!isEditMode && (value == null || value.isEmpty))
+                            ? "Le mot de passe est requis"
+                            : null,
+                      ),
+                      const SizedBox(height: 40),
+                      PrimaryButton(
+                        text: isEditMode
+                            ? 'ENREGISTRER LES MODIFICATIONS'
+                            : 'CRÉER LE COMPTE PROFESSEUR',
+                        isLoading: isSaving,
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            setState(() => isSaving = true);
 
-                              final String name = _nameController.text.trim();
-                              final String surname = _surnameController.text
-                                  .trim();
-                              final String email = _emailController.text.trim();
-                              final String password = _passwordController.text
-                                  .trim();
+                            final String name = _nameController.text.trim();
+                            final String surname = _surnameController.text
+                                .trim();
+                            final String email = _emailController.text.trim();
+                            final String password = _passwordController.text
+                                .trim();
 
-                              bool success;
-                              if (isEditMode) {
-                                success = await updateTeacher(
-                                  widget.teacher!['id'],
-                                  name,
-                                  surname,
-                                  email,
-                                  password,
-                                );
-                              } else {
-                                success = await addTeacherAPI(
-                                  name,
-                                  surname,
-                                  email,
-                                  password,
-                                );
-                              }
-
-                              if (!mounted) return;
-                              setState(() => isSaving = false);
-
-                              if (success) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      isEditMode
-                                          ? "Professeur mis à jour !"
-                                          : "Professeur créé !",
-                                    ),
-                                    backgroundColor: Colors.green,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                                Navigator.pop(context, true);
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Une erreur est survenue lors de l'enregistrement",
-                                    ),
-                                    backgroundColor: Colors.red,
-                                    behavior: SnackBarBehavior.floating,
-                                  ),
-                                );
-                              }
+                            bool success;
+                            if (isEditMode) {
+                              success = await updateTeacher(
+                                widget.teacher!['id'],
+                                name,
+                                surname,
+                                email,
+                                password,
+                              );
+                            } else {
+                              success = await addTeacherAPI(
+                                name,
+                                surname,
+                                email,
+                                password,
+                              );
                             }
-                          },
+
+                            if (!mounted) return;
+                            setState(() => isSaving = false);
+
+                            if (success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isEditMode
+                                        ? "Professeur mis à jour avec succès !"
+                                        : "Nouveau professeur créé avec succès !",
+                                  ),
+                                  backgroundColor: const Color(0xFF10B981),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              );
+                              Navigator.pop(context, true);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text(
+                                    "Une erreur est survenue lors de l'enregistrement",
+                                  ),
+                                  backgroundColor: const Color(0xFFEF4444),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                      if (isEditMode) ...[
+                        const SizedBox(height: 16),
+                        Center(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              "ANNULER",
+                              style: TextStyle(
+                                color: Color(0xFF94A3B8),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

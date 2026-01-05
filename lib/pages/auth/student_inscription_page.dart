@@ -1,77 +1,72 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:togoschool/pages/dashbord/admin_dashboard_page.dart';
-import 'package:togoschool/pages/dashbord/student_dashboard_page.dart';
-import 'package:togoschool/pages/dashbord/teacher_dashboard_page.dart';
-import 'package:togoschool/pages/auth/student_inscription_page.dart';
-import 'package:togoschool/pages/auth/forgot_password_page.dart';
+import 'package:togoschool/pages/auth/login_page.dart';
 import 'package:togoschool/service/api_service.dart';
-import 'package:togoschool/service/token_storage.dart';
 
-class LoginPage extends StatefulWidget {
-  const LoginPage({super.key});
+class StudentInscriptionPage extends StatefulWidget {
+  const StudentInscriptionPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  State<StudentInscriptionPage> createState() => _StudentInscriptionPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
   final _formKey = GlobalKey<FormState>();
+  final _nomController = TextEditingController();
+  final _prenomController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  String? _selectedClasse = 'tle_D';
   final _api = ApiService();
   bool _isLoading = false;
   bool _obscurePassword = true;
 
-  Future<void> _handleLogin() async {
+  final List<Map<String, String>> _classes = [
+    {'value': 'tle_D', 'label': 'Terminale D'},
+    {'value': 'tle_C', 'label': 'Terminale C'},
+    {'value': 'tle_A', 'label': 'Terminale A'},
+    {'value': '1ere_D', 'label': 'Première D'},
+    {'value': '1ere_C', 'label': 'Première C'},
+    {'value': '1ere_A', 'label': 'Première A'},
+    {'value': '2nde_S', 'label': 'Seconde S'},
+    {'value': '2nde_A', 'label': 'Seconde A'},
+    {'value': '3eme', 'label': 'Troisième'},
+  ];
+
+  Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isLoading = true);
 
     try {
-      final response = await _api.create("/login", {
+      final response = await _api.create("/register", {
+        "name": _nomController.text.trim(),
+        "surname": _prenomController.text.trim(),
         "email": _emailController.text.trim(),
         "password": _passwordController.text.trim(),
+        "classe": _selectedClasse,
       });
 
-      if (response?.statusCode == 200) {
-        final data = response?.data;
-        final token = data["token"];
-        final user = data["user"];
-        final roleId = user["role_id"];
-
-        await TokenStorage.saveToken(token);
-        await TokenStorage.saveRole(roleId);
-        await TokenStorage.saveUserId(user["id"]);
-
+      if (response?.statusCode == 201) {
         if (!mounted) return;
-
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Connexion réussie !"),
+            content: Text("Inscription réussie ! Connectez-vous."),
             backgroundColor: Color(0xFF10B981),
           ),
         );
 
-        // Redirection basée sur le rôle
-        Widget nextStep;
-        if (roleId == 1) {
-          nextStep = const AdminDashboardPage();
-        } else if (roleId == 2) {
-          nextStep = const TeacherDashboardPage();
-        } else {
-          nextStep = const StudentDashboardPage();
-        }
-
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => nextStep),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
         );
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
-            content: Text("Identifiants incorrects"),
+            content: Text(
+              "Échec de l'inscription. L'email est peut-être déjà utilisé.",
+            ),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -88,6 +83,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   void dispose() {
+    _nomController.dispose();
+    _prenomController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -102,7 +99,7 @@ class _LoginPageState extends State<LoginPage> {
           // Background accents
           Positioned(
             top: -100,
-            right: -100,
+            left: -100,
             child: Container(
               width: 300,
               height: 300,
@@ -118,45 +115,31 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const SizedBox(height: 40),
-                  // Logo / Icon
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(25),
-                        boxShadow: [
-                          BoxShadow(
-                            color: const Color(0xFF6366F1).withOpacity(0.1),
-                            blurRadius: 20,
-                            offset: const Offset(0, 10),
-                          ),
-                        ],
-                      ),
-                      child: const Icon(
-                        FontAwesomeIcons.graduationCap,
-                        size: 50,
-                        color: Color(0xFF6366F1),
-                      ),
+                  const SizedBox(height: 20),
+                  // App Bar like back button
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new,
+                      color: Color(0xFF1E293B),
                     ),
+                    onPressed: () => Navigator.pop(context),
                   ),
-                  const SizedBox(height: 40),
+                  const SizedBox(height: 20),
                   const Text(
-                    "Bienvenue sur",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF64748B),
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const Text(
-                    "TOGOSCHOOL",
+                    "Créer un compte",
                     style: TextStyle(
                       fontSize: 32,
                       fontWeight: FontWeight.bold,
                       color: Color(0xFF1E293B),
                       letterSpacing: -0.5,
+                    ),
+                  ),
+                  const Text(
+                    "Rejoignez TOGOSCHOOL dès aujourd'hui",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Color(0xFF64748B),
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                   const SizedBox(height: 10),
@@ -174,6 +157,38 @@ class _LoginPageState extends State<LoginPage> {
                     key: _formKey,
                     child: Column(
                       children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _buildInputField(
+                                controller: _nomController,
+                                label: "Nom",
+                                hint: "Doe",
+                                icon: Icons.person_outline,
+                                validator: (value) =>
+                                    (value == null || value.isEmpty)
+                                    ? "Requis"
+                                    : null,
+                              ),
+                            ),
+                            const SizedBox(width: 15),
+                            Expanded(
+                              child: _buildInputField(
+                                controller: _prenomController,
+                                label: "Prénom",
+                                hint: "John",
+                                icon: Icons.person_outline,
+                                validator: (value) =>
+                                    (value == null || value.isEmpty)
+                                    ? "Requis"
+                                    : null,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 20),
+                        _buildDropdownField(),
+                        const SizedBox(height: 20),
                         _buildInputField(
                           controller: _emailController,
                           label: "Email",
@@ -208,37 +223,16 @@ class _LoginPageState extends State<LoginPage> {
                           validator: (value) {
                             if (value == null || value.isEmpty)
                               return "Le mot de passe est requis";
+                            if (value.length < 6) return "Minimum 6 caractères";
                             return null;
                           },
                         ),
-                        const SizedBox(height: 15),
-                        Align(
-                          alignment: Alignment.centerRight,
-                          child: TextButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      const ForgotPasswordPage(),
-                                ),
-                              );
-                            },
-                            child: const Text(
-                              "Mot de passe oublié ?",
-                              style: TextStyle(
-                                color: Color(0xFF6366F1),
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 30),
+                        const SizedBox(height: 40),
                         SizedBox(
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton(
-                            onPressed: _isLoading ? null : _handleLogin,
+                            onPressed: _isLoading ? null : _handleRegister,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: const Color(0xFF6366F1),
                               foregroundColor: Colors.white,
@@ -257,7 +251,7 @@ class _LoginPageState extends State<LoginPage> {
                                     ),
                                   )
                                 : const Text(
-                                    "SE CONNECTER",
+                                    "S'INSCRIRE",
                                     style: TextStyle(
                                       fontSize: 16,
                                       fontWeight: FontWeight.bold,
@@ -270,26 +264,26 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                   ),
                   const SizedBox(height: 40),
+                  // Footer info cards or link
                   Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         const Text(
-                          "Nouveau ici ?",
+                          "Déjà un compte ?",
                           style: TextStyle(color: Color(0xFF64748B)),
                         ),
                         TextButton(
                           onPressed: () {
-                            Navigator.push(
+                            Navigator.pushReplacement(
                               context,
                               MaterialPageRoute(
-                                builder: (context) =>
-                                    const StudentInscriptionPage(),
+                                builder: (context) => const LoginPage(),
                               ),
                             );
                           },
                           child: const Text(
-                            "Créer un compte",
+                            "Connectez-vous",
                             style: TextStyle(
                               color: Color(0xFF6366F1),
                               fontWeight: FontWeight.bold,
@@ -298,6 +292,19 @@ class _LoginPageState extends State<LoginPage> {
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: 40),
+                  _buildBenefitItem(
+                    icon: FontAwesomeIcons.bookOpen,
+                    color: const Color(0xFF6366F1),
+                    title: "Cours complets",
+                    desc: "PDF, audio et vidéo à portée de main",
+                  ),
+                  _buildBenefitItem(
+                    icon: FontAwesomeIcons.vials,
+                    color: const Color(0xFF10B981),
+                    title: "Quiz interactifs",
+                    desc: "Testez vos connaissances en temps réel",
                   ),
                 ],
               ),
@@ -342,7 +349,6 @@ class _LoginPageState extends State<LoginPage> {
             suffixIcon: suffixIcon,
             filled: true,
             fillColor: Colors.white,
-            contentPadding: const EdgeInsets.symmetric(vertical: 18),
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -365,6 +371,118 @@ class _LoginPageState extends State<LoginPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildDropdownField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Classe",
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF475569),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.01),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButtonFormField<String>(
+              value: _selectedClasse,
+              icon: const Icon(
+                Icons.keyboard_arrow_down,
+                color: Color(0xFF6366F1),
+              ),
+              decoration: const InputDecoration(
+                border: InputBorder.none,
+                prefixIcon: Icon(
+                  Icons.school_outlined,
+                  color: Color(0xFF6366F1),
+                  size: 22,
+                ),
+              ),
+              items: _classes.map((classe) {
+                return DropdownMenuItem<String>(
+                  value: classe['value'],
+                  child: Text(classe['label']!),
+                );
+              }).toList(),
+              onChanged: (value) => setState(() => _selectedClasse = value),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBenefitItem({
+    required IconData icon,
+    required Color color,
+    required String title,
+    required String desc,
+  }) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 15),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: color.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 15),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
+                ),
+                Text(
+                  desc,
+                  style: const TextStyle(
+                    color: Color(0xFF64748B),
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

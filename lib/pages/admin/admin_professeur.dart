@@ -1,6 +1,5 @@
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:togoschool/components/form_header.dart';
+import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/admin/add_teacher.dart';
 import 'package:togoschool/service/api_service.dart';
 
@@ -84,257 +83,373 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: Column(
-          children: [
-            FormHeader(
-              title: 'Professeurs',
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: getData,
-                child: Column(
-                  children: [
-                    // Search Bar
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 10,
-                              offset: const Offset(0, 4),
-                            ),
-                          ],
-                        ),
-                        child: TextField(
-                          decoration: InputDecoration(
-                            icon: Icon(
-                              FontAwesomeIcons.magnifyingGlass,
-                              color: Colors.grey[400],
-                              size: 18,
-                            ),
-                            hintText: "Rechercher un professeur...",
-                            hintStyle: TextStyle(color: Colors.grey[400]),
-                            border: InputBorder.none,
-                          ),
-                          onChanged: (value) {
-                            // TODO: Implement local search
-                          },
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: Column(
+        children: [
+          DashHeader(
+            color1: const Color(0xFF6366F1),
+            color2: const Color(0xFF4F46E5),
+            title: "GESTION ENSEIGNANTS",
+            subtitle: "Administrez le corps professoral de l'établissement",
+            title1: teachers.length.toString(),
+            subtitle1: "Enseignants",
+            title2: matieres.length.toString(),
+            subtitle2: "Matières",
+            title3: "",
+            subtitle3: "",
+            onBack: () => Navigator.pop(context),
+          ),
+          _buildSearchBar(),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: getData,
+              color: const Color(0xFF6366F1),
+              child: isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFF6366F1),
                         ),
                       ),
-                    ),
+                    )
+                  : teachers.isEmpty
+                  ? _buildEmptyState()
+                  : _buildTeacherList(),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () async {
+          final result = await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const AddTeacherPage()),
+          );
+          if (result == true) getData();
+        },
+        backgroundColor: const Color(0xFF10B981),
+        elevation: 4,
+        icon: const Icon(Icons.person_add_rounded, color: Colors.white),
+        label: const Text(
+          "NOUVEAU PROFESSEUR",
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1,
+            color: Colors.white,
+          ),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
 
-                    // List
-                    Expanded(
-                      child: isLoading
-                          ? const Center(child: CircularProgressIndicator())
-                          : teachers.isEmpty
-                          ? Center(
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Icon(
-                                    Icons.person_off_outlined,
-                                    size: 60,
-                                    color: Colors.grey[400],
-                                  ),
-                                  const SizedBox(height: 16),
-                                  Text(
-                                    "Aucun enseignant trouvé",
-                                    style: TextStyle(
-                                      color: Colors.grey[600],
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            )
-                          : ListView.builder(
-                              padding: const EdgeInsets.all(16),
-                              itemCount: teachers.length,
-                              itemBuilder: (context, index) {
-                                var teacher = teachers[index];
-                                var color =
-                                    cardColors[index % cardColors.length];
-                                var assignedMatieres = getTeacherMatieres(
-                                  teacher['id'],
-                                );
-
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(20),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: Colors.black.withOpacity(0.05),
-                                        blurRadius: 15,
-                                        offset: const Offset(0, 5),
-                                      ),
-                                    ],
-                                  ),
-                                  child: Padding(
-                                    padding: const EdgeInsets.all(16),
-                                    child: Column(
-                                      children: [
-                                        Row(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            CircleAvatar(
-                                              radius: 25,
-                                              backgroundColor: color
-                                                  .withOpacity(0.1),
-                                              child: Icon(
-                                                Icons.person,
-                                                color: color,
-                                              ),
-                                            ),
-                                            const SizedBox(width: 16),
-                                            Expanded(
-                                              child: Column(
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    "${teacher['name'] ?? ''} ${teacher['surname'] ?? ''}",
-                                                    style: const TextStyle(
-                                                      fontWeight:
-                                                          FontWeight.bold,
-                                                      fontSize: 16,
-                                                      color: Colors.black87,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(height: 4),
-                                                  Text(
-                                                    "${teacher['email'] ?? ''}",
-                                                    style: TextStyle(
-                                                      color: Colors.grey[600],
-                                                      fontSize: 13,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
-                                            Row(
-                                              children: [
-                                                IconButton(
-                                                  icon: const Icon(
-                                                    Icons.edit_outlined,
-                                                    size: 20,
-                                                  ),
-                                                  color: Colors.blue,
-                                                  onPressed: () =>
-                                                      updateTeacher(teacher),
-                                                ),
-                                                IconButton(
-                                                  icon: const Icon(
-                                                    Icons.delete_outline,
-                                                    size: 20,
-                                                  ),
-                                                  color: Colors.red[300],
-                                                  onPressed: () =>
-                                                      deleteTeacher(
-                                                        teacher['id'],
-                                                      ),
-                                                ),
-                                              ],
-                                            ),
-                                          ],
-                                        ),
-                                        const SizedBox(height: 12),
-                                        Container(
-                                          width: double.infinity,
-                                          padding: const EdgeInsets.all(12),
-                                          decoration: BoxDecoration(
-                                            color: const Color(0xFFF9F9F9),
-                                            borderRadius: BorderRadius.circular(
-                                              12,
-                                            ),
-                                          ),
-                                          child: Column(
-                                            crossAxisAlignment:
-                                                CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                "Matières affectées:",
-                                                style: TextStyle(
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.bold,
-                                                  color: Colors.grey[700],
-                                                  letterSpacing: 0.5,
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              if (assignedMatieres.isEmpty)
-                                                Text(
-                                                  "Aucune matière affectée",
-                                                  style: TextStyle(
-                                                    fontSize: 13,
-                                                    color: Colors.grey[500],
-                                                    fontStyle: FontStyle.italic,
-                                                  ),
-                                                )
-                                              else
-                                                Wrap(
-                                                  spacing: 8,
-                                                  runSpacing: 8,
-                                                  children: assignedMatieres
-                                                      .map(
-                                                        (m) => Container(
-                                                          padding:
-                                                              const EdgeInsets.symmetric(
-                                                                horizontal: 10,
-                                                                vertical: 4,
-                                                              ),
-                                                          decoration: BoxDecoration(
-                                                            color: color
-                                                                .withOpacity(
-                                                                  0.1,
-                                                                ),
-                                                            borderRadius:
-                                                                BorderRadius.circular(
-                                                                  20,
-                                                                ),
-                                                          ),
-                                                          child: Text(
-                                                            m['nom'] ?? '',
-                                                            style: TextStyle(
-                                                              fontSize: 12,
-                                                              color: color,
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w600,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      )
-                                                      .toList(),
-                                                ),
-                                            ],
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                  ],
-                ),
-              ),
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xFF6366F1).withOpacity(0.06),
+              blurRadius: 15,
+              offset: const Offset(0, 4),
             ),
           ],
         ),
+        child: TextField(
+          decoration: InputDecoration(
+            hintText: 'Rechercher un professeur...',
+            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
+            prefixIcon: const Icon(
+              Icons.search_rounded,
+              color: Color(0xFF6366F1),
+              size: 22,
+            ),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 14,
+            ),
+          ),
+          onChanged: (value) {
+            // Local search logic can be added here if needed
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTeacherList() {
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
+      itemCount: teachers.length,
+      itemBuilder: (context, index) {
+        final teacher = teachers[index];
+        final color = cardColors[index % cardColors.length];
+        final assignedMatieres = getTeacherMatieres(teacher['id']);
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            color.withOpacity(0.2),
+                            color.withOpacity(0.1),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      child: Icon(Icons.person_rounded, color: color, size: 28),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "${teacher['name'] ?? ''} ${teacher['surname'] ?? ''}",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            teacher['email'] ?? '',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              color: Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    _buildTeacherActions(teacher),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFF1F5F9)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.book_outlined,
+                            size: 14,
+                            color: Color(0xFF64748B),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            "MATIÈRES AFFECTÉES",
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w800,
+                              color: const Color(0xFF64748B),
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      if (assignedMatieres.isEmpty)
+                        Text(
+                          "Aucune matière affectée",
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: const Color(0xFF94A3B8),
+                            fontStyle: FontStyle.italic,
+                          ),
+                        )
+                      else
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: assignedMatieres
+                              .map(
+                                (m) => Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: color.withOpacity(0.1),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    m['nom'] ?? '',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      color: color,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTeacherActions(dynamic teacher) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF94A3B8)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      onSelected: (value) {
+        if (value == 'edit') {
+          updateTeacher(teacher);
+        } else if (value == 'delete') {
+          _showDeleteConfirmation(teacher);
+        }
+      },
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: 'edit',
+          child: Row(
+            children: [
+              Icon(Icons.edit_rounded, size: 18, color: Color(0xFF6366F1)),
+              SizedBox(width: 12),
+              Text("Modifier", style: TextStyle(fontWeight: FontWeight.w500)),
+            ],
+          ),
+        ),
+        const PopupMenuItem(
+          value: 'delete',
+          child: Row(
+            children: [
+              Icon(
+                Icons.delete_outline_rounded,
+                size: 18,
+                color: Color(0xFFEF4444),
+              ),
+              SizedBox(width: 12),
+              Text(
+                "Supprimer",
+                style: TextStyle(
+                  color: Color(0xFFEF4444),
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showDeleteConfirmation(dynamic teacher) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text(
+          "Supprimer ?",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          "Voulez-vous vraiment supprimer le professeur ${teacher['name']} ?",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text(
+              "ANNULER",
+              style: TextStyle(color: Color(0xFF94A3B8)),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              deleteTeacher(teacher['id']);
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text("SUPPRIMER"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6366F1).withOpacity(0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.person_off_rounded,
+              size: 80,
+              color: const Color(0xFF6366F1).withOpacity(0.2),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const Text(
+            "Aucun enseignant trouvé",
+            style: TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+            ),
+          ),
+          const SizedBox(height: 8),
+          const Text(
+            "Commencez par ajouter votre premier professeur.",
+            style: TextStyle(color: Color(0xFF64748B)),
+          ),
+        ],
       ),
     );
   }

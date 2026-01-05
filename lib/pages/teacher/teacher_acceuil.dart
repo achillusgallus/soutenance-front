@@ -89,16 +89,205 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    String profName = profileData?['name'] ?? 'Enseignant';
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: SafeArea(
+        child: RefreshIndicator(
+          onRefresh: _refreshData,
+          color: const Color(0xFF6366F1),
+          child: ListView(
+            padding: const EdgeInsets.only(bottom: 40),
+            children: [
+              DashHeader(
+                color1: const Color(0xFF6366F1),
+                color2: const Color(0xFF4F46E5),
+                title: 'Bonjour, $profName',
+                subtitle: 'Gérez vos cours et quiz aujourd\'hui',
+                title1: matieres.length.toString(),
+                subtitle1: 'Matières',
+                title2: cours.length.toString(),
+                subtitle2: 'Cours',
+                title3: quiz.length.toString(),
+                subtitle3: 'Quiz',
+              ),
+              const SizedBox(height: 32),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildSectionTitle('ACTIONS RAPIDES'),
+                        IconButton(
+                          icon: const Icon(
+                            Icons.settings_outlined,
+                            color: Color(0xFF64748B),
+                            size: 24,
+                          ),
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TeacherParameter(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        ButtonCard(
+                          icon: FontAwesomeIcons.plus,
+                          title: 'Nouveau',
+                          color: const Color(0xFF6366F1),
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    AddCoursePage(subjects: matieres),
+                              ),
+                            );
+                            _refreshData();
+                          },
+                        ),
+                        ButtonCard(
+                          icon: FontAwesomeIcons.book,
+                          title: 'Cours',
+                          color: const Color(0xFF10B981),
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TeachCours(),
+                              ),
+                            );
+                            _refreshData();
+                          },
+                        ),
+                        ButtonCard(
+                          icon: FontAwesomeIcons.vial,
+                          title: 'Quiz',
+                          color: const Color(0xFFF59E0B),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TeacherQuiz(),
+                              ),
+                            );
+                          },
+                        ),
+                        ButtonCard(
+                          icon: FontAwesomeIcons.comments,
+                          title: 'Forum',
+                          color: const Color(0xFFEC4899),
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TeacherForum(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
+              const SizedBox(height: 40),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: _buildSectionTitle('MES MATIÈRES'),
+              ),
+              const SizedBox(height: 20),
+
+              if (isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(40),
+                    child: CircularProgressIndicator(),
+                  ),
+                )
+              else if (matieres.isEmpty)
+                _buildEmptyState()
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                  child: Column(
+                    children: matieres.asMap().entries.map((entry) {
+                      return _buildMatiereCard(entry.value, entry.key);
+                    }).toList(),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF64748B),
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(48.0),
+        child: Column(
+          children: [
+            Icon(
+              Icons.school_outlined,
+              size: 64,
+              color: const Color(0xFFCBD5E1),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Aucune matière affectée pour le moment.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF94A3B8),
+                fontSize: 16,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildMatiereCard(Map<String, dynamic> matiere, int index) {
     final color = MatiereColors[index % MatiereColors.length];
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -107,7 +296,7 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           onTap: () async {
             await Navigator.push(
               context,
@@ -118,249 +307,63 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
                 ),
               ),
             );
-            // Refresh data when returning, in case a course was added/deleted
             _refreshData();
           },
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(16),
-            child: IntrinsicHeight(
-              child: Row(
-                children: [
-                  Container(width: 6, color: color),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            matiere['nom'] ?? 'Sans nom',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF2D3142),
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            matiere['description'] ??
-                                'Pas de description available',
-                            style: TextStyle(
-                              fontSize: 14,
-                              color: Colors.grey[600],
-                              height: 1.4,
-                            ),
-                            maxLines: 4,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: color.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Text(
-                              matiere['classe'] ?? 'Classe non définie',
-                              style: TextStyle(
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                                color: color,
-                              ),
-                            ),
-                          ),
-                        ],
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 56,
+                  height: 56,
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Icon(FontAwesomeIcons.book, color: color, size: 20),
+                ),
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        matiere['nom'] ?? 'Sans nom',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 4),
+                      Text(
+                        matiere['classe'] ?? 'Classe non définie',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: color,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        matiere['description'] ?? 'Aucune description',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
                   ),
-                  Padding(
-                    padding: const EdgeInsets.only(right: 12.0),
-                    child: Icon(
-                      Icons.arrow_forward_ios,
-                      size: 16,
-                      color: Colors.grey[400],
-                    ),
-                  ),
-                ],
-              ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios,
+                  size: 14,
+                  color: Color(0xFFCBD5E1),
+                ),
+              ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(
-        0xFFF5F5F5,
-      ), // Slightly off-white for professional look
-      body: SafeArea(
-        child: RefreshIndicator(
-          onRefresh: _refreshData,
-          child: ListView(
-            padding: const EdgeInsets.only(bottom: 20),
-            children: [
-              DashHeader(
-                color1: Colors.blueAccent,
-                color2: Colors.green,
-                title: 'Bonjour Mr/Mme ${profileData?['name'] ?? 'Enseignant'}',
-                title1: matieres.length.toString(),
-                title2: cours.length.toString(),
-                title3: quiz.length.toString(),
-                subtitle: 'Votre espace enseignant',
-                subtitle1: 'Mes Matières',
-                subtitle2: 'Mes Cours',
-                subtitle3: 'Mes Quiz',
-              ),
-              const SizedBox(height: 20),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'ACTIONS RAPIDES',
-                      style: TextStyle(
-                        color: Colors.grey[700],
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        letterSpacing: 1.2,
-                      ),
-                    ),
-                    IconButton(
-                      icon: const Icon(
-                        FontAwesomeIcons.user,
-                        size: 20,
-                        color: Colors.black54,
-                      ),
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TeacherParameter(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    ButtonCard(
-                      icon: Icons.add_box,
-                      title: 'Nouveau',
-                      color: Colors.blueAccent,
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                AddCoursePage(subjects: matieres),
-                          ),
-                        );
-                      },
-                    ),
-                    ButtonCard(
-                      icon: Icons.library_books,
-                      title: 'Mes Cours',
-                      color: Colors.green,
-                      onTap: () async {
-                        await Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TeachCours(),
-                          ),
-                        );
-                      },
-                    ),
-                    ButtonCard(
-                      icon: Icons.quiz,
-                      title: 'Quiz',
-                      color: const Color.fromARGB(255, 216, 34, 180),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TeacherQuiz(),
-                          ),
-                        );
-                      },
-                    ),
-                    ButtonCard(
-                      icon: Icons.forum,
-                      title: 'Forum',
-                      color: const Color.fromARGB(255, 181, 114, 14),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const TeacherForum(),
-                          ),
-                        );
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 30),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20.0),
-                child: Text(
-                  'MES MATIÈRES',
-                  style: TextStyle(
-                    color: Colors.grey[700],
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              if (isLoading)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: CircularProgressIndicator(),
-                  ),
-                )
-              else if (matieres.isEmpty)
-                Center(
-                  child: Padding(
-                    padding: const EdgeInsets.all(40.0),
-                    child: Column(
-                      children: [
-                        Icon(
-                          Icons.school_outlined,
-                          size: 64,
-                          color: Colors.grey[300],
-                        ),
-                        const SizedBox(height: 16),
-                        Text(
-                          'Aucune matière affectée',
-                          style: TextStyle(
-                            color: Colors.grey[500],
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                )
-              else
-                ...matieres.asMap().entries.map((entry) {
-                  return _buildMatiereCard(entry.value, entry.key);
-                }).toList(),
-              const SizedBox(height: 30),
-            ],
           ),
         ),
       ),

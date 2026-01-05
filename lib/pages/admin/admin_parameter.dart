@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:togoschool/components/form_header.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/service/api_service.dart';
 import 'package:togoschool/service/token_storage.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
-import 'package:togoschool/pages/student_connexion_page.dart';
+import 'package:togoschool/pages/auth/login_page.dart';
 
 class AdminParameter extends StatefulWidget {
   const AdminParameter({super.key});
@@ -76,7 +74,7 @@ class _AdminParameterState extends State<AdminParameter> {
       await TokenStorage.clearToken();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const StudentConnexionPage()),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
           (route) => false,
         );
       }
@@ -135,40 +133,117 @@ class _AdminParameterState extends State<AdminParameter> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: isLoading
+          ? const Center(
+              child: CircularProgressIndicator(
+                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+              ),
+            )
+          : SingleChildScrollView(
+              padding: EdgeInsets.zero,
+              child: Column(
+                children: [
+                  _buildHeader(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 24,
+                    ),
+                    child: isEditing ? _buildEditForm() : _buildProfileView(),
+                  ),
+                ],
+              ),
+            ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+      ),
+      child: SafeArea(
+        bottom: false,
         child: Column(
           children: [
-            FormHeader(
-              title: isEditing ? 'Modifier le profil' : 'Paramètres',
-              onBack: () {
-                if (isEditing) {
-                  setState(() => isEditing = false);
-                } else {
-                  Navigator.pop(context);
-                }
-              },
-            ),
-            Expanded(
-              child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Container(
-                      margin: const EdgeInsets.only(top: 20),
-                      padding: const EdgeInsets.all(24),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(32),
-                          topRight: Radius.circular(32),
-                        ),
-                      ),
-                      child: SingleChildScrollView(
-                        child: isEditing
-                            ? _buildEditForm()
-                            : _buildProfileView(),
-                      ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(
+                      Icons.arrow_back_ios_new_rounded,
+                      color: Colors.white,
+                      size: 20,
                     ),
+                    onPressed: () {
+                      if (isEditing) {
+                        setState(() => isEditing = false);
+                      } else {
+                        Navigator.pop(context);
+                      }
+                    },
+                  ),
+                  const Text(
+                    "PARAMÈTRES",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.2,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
+              ),
             ),
+            const SizedBox(height: 20),
+            Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: Colors.white.withOpacity(0.3),
+                  width: 2,
+                ),
+              ),
+              child: CircleAvatar(
+                radius: 50,
+                backgroundColor: Colors.white.withOpacity(0.1),
+                child: const Icon(
+                  Icons.admin_panel_settings_rounded,
+                  size: 50,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Text(
+              '${profileData?['name'] ?? 'Administrateur'} ${profileData?['surname'] ?? ''}',
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              profileData?['email'] ?? 'admin@togoschool.com',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.8),
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -178,55 +253,154 @@ class _AdminParameterState extends State<AdminParameter> {
   Widget _buildProfileView() {
     return Column(
       children: [
-        const CircleAvatar(
-          radius: 50,
-          backgroundColor: Color(0xFFE3F2FD),
-          child: Icon(
-            FontAwesomeIcons.userLarge,
-            size: 40,
-            color: Colors.blueAccent,
+        _buildActionCard(
+          title: "Modifier mes informations",
+          subtitle: "Mettez à jour votre nom, email et mot de passe",
+          icon: Icons.edit_note_rounded,
+          color: const Color(0xFF6366F1),
+          onTap: () => setState(() => isEditing = true),
+        ),
+        const SizedBox(height: 32),
+        const Align(
+          alignment: Alignment.centerLeft,
+          child: Text(
+            "APPARENCE & SÉCURITÉ",
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF94A3B8),
+              letterSpacing: 1.2,
+            ),
           ),
         ),
         const SizedBox(height: 16),
-        Text(
-          '${profileData?['name'] ?? 'Nom'} ${profileData?['surname'] ?? ''}',
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-        ),
-        Text(
-          profileData?['email'] ?? 'email@ecole.com',
-          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.03),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              _buildSettingsTile(
+                icon: Icons.notifications_none_rounded,
+                title: 'Notifications',
+                onTap: () {},
+                color: const Color(0xFFF59E0B),
+              ),
+              const Divider(height: 1, indent: 60),
+              _buildSettingsTile(
+                icon: Icons.shield_outlined,
+                title: 'Sécurité du compte',
+                onTap: () {},
+                color: const Color(0xFF10B981),
+              ),
+              const Divider(height: 1, indent: 60),
+              _buildSettingsTile(
+                icon: Icons.info_outline_rounded,
+                title: 'À propos de TogoSchool',
+                onTap: () {},
+                color: const Color(0xFF8B5CF6),
+              ),
+            ],
+          ),
         ),
         const SizedBox(height: 24),
-        PrimaryButton(
-          text: 'Modifier le profil',
-          onPressed: () => setState(() => isEditing = true),
-        ),
-        const SizedBox(height: 32),
-        const Divider(),
-        const SizedBox(height: 16),
-        _buildSettingsTile(
-          icon: FontAwesomeIcons.bell,
-          title: 'Notifications',
-          onTap: () {},
-        ),
-        _buildSettingsTile(
-          icon: FontAwesomeIcons.shieldHalved,
-          title: 'Sécurité',
-          onTap: () {},
-        ),
-        _buildSettingsTile(
-          icon: FontAwesomeIcons.circleInfo,
-          title: 'À propos',
-          onTap: () {},
-        ),
-        const SizedBox(height: 20),
-        _buildSettingsTile(
-          icon: FontAwesomeIcons.rightFromBracket,
-          title: 'Se déconnecter',
-          onTap: logout,
-          color: Colors.red,
+        Container(
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFEF4444).withOpacity(0.05),
+                blurRadius: 15,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: _buildSettingsTile(
+            icon: Icons.logout_rounded,
+            title: 'Se déconnecter',
+            onTap: logout,
+            color: const Color(0xFFEF4444),
+            showArrow: false,
+          ),
         ),
       ],
+    );
+  }
+
+  Widget _buildActionCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Icon(icon, color: color, size: 28),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      color: Color(0xFF64748B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 16,
+              color: color.withOpacity(0.5),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -236,60 +410,98 @@ class _AdminParameterState extends State<AdminParameter> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Informations Personnelles",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 24),
-          CustomTextFormField(
-            label: 'Nom',
-            hint: 'Votre nom',
-            prefixIcon: Icons.person_outline,
-            controller: _nameController,
-            validator: (v) => (v == null || v.isEmpty) ? "Champ requis" : null,
-          ),
-          const SizedBox(height: 20),
-          CustomTextFormField(
-            label: 'Prénom',
-            hint: 'Votre prénom',
-            prefixIcon: Icons.person_outline,
-            controller: _surnameController,
-            validator: (v) => (v == null || v.isEmpty) ? "Champ requis" : null,
-          ),
-          const SizedBox(height: 20),
-          CustomTextFormField(
-            label: 'Email',
-            hint: 'votre@email.com',
-            prefixIcon: Icons.email_outlined,
-            controller: _emailController,
-            validator: (v) => (v == null || v.isEmpty) ? "Champ requis" : null,
-          ),
-          const SizedBox(height: 20),
-          CustomTextFormField(
-            label: 'Nouveau mot de passe',
-            hint: 'Laisser vide pour ne pas changer',
-            prefixIcon: Icons.lock_outline,
-            obscureText: _obscurePassword,
-            controller: _passwordController,
-            suffixIcon: IconButton(
-              icon: Icon(
-                _obscurePassword ? Icons.visibility_off : Icons.visibility,
-              ),
-              onPressed: () =>
-                  setState(() => _obscurePassword = !_obscurePassword),
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  "MODIFIER MON PROFIL",
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF94A3B8),
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                CustomTextFormField(
+                  label: 'NOM',
+                  hint: 'Votre nom',
+                  prefixIcon: Icons.person_outline_rounded,
+                  controller: _nameController,
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? "Champ requis" : null,
+                ),
+                const SizedBox(height: 20),
+                CustomTextFormField(
+                  label: 'PRÉNOM',
+                  hint: 'Votre prénom',
+                  prefixIcon: Icons.person_outline_rounded,
+                  controller: _surnameController,
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? "Champ requis" : null,
+                ),
+                const SizedBox(height: 20),
+                CustomTextFormField(
+                  label: 'ADRESSE EMAIL',
+                  hint: 'votre@email.com',
+                  prefixIcon: Icons.email_outlined,
+                  controller: _emailController,
+                  validator: (v) =>
+                      (v == null || v.isEmpty) ? "Champ requis" : null,
+                ),
+                const SizedBox(height: 20),
+                CustomTextFormField(
+                  label: 'NOUVEAU MOT DE PASSE',
+                  hint: 'Laissez vide pour ne pas changer',
+                  prefixIcon: Icons.lock_outline_rounded,
+                  obscureText: _obscurePassword,
+                  controller: _passwordController,
+                  suffixIcon: IconButton(
+                    icon: Icon(
+                      _obscurePassword
+                          ? Icons.visibility_off_rounded
+                          : Icons.visibility_rounded,
+                      color: const Color(0xFF94A3B8),
+                      size: 20,
+                    ),
+                    onPressed: () =>
+                        setState(() => _obscurePassword = !_obscurePassword),
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 32),
           PrimaryButton(
             text: 'ENREGISTRER LES MODIFICATIONS',
             isLoading: isSaving,
             onPressed: updateProfile,
           ),
           const SizedBox(height: 16),
-          TextButton(
-            onPressed: () => setState(() => isEditing = false),
-            child: const Center(
-              child: Text("Annuler", style: TextStyle(color: Colors.grey)),
+          Center(
+            child: TextButton(
+              onPressed: () => setState(() => isEditing = false),
+              child: const Text(
+                "ANNULER",
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 1,
+                ),
+              ),
             ),
           ),
         ],
@@ -301,20 +513,36 @@ class _AdminParameterState extends State<AdminParameter> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
-    Color color = Colors.black87,
+    required Color color,
+    bool showArrow = true,
   }) {
     return ListTile(
+      contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       leading: Container(
-        padding: const EdgeInsets.all(8),
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
-        child: Icon(icon, color: color, size: 18),
+        child: Icon(icon, color: color, size: 22),
       ),
-      title: Text(title, style: TextStyle(fontSize: 16, color: color)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+      title: Text(
+        title,
+        style: TextStyle(
+          fontSize: 16,
+          fontWeight: FontWeight.bold,
+          color: color.withAlpha(200),
+        ),
+      ),
+      trailing: showArrow
+          ? const Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: Color(0xFFCBD5E1),
+            )
+          : null,
       onTap: onTap,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
     );
   }
 }

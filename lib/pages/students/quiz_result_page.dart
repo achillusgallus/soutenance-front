@@ -36,108 +36,141 @@ class QuizResultPage extends StatelessWidget {
               color2: isPassed
                   ? const Color(0xFF059669)
                   : const Color(0xFFDC2626),
-              title: quizTitle,
-              subtitle: isPassed ? 'Félicitations !' : 'Continuez vos efforts',
+              title: "Résultats du Quiz",
+              subtitle: isPassed
+                  ? 'Excellent travail !'
+                  : 'Continuez vos efforts',
               title1: "$correctAnswers/$totalQuestions",
-              subtitle1: "Bonnes réponses",
+              subtitle1: "Correctes",
               title2: "$percentage%",
-              subtitle2: "Score",
-              title3: "${_formatTime(timeSpent)}",
-              subtitle3: "Temps",
+              subtitle2: "Votre Score",
+              title3: _formatTime(timeSpent),
+              subtitle3: "Durée",
             ),
-            const SizedBox(height: 20),
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  children: [
-                    _buildScoreCard(percentage, isPassed),
-                    const SizedBox(height: 20),
-                    _buildQuestionReview(),
-                  ],
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 24,
                 ),
-              ),
-            ),
-            _buildActionButtons(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScoreCard(int percentage, bool isPassed) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 0,
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          children: [
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: isPassed
-                    ? Colors.green.withOpacity(0.1)
-                    : Colors.red.withOpacity(0.1),
-              ),
-              child: Center(
+                physics: const BouncingScrollPhysics(),
                 child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      "$percentage%",
+                    _buildPerformanceSummary(percentage, isPassed),
+                    const SizedBox(height: 32),
+                    const Text(
+                      "RÉVISION DÉTAILLÉE",
                       style: TextStyle(
-                        fontSize: 32,
+                        color: Color(0xFF94A3B8),
                         fontWeight: FontWeight.bold,
-                        color: isPassed ? Colors.green : Colors.red,
+                        fontSize: 11,
+                        letterSpacing: 1.2,
                       ),
                     ),
-                    Text(
-                      isPassed ? "Réussi" : "Échoué",
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: isPassed ? Colors.green : Colors.red,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
+                    const SizedBox(height: 16),
+                    ...questionResults.asMap().entries.map((entry) {
+                      return _buildQuestionResultCard(entry.key, entry.value);
+                    }).toList(),
                   ],
                 ),
               ),
             ),
-            const SizedBox(height: 20),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatItem(
-                  Icons.check_circle_outline,
-                  "$correctAnswers",
-                  "Correctes",
-                  Colors.green,
-                ),
-                _buildStatItem(
-                  Icons.cancel_outlined,
-                  "${totalQuestions - correctAnswers}",
-                  "Incorrectes",
-                  Colors.red,
-                ),
-                _buildStatItem(
-                  Icons.access_time,
-                  _formatTime(timeSpent),
-                  "Temps",
-                  Colors.blue,
-                ),
-              ],
-            ),
+            _buildFooterActions(context),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildStatItem(
+  Widget _buildPerformanceSummary(int percentage, bool isPassed) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(28),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Stack(
+            alignment: Alignment.center,
+            children: [
+              SizedBox(
+                width: 140,
+                height: 140,
+                child: CircularProgressIndicator(
+                  value: percentage / 100,
+                  strokeWidth: 12,
+                  backgroundColor: const Color(0xFFF1F5F9),
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    isPassed
+                        ? const Color(0xFF10B981)
+                        : const Color(0xFFEF4444),
+                  ),
+                ),
+              ),
+              Column(
+                children: [
+                  Text(
+                    "$percentage%",
+                    style: TextStyle(
+                      fontSize: 32,
+                      fontWeight: FontWeight.bold,
+                      color: isPassed
+                          ? const Color(0xFF10B981)
+                          : const Color(0xFFEF4444),
+                    ),
+                  ),
+                  Text(
+                    isPassed ? "RÉUSSI" : "ÉCHOUÉ",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF94A3B8),
+                      letterSpacing: 1.1,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 32),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildStatMetric(
+                Icons.check_circle_rounded,
+                "$correctAnswers",
+                "Vraies",
+                const Color(0xFF10B981),
+              ),
+              _buildStatMetric(
+                Icons.cancel_rounded,
+                "${totalQuestions - correctAnswers}",
+                "Fausses",
+                const Color(0xFFEF4444),
+              ),
+              _buildStatMetric(
+                Icons.timer_rounded,
+                "${timeSpent ~/ 60}m",
+                "Temps",
+                const Color(0xFF6366F1),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatMetric(
     IconData icon,
     String value,
     String label,
@@ -145,138 +178,148 @@ class QuizResultPage extends StatelessWidget {
   ) {
     return Column(
       children: [
-        Icon(icon, color: color, size: 28),
+        Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
         const SizedBox(height: 8),
         Text(
           value,
-          style: TextStyle(
-            fontSize: 18,
+          style: const TextStyle(
+            fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: color,
+            color: Color(0xFF1E293B),
           ),
         ),
-        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-      ],
-    );
-  }
-
-  Widget _buildQuestionReview() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Révision des questions",
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 12, color: Color(0xFF94A3B8)),
         ),
-        const SizedBox(height: 16),
-        ...questionResults.asMap().entries.map((entry) {
-          final index = entry.key;
-          final result = entry.value;
-          return _buildQuestionResultCard(index, result);
-        }).toList(),
       ],
     );
   }
 
   Widget _buildQuestionResultCard(int index, Map<String, dynamic> result) {
-    final isCorrect = result['isCorrect'] ?? false;
-    final question = result['question'] ?? '';
-    final userAnswer = result['userAnswer'] ?? 'Pas de réponse';
-    final correctAnswer = result['correctAnswer'] ?? '';
+    final bool isCorrect = result['isCorrect'] ?? false;
+    final String question = result['question'] ?? '';
+    final String userAnswer = result['userAnswer'] ?? 'Aucune réponse';
+    final String correctAnswer = result['correctAnswer'] ?? '';
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 0,
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isCorrect
-                        ? Colors.green.withOpacity(0.1)
-                        : Colors.red.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  child: Text(
-                    "Question ${index + 1}",
-                    style: TextStyle(
-                      color: isCorrect ? Colors.green : Colors.red,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                const Spacer(),
-                Icon(
-                  isCorrect ? Icons.check_circle : Icons.cancel,
-                  color: isCorrect ? Colors.green : Colors.red,
-                  size: 24,
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Text(
-              question,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            _buildAnswerRow("Votre réponse", userAnswer, isCorrect),
-            if (!isCorrect) ...[
-              const SizedBox(height: 8),
-              _buildAnswerRow("Bonne réponse", correctAnswer, true),
-            ],
-          ],
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: isCorrect
+              ? const Color(0xFF10B981).withOpacity(0.3)
+              : const Color(0xFFEF4444).withOpacity(0.3),
         ),
+      ),
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      (isCorrect
+                              ? const Color(0xFF10B981)
+                              : const Color(0xFFEF4444))
+                          .withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  "Question ${index + 1}",
+                  style: TextStyle(
+                    color: isCorrect
+                        ? const Color(0xFF059669)
+                        : const Color(0xFFDC2626),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 11,
+                  ),
+                ),
+              ),
+              const Spacer(),
+              Icon(
+                isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                color: isCorrect
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFEF4444),
+                size: 18,
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            question,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF1E293B),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
+          _buildReviewRow("Votre réponse", userAnswer, isCorrect),
+          if (!isCorrect) ...[
+            const SizedBox(height: 12),
+            _buildReviewRow("Réponse correcte", correctAnswer, true),
+          ],
+        ],
       ),
     );
   }
 
-  Widget _buildAnswerRow(String label, String answer, bool isCorrect) {
+  Widget _buildReviewRow(String label, String value, bool isSuccess) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isCorrect
-            ? Colors.green.withOpacity(0.05)
-            : Colors.red.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isCorrect ? Colors.green : Colors.red,
-          width: 1,
-        ),
+        color: const Color(0xFFF8F9FD),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFF1F5F9)),
       ),
       child: Row(
         children: [
           Icon(
-            isCorrect ? Icons.check : Icons.close,
-            color: isCorrect ? Colors.green : Colors.red,
-            size: 16,
+            isSuccess ? Icons.check_circle_outline : Icons.error_outline,
+            size: 14,
+            color: isSuccess
+                ? const Color(0xFF10B981)
+                : const Color(0xFFEF4444),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   label,
-                  style: TextStyle(fontSize: 11, color: Colors.grey[600]),
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: Color(0xFF94A3B8),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
-                const SizedBox(height: 2),
                 Text(
-                  answer,
+                  value,
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: 13,
+                    color: isSuccess
+                        ? const Color(0xFF059669)
+                        : const Color(0xFFDC2626),
                     fontWeight: FontWeight.w600,
-                    color: isCorrect ? Colors.green : Colors.red,
                   ),
                 ),
               ],
@@ -287,78 +330,68 @@ class QuizResultPage extends StatelessWidget {
     );
   }
 
-  Widget _buildActionButtons(BuildContext context) {
+  Widget _buildFooterActions(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 32),
       decoration: BoxDecoration(
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -5),
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 20,
+            offset: const Offset(0, -10),
           ),
         ],
       ),
-      child: SafeArea(
-        child: Row(
-          children: [
-            Expanded(
-              child: OutlinedButton(
-                onPressed: () {
-                  Navigator.pop(
-                    context,
-                  ); // Retour à la page du quiz (ou liste si pushReplacement)
-                },
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  side: const BorderSide(color: Colors.green, width: 2),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+      child: Row(
+        children: [
+          Expanded(
+            child: OutlinedButton(
+              onPressed: () => Navigator.pop(context),
+              style: OutlinedButton.styleFrom(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                side: const BorderSide(color: Color(0xFFE2E8F0)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Text(
-                  "RETOUR",
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
+              ),
+              child: const Text(
+                "QUITTER",
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF64748B),
+                  letterSpacing: 1,
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(
-                    context,
-                  ); // Un seul pop suffit si pushReplacement a été utilisé
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  "TERMINER",
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: ElevatedButton(
+              onPressed: () => Navigator.pop(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF6366F1),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
+              child: const Text(
+                "RETOURNER",
+                style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   String _formatTime(int seconds) {
-    final minutes = seconds ~/ 60;
-    final secs = seconds % 60;
-    return '${minutes}min ${secs}s';
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return "${m}m ${s}s";
   }
 }

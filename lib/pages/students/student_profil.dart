@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:togoschool/components/form_header.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/service/api_service.dart';
 import 'package:togoschool/service/token_storage.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
-import 'package:togoschool/pages/student_connexion_page.dart';
+import 'package:togoschool/pages/auth/login_page.dart';
 
 class StudentProfil extends StatefulWidget {
   const StudentProfil({super.key});
@@ -76,7 +75,7 @@ class _StudentProfilState extends State<StudentProfil> {
       await TokenStorage.clearToken();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const StudentConnexionPage()),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
           (route) => false,
         );
       }
@@ -109,7 +108,6 @@ class _StudentProfilState extends State<StudentProfil> {
           );
           setState(() {
             isEditing = false;
-            // The backend returns {'user': {...}} on update but just {...} on read
             if (response?.data is Map && response?.data.containsKey('user')) {
               profileData = response?.data['user'];
             } else {
@@ -135,38 +133,27 @@ class _StudentProfilState extends State<StudentProfil> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: const Color(0xFFF8F9FD),
       body: SafeArea(
         child: Column(
           children: [
-            FormHeader(
-              title: isEditing ? 'Modifier le profil' : 'Paramètres',
-              onBack: () {
-                if (isEditing) {
-                  setState(() => isEditing = false);
-                } else {
-                  Navigator.pop(context);
-                }
-              },
-            ),
+            _buildCustomHeader(),
             Expanded(
               child: isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : Container(
-                      margin: const EdgeInsets.only(top: 20),
-                      padding: const EdgeInsets.all(24),
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.only(
-                          topLeft: Radius.circular(32),
-                          topRight: Radius.circular(32),
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFF6366F1),
                         ),
                       ),
-                      child: SingleChildScrollView(
-                        child: isEditing
-                            ? _buildEditForm()
-                            : _buildProfileView(),
+                    )
+                  : SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 20,
                       ),
+                      child: isEditing ? _buildEditForm() : _buildProfileView(),
                     ),
             ),
           ],
@@ -175,56 +162,167 @@ class _StudentProfilState extends State<StudentProfil> {
     );
   }
 
+  Widget _buildCustomHeader() {
+    final name = profileData?['name'] ?? 'Élève';
+    final surname = profileData?['surname'] ?? '';
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.only(
+          bottomLeft: Radius.circular(40),
+          bottomRight: Radius.circular(40),
+        ),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                onPressed: () => isEditing
+                    ? setState(() => isEditing = false)
+                    : Navigator.pop(context),
+                icon: const Icon(
+                  Icons.arrow_back_ios_new_rounded,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const Text(
+                "MON PROFIL",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(width: 48), // Spacer
+            ],
+          ),
+          const SizedBox(height: 20),
+          Container(
+            padding: const EdgeInsets.all(4),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(
+                color: Colors.white.withOpacity(0.3),
+                width: 3,
+              ),
+            ),
+            child: const CircleAvatar(
+              radius: 44,
+              backgroundColor: Colors.white,
+              child: Icon(
+                FontAwesomeIcons.userGraduate,
+                size: 36,
+                color: Color(0xFF6366F1),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            "$name $surname",
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            profileData?['email'] ?? 'votre@ecole.com',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.8),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildProfileView() {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const CircleAvatar(
-          radius: 50,
-          backgroundColor: Color(0xFFE8F5E9),
-          child: Icon(
-            FontAwesomeIcons.userGraduate,
-            size: 40,
-            color: Colors.green,
+        const Text(
+          "PARAMÈTRES DU COMPTE",
+          style: TextStyle(
+            color: Color(0xFF94A3B8),
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+            letterSpacing: 1.2,
           ),
         ),
         const SizedBox(height: 16),
-        Text(
-          '${profileData?['name'] ?? 'Élève'} ${profileData?['surname'] ?? ''}',
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.userPen,
+          title: 'Modifier mes informations',
+          onTap: () => setState(() => isEditing = true),
+          color: const Color(0xFF6366F1),
         ),
-        Text(
-          profileData?['email'] ?? 'email@ecole.com',
-          style: TextStyle(fontSize: 16, color: Colors.grey[600]),
-        ),
-        const SizedBox(height: 24),
-        PrimaryButton(
-          text: 'Modifier le profil',
-          onPressed: () => setState(() => isEditing = true),
-        ),
-        const SizedBox(height: 32),
-        const Divider(),
-        const SizedBox(height: 16),
         _buildSettingsTile(
           icon: FontAwesomeIcons.bell,
-          title: 'Notifications',
+          title: 'Préférences de notification',
           onTap: () {},
+          color: const Color(0xFFF59E0B),
         ),
         _buildSettingsTile(
           icon: FontAwesomeIcons.shieldHalved,
-          title: 'Sécurité',
+          title: 'Sécurité & Mot de passe',
           onTap: () {},
+          color: const Color(0xFF10B981),
         ),
+        const SizedBox(height: 32),
+        const Text(
+          "RESSOURCES",
+          style: TextStyle(
+            color: Color(0xFF94A3B8),
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 16),
         _buildSettingsTile(
           icon: FontAwesomeIcons.circleInfo,
-          title: 'À propos',
+          title: 'À propos de TogoSchool',
           onTap: () {},
+          color: const Color(0xFF64748B),
         ),
-        const SizedBox(height: 20),
         _buildSettingsTile(
-          icon: FontAwesomeIcons.rightFromBracket,
-          title: 'Se déconnecter',
-          onTap: logout,
-          color: Colors.red,
+          icon: FontAwesomeIcons.headset,
+          title: 'Aide & Support',
+          onTap: () {},
+          color: const Color(0xFF6366F1),
+        ),
+        const SizedBox(height: 40),
+        SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: _showLogoutDialog,
+            icon: const Icon(FontAwesomeIcons.rightFromBracket, size: 16),
+            label: const Text(
+              "SE DÉCONNECTER",
+              style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
+            ),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFFEE2E2),
+              foregroundColor: const Color(0xFFEF4444),
+              elevation: 0,
+              padding: const EdgeInsets.symmetric(vertical: 18),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
+          ),
         ),
       ],
     );
@@ -237,62 +335,93 @@ class _StudentProfilState extends State<StudentProfil> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Informations du Compte",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            "MISE À JOUR DU PROFIL",
+            style: TextStyle(
+              color: Color(0xFF94A3B8),
+              fontWeight: FontWeight.bold,
+              fontSize: 11,
+              letterSpacing: 1.2,
+            ),
           ),
           const SizedBox(height: 24),
+          _buildFieldLabel("Nom complet"),
           CustomTextFormField(
             label: 'Nom',
-            hint: 'Votre nom',
-            prefixIcon: Icons.person_outline,
+            hint: 'Entrez votre nom',
+            prefixIcon: Icons.person_outline_rounded,
             controller: _nameController,
             validator: (v) => (v == null || v.isEmpty) ? "Champ requis" : null,
           ),
           const SizedBox(height: 20),
+          _buildFieldLabel("Prénom"),
           CustomTextFormField(
             label: 'Prénom',
-            hint: 'Votre prénom',
-            prefixIcon: Icons.person_outline,
+            hint: 'Entrez votre prénom',
+            prefixIcon: Icons.person_outline_rounded,
             controller: _surnameController,
             validator: (v) => (v == null || v.isEmpty) ? "Champ requis" : null,
           ),
           const SizedBox(height: 20),
+          _buildFieldLabel("Adresse Email"),
           CustomTextFormField(
             label: 'Email',
-            hint: 'votre@email.com',
+            hint: 'votre@ecole.com',
             prefixIcon: Icons.email_outlined,
             controller: _emailController,
             validator: (v) => (v == null || v.isEmpty) ? "Champ requis" : null,
           ),
           const SizedBox(height: 20),
+          _buildFieldLabel("Sécurité"),
           CustomTextFormField(
             label: 'Nouveau mot de passe',
-            hint: 'Laisser vide pour ne pas changer',
-            prefixIcon: Icons.lock_outline,
+            hint: 'Laissez vide pour conserver l\'actuel',
+            prefixIcon: Icons.lock_outline_rounded,
             obscureText: _obscurePassword,
             controller: _passwordController,
             suffixIcon: IconButton(
               icon: Icon(
                 _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                color: const Color(0xFF94A3B8),
+                size: 18,
               ),
               onPressed: () =>
                   setState(() => _obscurePassword = !_obscurePassword),
             ),
           ),
-          const SizedBox(height: 40),
+          const SizedBox(height: 48),
           PrimaryButton(
             text: 'ENREGISTRER LES MODIFICATIONS',
             isLoading: isSaving,
             onPressed: updateProfile,
           ),
           const SizedBox(height: 16),
-          TextButton(
-            onPressed: () => setState(() => isEditing = false),
-            child: const Center(
-              child: Text("Annuler", style: TextStyle(color: Colors.grey)),
+          Center(
+            child: TextButton(
+              onPressed: () => setState(() => isEditing = false),
+              child: const Text(
+                "Annuler les modifications",
+                style: TextStyle(
+                  color: Color(0xFF94A3B8),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildFieldLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF1E293B),
+        ),
       ),
     );
   }
@@ -301,20 +430,83 @@ class _StudentProfilState extends State<StudentProfil> {
     required IconData icon,
     required String title,
     required VoidCallback onTap,
-    Color color = Colors.black87,
+    required Color color,
   }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: color.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Icon(icon, color: color, size: 18),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
-      title: Text(title, style: TextStyle(fontSize: 16, color: color)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 14),
-      onTap: onTap,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        leading: Container(
+          padding: const EdgeInsets.all(10),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        title: Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF1E293B),
+          ),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
+          color: Color(0xFFCBD5E1),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        onTap: onTap,
+      ),
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text(
+          "Se déconnecter ?",
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        content: const Text("Êtes-vous sûr de vouloir quitter votre session ?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text(
+              "ANNULER",
+              style: TextStyle(color: Color(0xFF94A3B8)),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Navigator.pop(context);
+              logout();
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFFEF4444),
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text("DÉCONNEXION"),
+          ),
+        ],
+      ),
     );
   }
 }

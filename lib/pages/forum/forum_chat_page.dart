@@ -92,42 +92,96 @@ class _ForumChatPageState extends State<ForumChatPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF1F5F9),
+      backgroundColor: const Color(0xFFF8F9FD),
       appBar: AppBar(
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Color(0xFF1E293B),
+            size: 20,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               widget.topicTitle,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF1E293B),
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
-            const Text(
-              "En ligne",
-              style: TextStyle(fontSize: 12, color: Colors.green),
+            Row(
+              children: [
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF10B981),
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Text(
+                  "Sujet Actif",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Color(0xFF10B981),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
           ],
         ),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black,
-        elevation: 1,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+        ),
       ),
       body: Column(
         children: [
           Expanded(
             child: isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const Center(
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Color(0xFF6366F1),
+                      ),
+                    ),
+                  )
                 : messages.isEmpty
                 ? _buildEmptyChat()
                 : ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.all(16),
+                    physics: const BouncingScrollPhysics(),
+                    padding: const EdgeInsets.fromLTRB(
+                      16,
+                      20,
+                      16,
+                      100,
+                    ), // Extra bottom padding for input
                     itemCount: messages.length,
                     itemBuilder: (context, index) {
                       final msg = messages[index];
-                      // This logic depends on the user_id or roles in the response
-                      // For now, let's assume if it's not the user it's on the left
                       final isMe = msg['is_me'] ?? false;
-                      return _buildMessageBubble(msg, isMe);
+                      final showDate =
+                          index == 0 ||
+                          _shouldShowDate(messages[index - 1], msg);
+
+                      return Column(
+                        children: [
+                          if (showDate)
+                            _buildDateSeparator(msg['created_at_human']),
+                          _buildMessageBubble(msg, isMe),
+                        ],
+                      );
                     },
                   ),
           ),
@@ -137,59 +191,97 @@ class _ForumChatPageState extends State<ForumChatPage> {
     );
   }
 
+  bool _shouldShowDate(dynamic prev, dynamic current) {
+    // Basic logic for date separator - could be improved with actual timestamp comparison
+    return prev['created_at_human'] != current['created_at_human'];
+  }
+
+  Widget _buildDateSeparator(String? date) {
+    if (date == null) return const SizedBox.shrink();
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24),
+      child: Row(
+        children: [
+          const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Text(
+              date.toUpperCase(),
+              style: const TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF94A3B8),
+                letterSpacing: 1,
+              ),
+            ),
+          ),
+          const Expanded(child: Divider(color: Color(0xFFE2E8F0))),
+        ],
+      ),
+    );
+  }
+
   Widget _buildMessageBubble(dynamic msg, bool isMe) {
+    final name = msg['user']?['name'] ?? 'Utilisateur';
+    final content = msg['message'] ?? '';
+    final time = msg['created_at_human'] ?? '';
+
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.75,
-        ),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: isMe ? const Color(0xFF6366F1) : Colors.white,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 0),
-            bottomRight: Radius.circular(isMe ? 0 : 16),
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 5,
-              offset: const Offset(0, 2),
-            ),
-          ],
+          maxWidth: MediaQuery.of(context).size.width * 0.8,
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: isMe
+              ? CrossAxisAlignment.end
+              : CrossAxisAlignment.start,
           children: [
             if (!isMe)
-              Text(
-                msg['user']?['name'] ?? 'Utilisateur',
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 10,
-                  color: Colors.blueGrey,
+              Padding(
+                padding: const EdgeInsets.only(left: 12, bottom: 4),
+                child: Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF64748B),
+                  ),
                 ),
               ),
-            Text(
-              msg['message'] ?? '',
-              style: TextStyle(
-                color: isMe ? Colors.white : Colors.black87,
-                fontSize: 14,
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: isMe ? const Color(0xFF6366F1) : Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: const Radius.circular(20),
+                  topRight: const Radius.circular(20),
+                  bottomLeft: Radius.circular(isMe ? 20 : 4),
+                  bottomRight: Radius.circular(isMe ? 4 : 20),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Text(
+                content,
+                style: TextStyle(
+                  color: isMe ? Colors.white : const Color(0xFF1E293B),
+                  fontSize: 15,
+                  height: 1.4,
+                ),
               ),
             ),
-            const SizedBox(height: 4),
-            Align(
-              alignment: Alignment.bottomRight,
+            Padding(
+              padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
               child: Text(
-                msg['created_at_human'] ?? '',
-                style: TextStyle(
-                  color: (isMe ? Colors.white : Colors.grey).withOpacity(0.7),
-                  fontSize: 9,
-                ),
+                time,
+                style: TextStyle(fontSize: 10, color: Colors.grey[400]),
               ),
             ),
           ],
@@ -200,49 +292,79 @@ class _ForumChatPageState extends State<ForumChatPage> {
 
   Widget _buildMessageInput() {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: const BoxDecoration(
+      padding: EdgeInsets.fromLTRB(
+        16,
+        16,
+        16,
+        MediaQuery.of(context).padding.bottom + 16,
+      ),
+      decoration: BoxDecoration(
         color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFE2E8F0))),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 20,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Expanded(
-            child: TextField(
-              controller: _messageController,
-              decoration: InputDecoration(
-                hintText: "Écrivez votre message...",
-                hintStyle: const TextStyle(color: Color(0xFF94A3B8)),
-                fillColor: const Color(0xFFF8FAFC),
-                filled: true,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(24),
-                  borderSide: BorderSide.none,
-                ),
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 10,
-                ),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(24),
               ),
-              maxLines: null,
+              child: TextField(
+                controller: _messageController,
+                style: const TextStyle(fontSize: 15),
+                decoration: const InputDecoration(
+                  hintText: "Votre message...",
+                  hintStyle: TextStyle(color: Color(0xFF94A3B8)),
+                  border: InputBorder.none,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: 20,
+                    vertical: 12,
+                  ),
+                ),
+                maxLines: 4,
+                minLines: 1,
+              ),
             ),
           ),
-          const SizedBox(width: 8),
-          CircleAvatar(
-            backgroundColor: const Color(0xFF6366F1),
-            child: isSending
-                ? const SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(
-                      color: Colors.white,
-                      strokeWidth: 2,
-                    ),
-                  )
-                : IconButton(
-                    icon: const Icon(Icons.send, color: Colors.white, size: 20),
-                    onPressed: _sendMessage,
+          const SizedBox(width: 12),
+          GestureDetector(
+            onTap: isSending ? null : _sendMessage,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: const Color(0xFF6366F1),
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6366F1).withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
                   ),
+                ],
+              ),
+              child: isSending
+                  ? const Padding(
+                      padding: EdgeInsets.all(14),
+                      child: CircularProgressIndicator(
+                        color: Colors.white,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Icon(
+                      Icons.send_rounded,
+                      color: Colors.white,
+                      size: 20,
+                    ),
+            ),
           ),
         ],
       ),
@@ -254,11 +376,31 @@ class _ForumChatPageState extends State<ForumChatPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.chat_bubble_outline, size: 60, color: Colors.grey[300]),
-          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: const Color(0xFF6366F1).withOpacity(0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.chat_bubble_outline_rounded,
+              size: 64,
+              color: const Color(0xFF6366F1).withOpacity(0.3),
+            ),
+          ),
+          const SizedBox(height: 24),
           const Text(
-            "Aucun message. Commencez la discussion !",
-            style: TextStyle(color: Colors.grey),
+            "Aucun message",
+            style: TextStyle(
+              color: Color(0xFF1E293B),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            "Commencez la discussion maintenant !",
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
           ),
         ],
       ),

@@ -47,6 +47,76 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: SafeArea(
+        child: Column(
+          children: [
+            DashHeader(
+              color1: const Color(0xFFF59E0B),
+              color2: const Color(0xFFD97706),
+              title: widget.forumTitle.toUpperCase(),
+              subtitle: 'Discussions en cours',
+              title1: topics.length.toString(),
+              subtitle1: 'Sujets',
+              title2: "",
+              subtitle2: "",
+              title3: "",
+              subtitle3: "",
+              onBack: () => Navigator.pop(context),
+            ),
+            Expanded(
+              child: RefreshIndicator(
+                onRefresh: _fetchTopics,
+                color: const Color(0xFFF59E0B),
+                child: isLoading
+                    ? const Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(
+                            Color(0xFFF59E0B),
+                          ),
+                        ),
+                      )
+                    : topics.isEmpty
+                    ? _buildEmptyState()
+                    : ListView.builder(
+                        physics: const BouncingScrollPhysics(),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 24,
+                        ),
+                        itemCount: topics.length,
+                        itemBuilder: (context, index) {
+                          final topic = topics[index];
+                          return _buildTopicCard(topic);
+                        },
+                      ),
+              ),
+            ),
+          ],
+        ),
+      ),
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: _showAddTopicDialog,
+        backgroundColor: const Color(0xFFF59E0B),
+        elevation: 4,
+        highlightElevation: 8,
+        icon: const Icon(Icons.add_comment_rounded, color: Colors.white),
+        label: const Text(
+          "NOUVEAU SUJET",
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      ),
+    );
+  }
+
   void _showAddTopicDialog() {
     final titleController = TextEditingController();
     final subjectController = TextEditingController();
@@ -59,36 +129,59 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
       builder: (context) => StatefulBuilder(
         builder: (ctx, setInternalState) => Container(
           decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            color: Color(0xFFF8F9FD),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(40)),
           ),
           padding: EdgeInsets.only(
-            bottom: MediaQuery.of(ctx).viewInsets.bottom,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 32,
             left: 24,
             right: 24,
-            top: 24,
+            top: 12,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 24),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
               const Text(
-                "Nouveau sujet de discussion",
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                "Lancer une discussion",
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
+              Text(
+                "Posez votre question ou partagez une idée avec la communauté.",
+                style: TextStyle(color: Colors.grey[600], fontSize: 14),
+              ),
+              const SizedBox(height: 28),
+              _buildFieldLabel("Titre du sujet"),
               CustomTextFormField(
-                label: "Titre du sujet",
-                hint: "Quel est votre problème ?",
+                label: "Ex: Comment résoudre l'exercice 3 ?",
+                hint: "",
                 controller: titleController,
+                prefixIcon: Icons.title_rounded,
               ),
-              const SizedBox(height: 16),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
+              _buildFieldLabel("Message / Description"),
               CustomTextFormField(
-                label: "Message / Description",
-                hint: "Décrivez votre sujet...",
+                label: "Détails de votre sujet...",
+                hint: "",
                 controller: subjectController,
-                maxLines: 3,
+                maxLines: 4,
+                prefixIcon: Icons.description_outlined,
               ),
               const SizedBox(height: 32),
               PrimaryButton(
@@ -114,7 +207,6 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
                   }
                 },
               ),
-              const SizedBox(height: 32),
             ],
           ),
         ),
@@ -122,104 +214,143 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
-      body: SafeArea(
-        child: Column(
-          children: [
-            DashHeader(
-              color1: const Color(0xFFF59E0B),
-              color2: const Color(0xFFD97706),
-              title: widget.forumTitle,
-              subtitle: 'Discussions en cours',
-              title1: topics.length.toString(),
-              subtitle1: 'Sujets',
-              title2: "",
-              subtitle2: "",
-              title3: "",
-              subtitle3: "",
-              onBack: () => Navigator.pop(context),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _fetchTopics,
-                child: isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : topics.isEmpty
-                    ? _buildEmptyState()
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(20),
-                        itemCount: topics.length,
-                        itemBuilder: (context, index) {
-                          final topic = topics[index];
-                          return _buildTopicCard(topic);
-                        },
-                      ),
-              ),
-            ),
-          ],
+  Widget _buildFieldLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF1E293B),
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddTopicDialog,
-        backgroundColor: Colors.orange,
-        child: const Icon(Icons.add_comment),
       ),
     );
   }
 
   Widget _buildTopicCard(dynamic topic) {
-    return Card(
+    final title = topic['titre'] ?? 'Sujet sans titre';
+    final auteur =
+        topic['auteur']?['name'] ?? topic['user_name'] ?? 'Utilisateur';
+    final time = topic['created_at_human'] ?? '';
+
+    return Container(
       margin: const EdgeInsets.only(bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: 0,
-      color: Colors.white,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 20,
-          vertical: 12,
-        ),
-        title: Text(
-          topic['titre'] ?? 'Sujet sans titre',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Icon(Icons.person_outline, size: 14, color: Colors.grey),
-                const SizedBox(width: 4),
-                Text(
-                  topic['auteur']?['name'] ?? topic['user_name'] ?? 'Élève',
-                  style: const TextStyle(fontSize: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ForumChatPage(topicId: topic['id'], topicTitle: title),
                 ),
-                const Spacer(),
-                const Icon(Icons.access_time, size: 14, color: Colors.grey),
-                const SizedBox(width: 4),
-                Text(
-                  topic['created_at_human'] ?? '',
-                  style: const TextStyle(fontSize: 12),
-                ),
-              ],
-            ),
-          ],
-        ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => ForumChatPage(
-                topicId: topic['id'],
-                topicTitle: topic['titre'],
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 12,
+                        backgroundColor: const Color(
+                          0xFFF59E0B,
+                        ).withOpacity(0.1),
+                        child: const Icon(
+                          Icons.person_rounded,
+                          size: 14,
+                          color: Color(0xFFD97706),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        auteur,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF64748B),
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        time,
+                        style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                      color: Color(0xFF1E293B),
+                      height: 1.3,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8F9FD),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.chat_bubble_outline_rounded,
+                              size: 14,
+                              color: Colors.grey[500],
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              "Rejoindre",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Spacer(),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        color: Color(0xFFCBD5E1),
+                        size: 18,
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
-          );
-        },
+          ),
+        ),
       ),
     );
   }
@@ -229,20 +360,43 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            Icons.speaker_notes_off_outlined,
-            size: 64,
-            color: Colors.grey[300],
+          Container(
+            padding: const EdgeInsets.all(32),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF59E0B).withOpacity(0.05),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.speaker_notes_off_rounded,
+              size: 64,
+              color: const Color(0xFFF59E0B).withOpacity(0.3),
+            ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           const Text(
-            "Aucune discussion dans ce forum",
-            style: TextStyle(color: Colors.grey),
+            "Aucune discussion",
+            style: TextStyle(
+              color: Color(0xFF1E293B),
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
+          Text(
+            "Soyez le premier à poser une question !",
+            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+          ),
+          const SizedBox(height: 24),
           TextButton(
             onPressed: _showAddTopicDialog,
-            child: const Text("Démarrer la première discussion"),
+            style: TextButton.styleFrom(
+              foregroundColor: const Color(0xFFF59E0B),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            ),
+            child: const Text(
+              "DÉMARRER UNE DISCUSSION",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

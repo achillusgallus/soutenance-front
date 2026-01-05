@@ -113,34 +113,53 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: Color(0xFF1E293B)),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 20),
-                _buildHeader(),
-                const SizedBox(height: 40),
-                if (_currentStep == 0) _buildEmailStep(),
-                if (_currentStep == 1) _buildCodeStep(),
-                if (_currentStep == 2) _buildPasswordStep(),
-                const SizedBox(height: 40),
-                _buildActionButton(),
-              ],
+      body: Stack(
+        children: [
+          // Background accents
+          Positioned(
+            top: -100,
+            right: -100,
+            child: Container(
+              width: 300,
+              height: 300,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: const Color(0xFF6366F1).withOpacity(0.05),
+              ),
             ),
           ),
-        ),
+          SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 30),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 20),
+                    // Back button
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new,
+                        color: Color(0xFF1E293B),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                    const SizedBox(height: 20),
+                    _buildHeader(),
+                    const SizedBox(height: 40),
+                    if (_currentStep == 0) _buildEmailStep(),
+                    if (_currentStep == 1) _buildCodeStep(),
+                    if (_currentStep == 2) _buildPasswordStep(),
+                    const SizedBox(height: 40),
+                    _buildActionButton(),
+                    const SizedBox(height: 40),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

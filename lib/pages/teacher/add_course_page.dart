@@ -40,11 +40,9 @@ class _AddCoursePageState extends State<AddCoursePage> {
     if (widget.course != null) {
       _titleController.text = widget.course!['titre'] ?? '';
       _contentController.text = widget.course!['contenu'] ?? '';
-      // On ne peut pas facilement restaurer un fichier local depuis un lien URL
       _linkController.text = widget.course!['fichier'] ?? '';
       _selectedSubjectId = widget.course!['matiere_id'];
     } else {
-      // Use initialSubjectId if provided, otherwise default to first subject
       if (widget.initialSubjectId != null) {
         _selectedSubjectId = widget.initialSubjectId;
       } else if (widget.subjects.isNotEmpty) {
@@ -142,8 +140,7 @@ class _AddCoursePageState extends State<AddCoursePage> {
         'contenu': _contentController.text,
         'matiere_nom': selectedSubject?['nom'],
         'matiere_id': _selectedSubjectId,
-        '_method':
-            'PUT', // Certains frameworks PHP (comme Laravel) exigent cela pour le multipart PUT
+        '_method': 'PUT',
       };
 
       final formData = dio_multipart.FormData.fromMap(dataMap);
@@ -160,7 +157,6 @@ class _AddCoursePageState extends State<AddCoursePage> {
         );
       }
 
-      // On utilise POST avec _method: PUT car multipart/form-data via PUT est souvent problématique sur les serveurs
       await api.create("/professeur/cours/${widget.course!['id']}", formData);
       Navigator.pop(context, true);
     } catch (e) {
@@ -178,128 +174,188 @@ class _AddCoursePageState extends State<AddCoursePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: Column(
-          children: [
-            FormHeader(
-              title: widget.course == null
-                  ? 'Ajouter un cours'
-                  : 'Modifier le cours',
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: Column(
+        children: [
+          FormHeader(
+            title: widget.course == null
+                ? 'Nouveau Cours'
+                : 'Modifier le Cours',
+            onBack: () => Navigator.pop(context),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.all(24),
+              child: Container(
                 padding: const EdgeInsets.all(24),
-                child: Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 20,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(32),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6366F1).withOpacity(0.06),
+                      blurRadius: 24,
+                      offset: const Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildSectionTitle("Informations Générales"),
+                      const SizedBox(height: 24),
+                      _buildLabel("Matière associée"),
+                      _buildSubjectDropdown(),
+                      const SizedBox(height: 20),
+                      CustomTextFormField(
+                        label: 'Titre du cours',
+                        hint: 'Ex: Introduction à l\'Algèbre',
+                        prefixIcon: Icons.title_rounded,
+                        controller: _titleController,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextFormField(
+                        label: 'Description / Contenu',
+                        hint: 'Décrivez brièvement le contenu du cours...',
+                        prefixIcon: Icons.description_outlined,
+                        controller: _contentController,
+                      ),
+                      const SizedBox(height: 32),
+                      _buildSectionTitle("Ressources Pédagogiques"),
+                      const SizedBox(height: 8),
+                      _buildLabel("Fichier du cours (PDF, Vidéo...)"),
+                      const SizedBox(height: 8),
+                      _buildFilePicker(),
+                      const SizedBox(height: 40),
+                      PrimaryButton(
+                        text: widget.course == null
+                            ? 'CRÉER LE COURS'
+                            : 'METTRE À JOUR',
+                        isLoading: _isSaving,
+                        onPressed: _save,
                       ),
                     ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          "Détails du cours",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 24),
-                        _buildSubjectDropdown(),
-                        const SizedBox(height: 20),
-                        CustomTextFormField(
-                          label: 'Titre du cours',
-                          hint: 'Ex: Introduction à l\'Algèbre',
-                          prefixIcon: Icons.title,
-                          controller: _titleController,
-                        ),
-                        const SizedBox(height: 20),
-                        CustomTextFormField(
-                          label: 'Description / Contenu',
-                          hint: 'Décrivez brièvement le cours...',
-                          prefixIcon: Icons.description_outlined,
-                          controller: _contentController,
-                          // MaxLines could be added to CustomTextFormField if supported
-                        ),
-                        const SizedBox(height: 20),
-                        const Text(
-                          "Document ou Vidéo du cours",
-                          style: TextStyle(fontWeight: FontWeight.w500),
-                        ),
-                        const SizedBox(height: 8),
-                        InkWell(
-                          onTap: _pickFile,
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.grey[100],
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey[300]!),
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  _pickedFile == null
-                                      ? Icons.upload_file
-                                      : Icons.check_circle,
-                                  color: _pickedFile == null
-                                      ? Colors.grey
-                                      : Colors.green,
-                                ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    _pickedFile?.name ??
-                                        (widget.course?['fichier'] != null
-                                            ? p.basename(
-                                                widget.course!['fichier'],
-                                              )
-                                            : "Choisir un fichier (PDF, MP4...)"),
-                                    style: TextStyle(
-                                      color:
-                                          _pickedFile == null &&
-                                              widget.course?['fichier'] == null
-                                          ? Colors.grey[600]
-                                          : Colors.black,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (_pickedFile != null)
-                                  const Icon(
-                                    Icons.edit,
-                                    size: 18,
-                                    color: Colors.blueAccent,
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 40),
-                        PrimaryButton(
-                          text: widget.course == null
-                              ? 'CRÉER LE COURS'
-                              : 'METTRE À JOUR',
-                          isLoading: _isSaving,
-                          onPressed: _save,
-                        ),
-                      ],
-                    ),
                   ),
                 ),
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
+        color: Color(0xFF1E293B),
+      ),
+    );
+  }
+
+  Widget _buildLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+          color: Color(0xFF64748B),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFilePicker() {
+    bool hasFile = _pickedFile != null || widget.course?['fichier'] != null;
+    String fileName =
+        _pickedFile?.name ??
+        (widget.course?['fichier'] != null
+            ? p.basename(widget.course!['fichier'])
+            : "Choisir un fichier");
+
+    return InkWell(
+      onTap: _pickFile,
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: hasFile
+              ? const Color(0xFF6366F1).withOpacity(0.03)
+              : const Color(0xFFF8F9FD),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: hasFile
+                ? const Color(0xFF6366F1).withOpacity(0.1)
+                : const Color(0xFFE2E8F0),
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: hasFile
+                    ? const Color(0xFF6366F1).withOpacity(0.1)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  if (!hasFile)
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.03),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                ],
+              ),
+              child: Icon(
+                _pickedFile == null
+                    ? Icons.cloud_upload_outlined
+                    : Icons.check_circle_rounded,
+                color: hasFile
+                    ? const Color(0xFF6366F1)
+                    : const Color(0xFF94A3B8),
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    fileName,
+                    style: TextStyle(
+                      color: hasFile
+                          ? const Color(0xFF1E293B)
+                          : const Color(0xFF94A3B8),
+                      fontWeight: hasFile ? FontWeight.w600 : FontWeight.normal,
+                      fontSize: 14,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (!hasFile)
+                    const Text(
+                      "PDF, MP4, MOV...",
+                      style: TextStyle(color: Color(0xFF94A3B8), fontSize: 11),
+                    ),
+                ],
+              ),
+            ),
+            if (hasFile)
+              const Icon(
+                Icons.edit_rounded,
+                color: Color(0xFF6366F1),
+                size: 20,
+              ),
           ],
         ),
       ),
@@ -307,35 +363,36 @@ class _AddCoursePageState extends State<AddCoursePage> {
   }
 
   Widget _buildSubjectDropdown() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          "Sélectionner la matière",
-          style: TextStyle(fontWeight: FontWeight.w500),
-        ),
-        const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          decoration: BoxDecoration(
-            color: Colors.grey[100],
-            borderRadius: BorderRadius.circular(12),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<int>(
+          value: _selectedSubjectId,
+          isExpanded: true,
+          icon: const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: Color(0xFF64748B),
           ),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<int>(
-              value: _selectedSubjectId,
-              isExpanded: true,
-              items: widget.subjects.map((s) {
-                return DropdownMenuItem<int>(
-                  value: s['id'],
-                  child: Text(s['nom'] ?? 'Sans nom'),
-                );
-              }).toList(),
-              onChanged: (val) => setState(() => _selectedSubjectId = val),
-            ),
+          style: const TextStyle(
+            color: Color(0xFF1E293B),
+            fontSize: 15,
+            fontWeight: FontWeight.w500,
           ),
+          borderRadius: BorderRadius.circular(16),
+          items: widget.subjects.map((s) {
+            return DropdownMenuItem<int>(
+              value: s['id'],
+              child: Text(s['nom'] ?? 'Sans nom'),
+            );
+          }).toList(),
+          onChanged: (val) => setState(() => _selectedSubjectId = val),
         ),
-      ],
+      ),
     );
   }
 }

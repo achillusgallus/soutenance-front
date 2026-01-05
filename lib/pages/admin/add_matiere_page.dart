@@ -94,198 +94,268 @@ class _AddMatierePageState extends State<AddMatierePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: Column(
-          children: [
-            FormHeader(
-              title: isEditMode ? 'Modifier la matière' : 'Nouvelle Matière',
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 32,
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: Column(
+        children: [
+          FormHeader(
+            title: isEditMode ? 'MODIFIER LA MATIÈRE' : 'NOUVELLE MATIÈRE',
+            onBack: () => Navigator.pop(context),
+          ),
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(24, 20, 24, 40),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(32),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(30),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF6366F1).withOpacity(0.08),
+                      blurRadius: 30,
+                      offset: const Offset(0, 10),
+                    ),
+                  ],
                 ),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(32),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.05),
-                        blurRadius: 20,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isEditMode
-                              ? "Modifier les détails"
-                              : "Informations Générales",
-                          style: const TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          isEditMode
-                              ? "Mettez à jour les informations de cette matière."
-                              : "Entrez le nom et la description de la nouvelle matière.",
-                          style: TextStyle(
-                            color: Colors.grey[600],
-                            fontSize: 13,
-                          ),
-                        ),
-                        const SizedBox(height: 32),
-                        CustomTextFormField(
-                          label: 'Nom de la matière',
-                          hint: 'Ex: Mathématiques',
-                          prefixIcon: Icons.book_outlined,
-                          validator: (value) {
-                            if (value == null || value.isEmpty)
-                              return "Le nom est requis";
-                            return null;
-                          },
-                          controller: _nameController,
-                        ),
-                        const SizedBox(height: 20),
-                        CustomTextFormField(
-                          label: 'Description',
-                          hint: 'Brève description du cours...',
-                          prefixIcon: Icons.description_outlined,
-                          validator: (value) {
-                            if (value == null || value.isEmpty)
-                              return "La description est requise";
-                            return null;
-                          },
-                          controller: _descriptionController,
-                        ),
-                        const SizedBox(height: 20),
-                        CustomTextFormField(
-                          label: 'Professeur',
-                          hint: 'Nom du professeur assigné',
-                          prefixIcon: Icons.person_outlined,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "Le professeur est requis";
-                            }
-                            return null;
-                          },
-                          controller: _userNameController,
-                        ),
-                        const SizedBox(height: 20),
-                        DropdownButtonFormField<String>(
-                          value: _selectedClasse,
-                          decoration: InputDecoration(
-                            labelText: 'Classe',
-                            prefixIcon: const Icon(
-                              Icons.class_outlined,
-                              color: Colors.blueAccent,
-                            ),
-                            filled: true,
-                            fillColor: Colors.grey[50],
-                            border: OutlineInputBorder(
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF6366F1).withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
+                            child: const Icon(
+                              Icons.menu_book_rounded,
+                              color: Color(0xFF6366F1),
+                              size: 24,
+                            ),
                           ),
-                          items: classes.map((String c) {
-                            return DropdownMenuItem<String>(
-                              value: c,
-                              child: Text(c),
-                            );
-                          }).toList(),
-                          onChanged: (String? value) {
-                            setState(() {
-                              _selectedClasse = value;
-                            });
-                          },
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return "La classe est requise";
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 40),
-                        PrimaryButton(
-                          text: isEditMode ? 'ENREGISTRER' : 'AJOUTER MATIÈRE',
-                          isLoading: isSaving,
-                          onPressed: () async {
-                            if (_formKey.currentState!.validate()) {
-                              setState(() => isSaving = true);
-
-                              final String name = _nameController.text.trim();
-                              final String description = _descriptionController
-                                  .text
-                                  .trim();
-                              final String username = _userNameController.text
-                                  .trim();
-
-                              bool success;
-                              if (isEditMode) {
-                                success = await updateMatiere(
-                                  widget.matiere!['id'],
-                                  name,
-                                  description,
-                                  username,
-                                  _selectedClasse!,
-                                );
-                              } else {
-                                success = await addMatiere(
-                                  name,
-                                  description,
-                                  username,
-                                  _selectedClasse!,
-                                );
-                              }
-
-                              if (!mounted) return;
-                              setState(() => isSaving = false);
-
-                              if (success) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      isEditMode
-                                          ? "Matière modifiée !"
-                                          : "Matière ajoutée !",
-                                    ),
-                                    backgroundColor: Colors.green,
-                                    behavior: SnackBarBehavior.floating,
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isEditMode
+                                      ? "Édition des détails"
+                                      : "Informations Générales",
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                    color: Color(0xFF1E293B),
                                   ),
-                                );
-                                Navigator.pop(context, true);
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text("Une erreur est survenue"),
-                                    backgroundColor: Colors.red,
-                                    behavior: SnackBarBehavior.floating,
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  "Configurez les paramètres de cette matière.",
+                                  style: TextStyle(
+                                    color: const Color(0xFF64748B),
+                                    fontSize: 13,
                                   ),
-                                );
-                              }
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      CustomTextFormField(
+                        label: 'NOM DE LA MATIÈRE',
+                        hint: 'Ex: Mathématiques',
+                        prefixIcon: Icons.book_rounded,
+                        controller: _nameController,
+                        validator: (value) => (value == null || value.isEmpty)
+                            ? "Le nom est requis"
+                            : null,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextFormField(
+                        label: 'DESCRIPTION',
+                        hint: 'Brève description du cours...',
+                        prefixIcon: Icons.description_rounded,
+                        controller: _descriptionController,
+                        validator: (value) => (value == null || value.isEmpty)
+                            ? "La description est requise"
+                            : null,
+                      ),
+                      const SizedBox(height: 20),
+                      CustomTextFormField(
+                        label: 'PROFESSEUR REPLACÉ (NOM COMPLET)',
+                        hint: 'Nom de l\'enseignant responsable',
+                        prefixIcon: Icons.person_rounded,
+                        controller: _userNameController,
+                        validator: (value) => (value == null || value.isEmpty)
+                            ? "L'enseignant est requis"
+                            : null,
+                      ),
+                      const SizedBox(height: 20),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            "CLASSE ASSIGNÉE",
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF6366F1),
+                              letterSpacing: 1.2,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          DropdownButtonFormField<String>(
+                            value: _selectedClasse,
+                            decoration: InputDecoration(
+                              prefixIcon: const Icon(
+                                Icons.school_rounded,
+                                color: Color(0xFF6366F1),
+                                size: 20,
+                              ),
+                              filled: true,
+                              fillColor: const Color(0xFFF8F9FD),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 16,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: BorderSide.none,
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(16),
+                                borderSide: const BorderSide(
+                                  color: Color(0xFF6366F1),
+                                  width: 1.5,
+                                ),
+                              ),
+                            ),
+                            dropdownColor: Colors.white,
+                            style: const TextStyle(
+                              color: Color(0xFF1E293B),
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            items: classes.map((String c) {
+                              return DropdownMenuItem<String>(
+                                value: c,
+                                child: Text(
+                                  c.replaceAll('_', ' ').toUpperCase(),
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (String? value) =>
+                                setState(() => _selectedClasse = value),
+                            validator: (value) =>
+                                (value == null || value.isEmpty)
+                                ? "La classe est requise"
+                                : null,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 40),
+                      PrimaryButton(
+                        text: isEditMode
+                            ? 'METTRE À JOUR LA MATIÈRE'
+                            : 'CRÉER LA MATIÈRE',
+                        isLoading: isSaving,
+                        onPressed: () async {
+                          if (_formKey.currentState!.validate()) {
+                            setState(() => isSaving = true);
+
+                            final String name = _nameController.text.trim();
+                            final String description = _descriptionController
+                                .text
+                                .trim();
+                            final String username = _userNameController.text
+                                .trim();
+
+                            bool success;
+                            if (isEditMode) {
+                              success = await updateMatiere(
+                                widget.matiere!['id'],
+                                name,
+                                description,
+                                username,
+                                _selectedClasse!,
+                              );
+                            } else {
+                              success = await addMatiere(
+                                name,
+                                description,
+                                username,
+                                _selectedClasse!,
+                              );
                             }
-                          },
+
+                            if (!mounted) return;
+                            setState(() => isSaving = false);
+
+                            if (success) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    isEditMode
+                                        ? "Matière mise à jour avec succès !"
+                                        : "Nouvelle matière créée avec succès !",
+                                  ),
+                                  backgroundColor: const Color(0xFF10B981),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              );
+                              Navigator.pop(context, true);
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: const Text(
+                                    "Une erreur est survenue lors de l'enregistrement",
+                                  ),
+                                  backgroundColor: const Color(0xFFEF4444),
+                                  behavior: SnackBarBehavior.floating,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                              );
+                            }
+                          }
+                        },
+                      ),
+                      if (isEditMode) ...[
+                        const SizedBox(height: 16),
+                        Center(
+                          child: TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text(
+                              "ANNULER",
+                              style: TextStyle(
+                                color: Color(0xFF94A3B8),
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
                         ),
                       ],
-                    ),
+                    ],
                   ),
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

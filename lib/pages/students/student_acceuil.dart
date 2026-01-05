@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/components/dash_header.dart';
+import 'package:togoschool/components/button_card.dart';
 import 'package:togoschool/pages/students/student_cours.dart';
 import 'package:togoschool/pages/students/student_forum.dart';
 import 'package:togoschool/pages/students/student_profil.dart';
@@ -86,12 +87,12 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
         onRefresh: studentMatieres,
         color: const Color(0xFF6366F1),
         child: ListView(
-          padding: EdgeInsets.zero,
+          padding: const EdgeInsets.only(bottom: 40),
           physics: const AlwaysScrollableScrollPhysics(),
           children: [
             DashHeader(
               color1: const Color(0xFF6366F1),
-              color2: const Color(0xFF8B5CF6),
+              color2: const Color(0xFF4F46E5),
               title: "Bonjour, $studentName",
               subtitle: 'Prêt à apprendre aujourd\'hui ?',
               title1: matieres.length.toString(),
@@ -101,16 +102,16 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
               title3: forumCount.toString(),
               subtitle3: 'Forums',
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     'ACTIONS RAPIDES',
                     style: TextStyle(
-                      color: Color(0xFF475569),
+                      color: Color(0xFF64748B),
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                       letterSpacing: 1.2,
@@ -120,10 +121,10 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildActionCard(
+                      ButtonCard(
                         icon: FontAwesomeIcons.bookOpen,
-                        title: 'Mes Cours',
-                        color: const Color(0xFF3B82F6),
+                        title: 'Cours',
+                        color: const Color(0xFF6366F1),
                         onTap: () {
                           Navigator.push(
                             context,
@@ -133,7 +134,7 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                           );
                         },
                       ),
-                      _buildActionCard(
+                      ButtonCard(
                         icon: FontAwesomeIcons.vial,
                         title: 'Quiz',
                         color: const Color(0xFF10B981),
@@ -146,7 +147,7 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                           );
                         },
                       ),
-                      _buildActionCard(
+                      ButtonCard(
                         icon: FontAwesomeIcons.comments,
                         title: 'Forum',
                         color: const Color(0xFFF59E0B),
@@ -159,7 +160,7 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                           );
                         },
                       ),
-                      _buildActionCard(
+                      ButtonCard(
                         icon: FontAwesomeIcons.user,
                         title: 'Profil',
                         color: const Color(0xFFEC4899),
@@ -174,21 +175,21 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 40),
                   const Text(
                     'MES MATIÈRES',
                     style: TextStyle(
-                      color: Color(0xFF475569),
+                      color: Color(0xFF64748B),
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
                       letterSpacing: 1.2,
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   if (isLoading)
                     const Center(
                       child: Padding(
-                        padding: EdgeInsets.all(32.0),
+                        padding: EdgeInsets.all(40.0),
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(
                             Color(0xFF6366F1),
@@ -197,42 +198,42 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                       ),
                     )
                   else if (matieres.isEmpty)
-                    Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(32.0),
-                        child: Column(
-                          children: [
-                            Icon(
-                              FontAwesomeIcons.folderOpen,
-                              size: 48,
-                              color: Colors.grey.withOpacity(0.5),
-                            ),
-                            const SizedBox(height: 16),
-                            const Text(
-                              "Aucune matière trouvée pour votre classe.",
-                              style: TextStyle(
-                                color: Colors.grey,
-                                fontSize: 16,
-                              ),
-                              textAlign: TextAlign.center,
-                            ),
-                          ],
-                        ),
-                      ),
-                    )
+                    _buildEmptyState()
                   else
                     ListView.builder(
                       shrinkWrap: true,
                       physics: const NeverScrollableScrollPhysics(),
                       itemCount: matieres.length,
-                      padding: const EdgeInsets.only(bottom: 24),
+                      padding: EdgeInsets.zero,
                       itemBuilder: (context, index) {
-                        final matiere = matieres[index];
-                        return _buildMatiereCard(matiere);
+                        return _buildMatiereCard(matieres[index]);
                       },
                     ),
                 ],
               ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(40.0),
+        child: Column(
+          children: [
+            Icon(
+              FontAwesomeIcons.folderOpen,
+              size: 48,
+              color: const Color(0xFFCBD5E1),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Aucune matière trouvée pour votre classe.",
+              style: TextStyle(color: Color(0xFF94A3B8), fontSize: 16),
+              textAlign: TextAlign.center,
             ),
           ],
         ),
@@ -245,10 +246,10 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(0.03),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -258,7 +259,6 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
         color: Colors.transparent,
         child: InkWell(
           onTap: () {
-            // Navigate to courses page filtered by this subject
             Navigator.push(
               context,
               MaterialPageRoute(
@@ -269,14 +269,14 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
               ),
             );
           },
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
           child: Padding(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(20.0),
             child: Row(
               children: [
                 Container(
-                  width: 60,
-                  height: 60,
+                  width: 56,
+                  height: 56,
                   decoration: BoxDecoration(
                     color: const Color(0xFF6366F1).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(16),
@@ -284,28 +284,30 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                   child: const Icon(
                     FontAwesomeIcons.book,
                     color: Color(0xFF6366F1),
-                    size: 24,
+                    size: 20,
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 20),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        matiere['nom'] ?? 'Matière sans nom',
+                        matiere['nom'] ?? 'Matière',
                         style: const TextStyle(
-                          fontSize: 18,
+                          fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF1E293B),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        matiere['description'] ??
-                            'Aucune description disponible',
-                        style: TextStyle(fontSize: 14, color: Colors.grey[600]),
-                        maxLines: 2,
+                        matiere['description'] ?? 'Aucune description',
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF64748B),
+                        ),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -313,55 +315,14 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                 ),
                 const Icon(
                   Icons.arrow_forward_ios,
-                  size: 16,
-                  color: Color(0xFF94A3B8),
+                  size: 14,
+                  color: Color(0xFFCBD5E1),
                 ),
               ],
             ),
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildActionCard({
-    required IconData icon,
-    required String title,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Column(
-      children: [
-        InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            width: 70,
-            height: 70,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(0.1),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: color, size: 28),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          title,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
-          ),
-        ),
-      ],
     );
   }
 }

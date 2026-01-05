@@ -96,12 +96,240 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
     }
   }
 
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF8F9FD),
+      body: Column(
+        children: [
+          FormHeader(
+            title: "Questions: ${widget.quiz['titre']}",
+            onBack: () => Navigator.pop(context),
+          ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: _loadQuestions,
+              color: const Color(0xFF10B981),
+              child: isLoading
+                  ? const Center(
+                      child: CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          Color(0xFF10B981),
+                        ),
+                      ),
+                    )
+                  : _buildQuestionsList(),
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showQuestionForm(),
+        backgroundColor: const Color(0xFF10B981),
+        elevation: 4,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: const Icon(Icons.add_rounded, color: Colors.white, size: 30),
+      ),
+    );
+  }
+
+  Widget _buildQuestionsList() {
+    if (questions.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withOpacity(0.05),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.help_outline_rounded,
+                size: 80,
+                color: const Color(0xFF10B981).withOpacity(0.2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              "Aucune question dans ce quiz",
+              style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      physics: const BouncingScrollPhysics(),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+      itemCount: questions.length,
+      itemBuilder: (context, index) {
+        final q = questions[index];
+        final List<dynamic> answers = q['reponses'] ?? [];
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(24),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.04),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF10B981).withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Center(
+                  child: Text(
+                    "${index + 1}",
+                    style: const TextStyle(
+                      color: Color(0xFF10B981),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+              title: Text(
+                q['question'] ?? 'Question sans titre',
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              subtitle: Text(
+                "${answers.length} réponse(s) • ${q['type']?.toString().toUpperCase() ?? 'QCM'}",
+                style: const TextStyle(color: Color(0xFF64748B), fontSize: 12),
+              ),
+              children: [
+                Container(
+                  height: 1,
+                  color: const Color(0xFFF1F5F9),
+                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ...answers.map((a) {
+                        final bool isCorrect =
+                            a['est_correcte'] == 1 || a['est_correcte'] == true;
+                        return Padding(
+                          padding: const EdgeInsets.only(bottom: 10),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 12,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isCorrect
+                                  ? const Color(0xFF10B981).withOpacity(0.05)
+                                  : const Color(0xFFF1F5F9),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: isCorrect
+                                    ? const Color(0xFF10B981).withOpacity(0.2)
+                                    : const Color(0xFFE2E8F0),
+                              ),
+                            ),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  isCorrect
+                                      ? Icons.check_circle_rounded
+                                      : Icons.radio_button_unchecked_rounded,
+                                  size: 18,
+                                  color: isCorrect
+                                      ? const Color(0xFF10B981)
+                                      : const Color(0xFF94A3B8),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    a['reponse'] ?? '',
+                                    style: TextStyle(
+                                      fontWeight: isCorrect
+                                          ? FontWeight.w600
+                                          : FontWeight.normal,
+                                      color: isCorrect
+                                          ? const Color(0xFF1E293B)
+                                          : const Color(0xFF64748B),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }),
+                      const SizedBox(height: 16),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          TextButton.icon(
+                            onPressed: () => _showQuestionForm(question: q),
+                            icon: const Icon(Icons.edit_rounded, size: 18),
+                            label: const Text("Modifier"),
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFF6366F1),
+                              backgroundColor: const Color(
+                                0xFF6366F1,
+                              ).withOpacity(0.08),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          TextButton.icon(
+                            onPressed: () => _deleteQuestion(q['id']),
+                            icon: const Icon(
+                              Icons.delete_outline_rounded,
+                              size: 18,
+                            ),
+                            label: const Text("Supprimer"),
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFFEF4444),
+                              backgroundColor: const Color(
+                                0xFFEF4444,
+                              ).withOpacity(0.08),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   void _showQuestionForm({Map<String, dynamic>? question}) {
     final titleController = TextEditingController(
       text: question?['question'] ?? '',
     );
-
-    // Initialiser les réponses existantes ou une liste vide
     List<Map<String, dynamic>> answers = [];
     List<int> deletedAnswerIds = [];
 
@@ -116,7 +344,6 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
         ),
       );
     } else {
-      // Commencer avec 2 options par défaut
       answers = [
         {'controller': TextEditingController(), 'est_correcte': true},
         {'controller': TextEditingController(), 'est_correcte': false},
@@ -131,25 +358,26 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setInternalState) => Container(
-          height: MediaQuery.of(ctx).size.height * 0.85,
+          height: MediaQuery.of(ctx).size.height * 0.9,
           decoration: const BoxDecoration(
-            color: Color(0xFFF5F5F5),
-            borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+            color: Color(0xFFF8F9FD),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
           ),
           child: Column(
             children: [
               Container(
-                margin: const EdgeInsets.symmetric(vertical: 12),
+                margin: const EdgeInsets.symmetric(vertical: 16),
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey[300],
+                  color: const Color(0xFFCBD5E1),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               Expanded(
                 child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(24),
+                  physics: const BouncingScrollPhysics(),
+                  padding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -159,15 +387,23 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
                             : "Modifier la Question",
                         style: const TextStyle(
                           fontSize: 22,
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w800,
+                          color: Color(0xFF1E293B),
                         ),
                       ),
-                      const SizedBox(height: 24),
+                      const Text(
+                        "Configurez l'énoncé et les options de réponse",
+                        style: TextStyle(
+                          color: Color(0xFF64748B),
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 32),
                       CustomTextFormField(
                         label: "Énoncé de la question",
                         hint: "Ex: Quel est le plus grand pays du monde ?",
                         controller: titleController,
-                        prefixIcon: Icons.help_outline,
+                        prefixIcon: Icons.help_outline_rounded,
                       ),
                       const SizedBox(height: 32),
                       Row(
@@ -178,6 +414,7 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
+                              color: Color(0xFF1E293B),
                             ),
                           ),
                           TextButton.icon(
@@ -187,19 +424,45 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
                                 'est_correcte': false,
                               }),
                             ),
-                            icon: const Icon(Icons.add_circle_outline),
+                            icon: const Icon(
+                              Icons.add_circle_outline_rounded,
+                              size: 18,
+                            ),
                             label: const Text("Ajouter"),
+                            style: TextButton.styleFrom(
+                              foregroundColor: const Color(0xFF10B981),
+                              backgroundColor: const Color(
+                                0xFF10B981,
+                              ).withOpacity(0.08),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 20),
                       ...List.generate(answers.length, (index) {
+                        bool correct = answers[index]['est_correcte'];
                         return Container(
                           margin: const EdgeInsets.only(bottom: 16),
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(20),
                           decoration: BoxDecoration(
                             color: Colors.white,
-                            borderRadius: BorderRadius.circular(16),
+                            borderRadius: BorderRadius.circular(24),
+                            border: Border.all(
+                              color: correct
+                                  ? const Color(0xFF10B981).withOpacity(0.3)
+                                  : const Color(0xFFE2E8F0),
+                              width: 1.5,
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.03),
+                                blurRadius: 10,
+                                offset: const Offset(0, 4),
+                              ),
+                            ],
                           ),
                           child: Column(
                             children: [
@@ -210,34 +473,65 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
                                       controller: answers[index]['controller'],
                                       decoration: InputDecoration(
                                         hintText: "Option ${index + 1}",
+                                        hintStyle: const TextStyle(
+                                          color: Color(0xFF94A3B8),
+                                        ),
                                         border: InputBorder.none,
+                                        isDense: true,
+                                      ),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF1E293B),
                                       ),
                                     ),
                                   ),
                                   IconButton(
                                     icon: const Icon(
-                                      Icons.remove_circle_outline,
-                                      color: Colors.red,
+                                      Icons.close_rounded,
+                                      color: Color(0xFFEF4444),
+                                      size: 20,
                                     ),
                                     onPressed: () => setInternalState(() {
-                                      if (answers[index]['id'] != null) {
+                                      if (answers[index]['id'] != null)
                                         deletedAnswerIds.add(
                                           answers[index]['id'],
                                         );
-                                      }
                                       answers.removeAt(index);
                                     }),
                                   ),
                                 ],
                               ),
-                              const Divider(),
+                              const Divider(height: 24),
                               Row(
                                 children: [
-                                  const Text("Bonne réponse ?"),
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        Icons.check_circle_rounded,
+                                        size: 16,
+                                        color: correct
+                                            ? const Color(0xFF10B981)
+                                            : const Color(0xFF94A3B8),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        "Réponse Correcte",
+                                        style: TextStyle(
+                                          color: correct
+                                              ? const Color(0xFF10B981)
+                                              : const Color(0xFF64748B),
+                                          fontWeight: correct
+                                              ? FontWeight.bold
+                                              : FontWeight.normal,
+                                          fontSize: 13,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
                                   const Spacer(),
-                                  Switch(
-                                    value: answers[index]['est_correcte'],
-                                    activeColor: Colors.blueAccent,
+                                  Switch.adaptive(
+                                    value: correct,
+                                    activeColor: const Color(0xFF10B981),
                                     onChanged: (val) => setInternalState(
                                       () =>
                                           answers[index]['est_correcte'] = val,
@@ -254,8 +548,8 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
                         text: "ENREGISTRER LA QUESTION",
                         isLoading: isSavingLocal,
                         onPressed: () async {
-                          if (titleController.text.isEmpty) return;
-                          if (answers.isEmpty) return;
+                          if (titleController.text.isEmpty || answers.isEmpty)
+                            return;
 
                           setInternalState(() => isSavingLocal = true);
                           try {
@@ -263,32 +557,23 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
                               'question': titleController.text,
                               'type': 'qcm',
                             };
-
                             int? questionId;
                             if (question == null) {
                               final res = await api.create(
                                 "/professeur/quiz/${widget.quiz['id']}/questions",
                                 questionData,
                               );
-
-                              // Extraction robuste de l'ID depuis la réponse du serveur
                               final resData = res?.data;
                               if (resData != null) {
-                                if (resData is Map) {
-                                  // Certains serveurs enveloppent dans 'data', d'autres non
-                                  final actualData = resData.containsKey('data')
-                                      ? resData['data']
-                                      : resData;
-                                  if (actualData['id'] != null) {
-                                    questionId = int.tryParse(
-                                      actualData['id'].toString(),
-                                    );
-                                  } else if (resData['id'] != null) {
-                                    questionId = int.tryParse(
-                                      resData['id'].toString(),
-                                    );
-                                  }
-                                }
+                                final actualData =
+                                    (resData is Map &&
+                                        resData.containsKey('data'))
+                                    ? resData['data']
+                                    : resData;
+                                questionId = int.tryParse(
+                                  (actualData['id'] ?? resData['id'])
+                                      .toString(),
+                                );
                               }
                             } else {
                               await api.update(
@@ -300,70 +585,48 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
                               );
                             }
 
-                            if (questionId == null) {
+                            if (questionId == null)
                               throw Exception(
-                                "L'enregistrement de la question a réussi mais l'ID n'a pas pu être récupéré.",
+                                "Impossible de récupérer l'ID de la question.",
                               );
-                            }
 
-                            // Gérer les suppressions de réponses si on est en mode édition
                             for (var id in deletedAnswerIds) {
                               try {
                                 await api.delete("/professeur/reponses/$id");
-                              } catch (e) {
-                                // On continue même si la suppression échoue
-                                print("Erreur suppression réponse: $e");
-                              }
+                              } catch (_) {}
                             }
 
-                            // Gérer les ajouts/modifications de réponses
-                            int answerIndex = 1;
                             for (var a in answers) {
                               final String reponseText = a['controller'].text
                                   .trim();
                               if (reponseText.isEmpty) continue;
-
                               final reponseData = {
                                 'reponse': reponseText,
-                                'est_correcte': a['est_correcte']
-                                    ? true
-                                    : false,
+                                'est_correcte': a['est_correcte'],
                                 'question_id': questionId,
                               };
-
-                              try {
-                                if (a['id'] == null) {
-                                  // Nouvelle réponse
-                                  await api.create(
-                                    "/professeur/questions/$questionId/reponses",
-                                    reponseData,
-                                  );
-                                } else {
-                                  // Mise à jour réponse existante
-                                  await api.update(
-                                    "/professeur/reponses/${a['id']}",
-                                    reponseData,
-                                  );
-                                }
-                              } catch (e) {
-                                print("Erreur sur l'option $answerIndex : $e");
-                                // On peut choisir d'arrêter ou de continuer. Ici on lance une exception pour alerter.
-                                throw Exception(
-                                  "Erreur sur l'option $answerIndex : $e",
+                              if (a['id'] == null) {
+                                await api.create(
+                                  "/professeur/questions/$questionId/reponses",
+                                  reponseData,
+                                );
+                              } else {
+                                await api.update(
+                                  "/professeur/reponses/${a['id']}",
+                                  reponseData,
                                 );
                               }
-                              answerIndex++;
                             }
 
                             if (mounted) {
                               Navigator.pop(ctx);
-                              _loadQuestions(); // Recharger la liste
+                              _loadQuestions();
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
                                   content: Text(
-                                    "Question et réponses enregistrées !",
+                                    "Question enregistrée avec succès !",
                                   ),
-                                  backgroundColor: Colors.green,
+                                  backgroundColor: Color(0xFF10B981),
                                 ),
                               );
                             }
@@ -372,18 +635,17 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
                               ScaffoldMessenger.of(ctx).showSnackBar(
                                 SnackBar(
                                   content: Text("Échec : $e"),
-                                  duration: const Duration(seconds: 5),
+                                  backgroundColor: const Color(0xFFEF4444),
                                 ),
                               );
                             }
                           } finally {
-                            if (mounted) {
+                            if (mounted)
                               setInternalState(() => isSavingLocal = false);
-                            }
                           }
                         },
                       ),
-                      const SizedBox(height: 40),
+                      const SizedBox(height: 48),
                     ],
                   ),
                 ),
@@ -392,183 +654,6 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
           ),
         ),
       ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
-      body: SafeArea(
-        child: Column(
-          children: [
-            FormHeader(
-              title: "Questions: ${widget.quiz['titre']}",
-              onBack: () => Navigator.pop(context),
-            ),
-            Expanded(
-              child: RefreshIndicator(
-                onRefresh: _loadQuestions,
-                child: isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _buildQuestionsList(),
-              ),
-            ),
-          ],
-        ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showQuestionForm(),
-        backgroundColor: Colors.blueAccent,
-        child: const Icon(Icons.add),
-      ),
-    );
-  }
-
-  Widget _buildQuestionsList() {
-    if (questions.isEmpty) {
-      return const Center(
-        child: Text(
-          "Aucune question dans ce quiz",
-          style: TextStyle(color: Colors.grey),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(20),
-      itemCount: questions.length,
-      itemBuilder: (context, index) {
-        final q = questions[index];
-        final List<dynamic> answers = q['reponses'] ?? [];
-
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-          elevation: 0,
-          child: ExpansionTile(
-            leading: CircleAvatar(
-              backgroundColor: Colors.blueAccent.withOpacity(0.1),
-              child: Text(
-                "${index + 1}",
-                style: const TextStyle(
-                  color: Colors.blueAccent,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            title: Text(
-              q['question'] ?? 'Question sans titre',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              "${answers.length} réponse(s) - ${q['type']?.toString().toUpperCase() ?? 'QCM'}",
-              style: TextStyle(color: Colors.grey[600], fontSize: 12),
-            ),
-            children: [
-              const Divider(height: 1),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ...answers.map((a) {
-                      final bool isCorrect =
-                          a['est_correcte'] == 1 || a['est_correcte'] == true;
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: isCorrect
-                                ? Colors.green.withOpacity(0.05)
-                                : Colors.red.withOpacity(0.05),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: isCorrect
-                                  ? Colors.green.withOpacity(0.2)
-                                  : Colors.red.withOpacity(0.2),
-                            ),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                isCorrect ? Icons.check_circle : Icons.cancel,
-                                size: 20,
-                                color: isCorrect ? Colors.green : Colors.red,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Text(
-                                  a['reponse'] ?? '',
-                                  style: TextStyle(
-                                    fontWeight: isCorrect
-                                        ? FontWeight.bold
-                                        : FontWeight.normal,
-                                    color: isCorrect
-                                        ? Colors.green[800]
-                                        : Colors.red[800],
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      );
-                    }),
-                    const SizedBox(height: 16),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        ElevatedButton.icon(
-                          onPressed: () => _showQuestionForm(question: q),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.blueAccent,
-                            foregroundColor: Colors.white,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          icon: const Icon(Icons.edit, size: 18),
-                          label: const Text("Modifier"),
-                        ),
-                        const SizedBox(width: 12),
-                        OutlinedButton.icon(
-                          onPressed: () => _deleteQuestion(q['id']),
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 8,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                          ),
-                          icon: const Icon(Icons.delete, size: 18),
-                          label: const Text("Supprimer"),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

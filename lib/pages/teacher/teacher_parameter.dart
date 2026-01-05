@@ -5,7 +5,7 @@ import 'package:togoschool/service/api_service.dart';
 import 'package:togoschool/service/token_storage.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
-import 'package:togoschool/pages/student_connexion_page.dart';
+import 'package:togoschool/pages/auth/login_page.dart';
 
 class TeacherParameter extends StatefulWidget {
   const TeacherParameter({super.key});
@@ -76,7 +76,7 @@ class _TeacherParameterState extends State<TeacherParameter> {
       await TokenStorage.clearToken();
       if (mounted) {
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const StudentConnexionPage()),
+          MaterialPageRoute(builder: (context) => const LoginPage()),
           (route) => false,
         );
       }

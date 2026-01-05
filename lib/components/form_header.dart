@@ -5,42 +5,68 @@ class FormHeader extends StatelessWidget {
   final String title;
   final VoidCallback? onBack;
 
-  const FormHeader({Key? key, required this.title, this.onBack})
-    : super(key: key);
+  const FormHeader({super.key, required this.title, this.onBack});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
+      width: double.infinity,
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
-          colors: [Colors.blueAccent, CupertinoColors.activeGreen],
+          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Stack(
         children: [
-          Row(
-            children: [
-              // Bouton retour
-              if (onBack != null)
-                IconButton(
-                  icon: Icon(Icons.arrow_back, color: Colors.white),
-                  onPressed: onBack!,
-                ),
-
-              // Titre dynamique
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 17,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+          // Decorative circles (consistent with LoginPage)
+          Positioned(
+            top: -20,
+            right: -20,
+            child: CircleAvatar(
+              radius: 40,
+              backgroundColor: Colors.white.withOpacity(0.08),
+            ),
+          ),
+          Positioned(
+            bottom: -10,
+            left: -10,
+            child: CircleAvatar(
+              radius: 30,
+              backgroundColor: Colors.white.withOpacity(0.05),
+            ),
+          ),
+          SafeArea(
+            bottom: false,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 16),
+              child: Row(
+                children: [
+                  if (onBack != null)
+                    IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                      onPressed: onBack!,
+                    ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      title.toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
         ],
       ),
