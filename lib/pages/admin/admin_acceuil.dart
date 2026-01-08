@@ -62,8 +62,8 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
 
       setState(() {
         final List<dynamic> allUsers = results[0]?.data ?? [];
-        teachers = allUsers.where((user) => user['role_id'] == 2).toList();
-        students = allUsers.where((user) => user['role_id'] == 3).toList();
+        teachers = allUsers.where((user) => user['role_id']?.toString() == "2").toList();
+        students = allUsers.where((user) => user['role_id']?.toString() == "3").toList();
         matieres = results[1]?.data ?? [];
       });
 

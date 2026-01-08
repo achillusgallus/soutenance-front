@@ -1,8 +1,10 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/utils/security_utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart' as dio_multipart;
 import 'package:path/path.dart' as p;
@@ -91,38 +93,61 @@ class _AddCoursePageState extends State<AddCoursePage> {
         orElse: () => null,
       );
 
+      final String safeTitle = SecurityUtils.sanitizeInput(
+        _titleController.text,
+      );
+      final String safeContent = SecurityUtils.sanitizeInput(
+        _contentController.text,
+      );
+
       final Map<String, dynamic> dataMap = {
-        'titre': _titleController.text,
-        'contenu': _contentController.text,
+        'titre': safeTitle,
+        'contenu': safeContent,
         'matiere_nom': selectedSubject?['nom'],
         'matiere_id': _selectedSubjectId,
       };
 
       final formData = dio_multipart.FormData.fromMap(dataMap);
 
-      if (_pickedFile != null && _pickedFile!.path != null) {
-        formData.files.add(
-          MapEntry(
-            'fichier',
-            await dio_multipart.MultipartFile.fromFile(
-              _pickedFile!.path!,
-              filename: _pickedFile!.name,
+      if (_pickedFile != null) {
+        if (kIsWeb) {
+          if (_pickedFile!.bytes != null) {
+            formData.files.add(
+              MapEntry(
+                'fichier',
+                dio_multipart.MultipartFile.fromBytes(
+                  _pickedFile!.bytes!,
+                  filename: _pickedFile!.name,
+                ),
+              ),
+            );
+          }
+        } else if (_pickedFile!.path != null) {
+          formData.files.add(
+            MapEntry(
+              'fichier',
+              await dio_multipart.MultipartFile.fromFile(
+                _pickedFile!.path!,
+                filename: _pickedFile!.name,
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
 
       await api.create("/professeur/cours", formData);
-      Navigator.pop(context, true);
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Une erreur est survenue: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Une erreur est survenue: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 
@@ -135,9 +160,16 @@ class _AddCoursePageState extends State<AddCoursePage> {
         orElse: () => null,
       );
 
+      final String safeTitle = SecurityUtils.sanitizeInput(
+        _titleController.text,
+      );
+      final String safeContent = SecurityUtils.sanitizeInput(
+        _contentController.text,
+      );
+
       final Map<String, dynamic> dataMap = {
-        'titre': _titleController.text,
-        'contenu': _contentController.text,
+        'titre': safeTitle,
+        'contenu': safeContent,
         'matiere_nom': selectedSubject?['nom'],
         'matiere_id': _selectedSubjectId,
         '_method': 'PUT',
@@ -145,29 +177,45 @@ class _AddCoursePageState extends State<AddCoursePage> {
 
       final formData = dio_multipart.FormData.fromMap(dataMap);
 
-      if (_pickedFile != null && _pickedFile!.path != null) {
-        formData.files.add(
-          MapEntry(
-            'fichier',
-            await dio_multipart.MultipartFile.fromFile(
-              _pickedFile!.path!,
-              filename: _pickedFile!.name,
+      if (_pickedFile != null) {
+        if (kIsWeb) {
+          if (_pickedFile!.bytes != null) {
+            formData.files.add(
+              MapEntry(
+                'fichier',
+                dio_multipart.MultipartFile.fromBytes(
+                  _pickedFile!.bytes!,
+                  filename: _pickedFile!.name,
+                ),
+              ),
+            );
+          }
+        } else if (_pickedFile!.path != null) {
+          formData.files.add(
+            MapEntry(
+              'fichier',
+              await dio_multipart.MultipartFile.fromFile(
+                _pickedFile!.path!,
+                filename: _pickedFile!.name,
+              ),
             ),
-          ),
-        );
+          );
+        }
       }
 
       await api.create("/professeur/cours/${widget.course!['id']}", formData);
-      Navigator.pop(context, true);
+      if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Une erreur est survenue: $e"),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Une erreur est survenue: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     } finally {
-      setState(() => _isSaving = false);
+      if (mounted) setState(() => _isSaving = false);
     }
   }
 

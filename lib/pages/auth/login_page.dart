@@ -7,6 +7,7 @@ import 'package:togoschool/pages/auth/student_inscription_page.dart';
 import 'package:togoschool/pages/auth/forgot_password_page.dart';
 import 'package:togoschool/service/api_service.dart';
 import 'package:togoschool/service/token_storage.dart';
+import 'package:togoschool/utils/security_utils.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -29,8 +30,12 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
+      final String safeEmail = SecurityUtils.sanitizeInput(
+        _emailController.text,
+      );
+
       final response = await _api.create("/login", {
-        "email": _emailController.text.trim(),
+        "email": safeEmail,
         "password": _passwordController.text.trim(),
       });
 

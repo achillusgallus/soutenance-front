@@ -4,6 +4,7 @@ import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/pages/forum/forum_chat_page.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/utils/security_utils.dart';
 
 class ForumTopicListPage extends StatefulWidget {
   final int forumId;
@@ -191,10 +192,16 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
                   if (titleController.text.isEmpty) return;
                   setInternalState(() => isSaving = true);
                   try {
+                    final String safeTitle = SecurityUtils.sanitizeInput(
+                      titleController.text,
+                    );
+                    final String safeContent = SecurityUtils.sanitizeInput(
+                      subjectController.text,
+                    );
                     await api.create("/forums/sujets", {
                       "forum_id": widget.forumId,
-                      "titre": titleController.text.trim(),
-                      "contenu": subjectController.text.trim(),
+                      "titre": safeTitle,
+                      "contenu": safeContent,
                     });
                     Navigator.pop(ctx);
                     _fetchTopics();

@@ -3,6 +3,7 @@ import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/utils/security_utils.dart';
 
 class AddMatierePage extends StatefulWidget {
   final Map<String, dynamic>? matiere;
@@ -272,12 +273,16 @@ class _AddMatierePageState extends State<AddMatierePage> {
                           if (_formKey.currentState!.validate()) {
                             setState(() => isSaving = true);
 
-                            final String name = _nameController.text.trim();
-                            final String description = _descriptionController
-                                .text
-                                .trim();
-                            final String username = _userNameController.text
-                                .trim();
+                            final String name = SecurityUtils.sanitizeInput(
+                              _nameController.text,
+                            );
+                            final String description =
+                                SecurityUtils.sanitizeInput(
+                                  _descriptionController.text,
+                                );
+                            final String username = SecurityUtils.sanitizeInput(
+                              _userNameController.text,
+                            );
 
                             bool success;
                             if (isEditMode) {

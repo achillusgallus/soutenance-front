@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/utils/security_utils.dart';
 
 class ForumChatPage extends StatefulWidget {
   final int topicId;
@@ -59,8 +60,8 @@ class _ForumChatPageState extends State<ForumChatPage> {
   }
 
   Future<void> _sendMessage() async {
-    final text = _messageController.text.trim();
-    if (text.isEmpty) return;
+    final safeText = SecurityUtils.sanitizeInput(_messageController.text);
+    if (safeText.isEmpty) return;
 
     setState(() => isSending = true);
     try {
@@ -68,13 +69,13 @@ class _ForumChatPageState extends State<ForumChatPage> {
         // Teacher reply endpoint
         await api.create(
           "/professeur/forums/sujets/${widget.topicId}/repondre",
-          {"message": text},
+          {"message": safeText},
         );
       } else {
         // Student/General message endpoint
         await api.create("/messages", {
           "sujet_id": widget.topicId,
-          "message": text,
+          "message": safeText,
         });
       }
 

@@ -3,8 +3,8 @@ import 'package:togoschool/components/class_dropdown.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
-
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/utils/security_utils.dart';
 
 class AddStudent extends StatefulWidget {
   final Map<String, dynamic>? Student;
@@ -239,10 +239,15 @@ class _AddStudentState extends State<AddStudent> {
                           if (_formKey.currentState!.validate()) {
                             setState(() => isSaving = true);
 
-                            final String name = _nameController.text.trim();
-                            final String surname = _surnameController.text
-                                .trim();
-                            final String email = _emailController.text.trim();
+                            final String name = SecurityUtils.sanitizeInput(
+                              _nameController.text,
+                            );
+                            final String surname = SecurityUtils.sanitizeInput(
+                              _surnameController.text,
+                            );
+                            final String email = SecurityUtils.sanitizeInput(
+                              _emailController.text,
+                            );
                             final String password = _passwordController.text
                                 .trim();
                             final String classe = selectedvalue ?? 'tle_D';

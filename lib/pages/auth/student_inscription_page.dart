@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/utils/security_utils.dart';
 
 class StudentInscriptionPage extends StatefulWidget {
   const StudentInscriptionPage({super.key});
@@ -39,10 +40,18 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
     setState(() => _isLoading = true);
 
     try {
+      final String safeName = SecurityUtils.sanitizeInput(_nomController.text);
+      final String safeSurname = SecurityUtils.sanitizeInput(
+        _prenomController.text,
+      );
+      final String safeEmail = SecurityUtils.sanitizeInput(
+        _emailController.text,
+      );
+
       final response = await _api.create("/register", {
-        "name": _nomController.text.trim(),
-        "surname": _prenomController.text.trim(),
-        "email": _emailController.text.trim(),
+        "name": safeName,
+        "surname": safeSurname,
+        "email": safeEmail,
         "password": _passwordController.text.trim(),
         "classe": _selectedClasse,
       });

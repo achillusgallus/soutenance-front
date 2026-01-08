@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/utils/security_utils.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
@@ -24,8 +25,11 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() => _isLoading = true);
 
     try {
+      final String safeEmail = SecurityUtils.sanitizeInput(
+        _emailController.text,
+      );
       final res = await _api.create("/password/send-code", {
-        "email": _emailController.text.trim(),
+        "email": safeEmail,
       });
 
       if (res?.statusCode == 200) {
@@ -49,9 +53,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
     setState(() => _isLoading = true);
 
     try {
+      final String safeEmail = SecurityUtils.sanitizeInput(
+        _emailController.text,
+      );
+      final String safeCode = SecurityUtils.sanitizeInput(_codeController.text);
+
       final res = await _api.create("/password/verify-code", {
-        "email": _emailController.text.trim(),
-        "code": _codeController.text.trim(),
+        "email": safeEmail,
+        "code": safeCode,
       });
 
       if (res?.statusCode == 200) {
@@ -75,9 +84,14 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
     setState(() => _isLoading = true);
     try {
+      final String safeEmail = SecurityUtils.sanitizeInput(
+        _emailController.text,
+      );
+      final String safeCode = SecurityUtils.sanitizeInput(_codeController.text);
+
       final res = await _api.create("/password/reset", {
-        "email": _emailController.text.trim(),
-        "code": _codeController.text.trim(),
+        "email": safeEmail,
+        "code": safeCode,
         "password": _newPasswordController.text,
       });
 

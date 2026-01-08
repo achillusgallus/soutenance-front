@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/utils/security_utils.dart';
 import 'package:togoschool/service/api_service.dart';
 import 'package:togoschool/service/token_storage.dart';
 import 'package:togoschool/components/primary_button.dart';
@@ -86,10 +87,18 @@ class _AdminParameterState extends State<AdminParameter> {
 
     setState(() => isSaving = true);
     try {
+      final String safeName = SecurityUtils.sanitizeInput(_nameController.text);
+      final String safeSurname = SecurityUtils.sanitizeInput(
+        _surnameController.text,
+      );
+      final String safeEmail = SecurityUtils.sanitizeInput(
+        _emailController.text,
+      );
+
       final data = {
-        "name": _nameController.text.trim(),
-        "surname": _surnameController.text.trim(),
-        "email": _emailController.text.trim(),
+        "name": safeName,
+        "surname": safeSurname,
+        "email": safeEmail,
       };
       if (_passwordController.text.isNotEmpty) {
         data["password"] = _passwordController.text.trim();

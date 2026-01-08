@@ -3,6 +3,7 @@ import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/utils/security_utils.dart';
 
 class AddQuizPage extends StatefulWidget {
   final Map<String, dynamic>? quiz;
@@ -46,8 +47,12 @@ class _AddQuizPageState extends State<AddQuizPage> {
         orElse: () => null,
       );
 
+      final String safeTitle = SecurityUtils.sanitizeInput(
+        _titleController.text,
+      );
+
       final quizData = {
-        'titre': _titleController.text,
+        'titre': safeTitle,
         'matiere_id': _selectedSubjectId,
         'matiere_nom': selectedSubject?['nom'],
         'duree': int.tryParse(_durationController.text) ?? 30,

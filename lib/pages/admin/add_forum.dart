@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
-import 'package:togoschool/pages/dashbord/admin_dashboard_page.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/utils/security_utils.dart';
 
 class AddForumPage extends StatefulWidget {
   const AddForumPage({super.key});
@@ -139,9 +139,12 @@ class _AddForumPageState extends State<AddForumPage> {
                           if (_formKey.currentState!.validate()) {
                             setState(() => isSaving = true);
 
-                            final String titre = _titreController.text.trim();
-                            final String matiere = _matiereController.text
-                                .trim();
+                            final String titre = SecurityUtils.sanitizeInput(
+                              _titreController.text,
+                            );
+                            final String matiere = SecurityUtils.sanitizeInput(
+                              _matiereController.text,
+                            );
 
                             final success = await addForum(titre, matiere);
 

@@ -406,53 +406,98 @@ class _StudentCoursState extends State<StudentCours> {
   }
 
   Future<void> _downloadAndOpenFile(String fileUrl, String fileName) async {
-    String fullUrl = fileUrl;
-    if (!fileUrl.startsWith('http')) {
-      fullUrl = "http://10.0.2.2:8000/storage/$fileUrl";
-    }
+    final fullUrl = ApiService.resolveFileUrl(fileUrl);
+    if (fullUrl == null) return;
 
     try {
       if (kIsWeb) {
         final Uri uri = Uri.parse(fullUrl);
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          throw 'Impossible d\'ouvrir le lien : $fullUrl';
         }
         return;
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: const Duration(seconds: 2),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(15),
           ),
+          backgroundColor: const Color(0xFF6366F1),
           content: Row(
             children: [
               const SizedBox(
-                width: 20,
-                height: 20,
+                width: 18,
+                height: 18,
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   color: Colors.white,
                 ),
               ),
               const SizedBox(width: 15),
-              Expanded(child: Text("Téléchargement de $fileName...")),
+              Expanded(
+                child: Text(
+                  "Préparation de $fileName...",
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
             ],
           ),
         ),
       );
 
-      final tempDir = await getTemporaryDirectory();
-      final filePath = "${tempDir.path}/$fileName";
+      bool openedLocally = false;
+      try {
+        final tempDir = await getTemporaryDirectory();
+        final filePath = "${tempDir.path}/$fileName";
 
-      await Dio().download(fullUrl, filePath);
-      await OpenFilex.open(filePath);
+        // Download file with a specific timeout to handle unstable connections
+        await Dio(
+          BaseOptions(
+            connectTimeout: const Duration(seconds: 15),
+            receiveTimeout: const Duration(seconds: 60),
+          ),
+        ).download(fullUrl, filePath);
+
+        // Try to open the local file
+        final result = await OpenFilex.open(filePath);
+        if (result.type == ResultType.done) {
+          openedLocally = true;
+        } else {
+          print("DEBUG - OpenFilex error: ${result.message}");
+        }
+      } catch (downloadError) {
+        print(
+          "DEBUG - Download failed, attempting browser fallback: $downloadError",
+        );
+      }
+
+      // Fallback: If local opening failed or download errored, try browser
+      if (!openedLocally) {
+        final Uri uri = Uri.parse(fullUrl);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          throw 'Échec du téléchargement et impossible d\'ouvrir dans le navigateur.';
+        }
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text("Erreur: $e")));
+        print("DEBUG - File error: $e");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Erreur lors de l'ouverture : $e"),
+            backgroundColor: const Color(0xFFEF4444),
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
+        );
       }
     }
   }

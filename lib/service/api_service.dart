@@ -7,21 +7,19 @@ class ApiService {
   late Dio dio;
 
   ApiService() {
-
     String baseUrl;
 
     // Déterminez l'URL de base en fonction de l'environnement
     if (kIsWeb) {
       // Pour le navigateur web (Flutter web), utilisez localhost
-      baseUrl = "http://localhost:8000/api";
+      baseUrl = "https://backend-togoschool.onrender.com/api";
     } else if (Platform.isAndroid) {
       // Pour Android (émulateur), utilisez l'IP spéciale
       baseUrl = "http://10.0.2.2:8000/api";
-      
-      // Si vous voulez supporter un appareil Android physique en développement, 
+
+      // Si vous voulez supporter un appareil Android physique en développement,
       // vous devriez utiliser votre IP locale réelle ici (par exemple 192.168.1.XX)
-      // baseUrl = "192.168.1.xx"; 
-    
+      // baseUrl = "192.168.1.xx";
     } else if (Platform.isIOS) {
       // Pour iOS (simulateur), utilisez localhost
       baseUrl = "http://localhost:8000/api";
@@ -29,7 +27,6 @@ class ApiService {
       // Cas par défaut (Desktop, etc.)
       baseUrl = "http://localhost:8000/api";
     }
-
 
     dio = Dio(
       BaseOptions(
@@ -126,5 +123,35 @@ class ApiService {
     } on DioException catch (e) {
       throw Exception(handleError(e));
     }
+  }
+
+  // Centralized URL resolution for files
+  static String? resolveFileUrl(String? path) {
+    if (path == null || path.isEmpty) return null;
+    if (path.startsWith('http')) {
+      // If we are on Android emulator and the URL contains localhost, swap it
+      if (!kIsWeb && Platform.isAndroid && path.contains('localhost')) {
+        return path.replaceAll('localhost', '10.0.2.2');
+      }
+      return path;
+    }
+
+    // Determine host
+    String host = "localhost";
+    if (!kIsWeb && Platform.isAndroid) {
+      host = "10.0.2.2";
+    }
+
+    // Prepend base storage URL
+    return "http://$host:8000/storage/$path";
+  }
+
+  // Helper for base storage path
+  static String get baseStorageUrl {
+    String host = "localhost";
+    if (!kIsWeb && Platform.isAndroid) {
+      host = "10.0.2.2";
+    }
+    return "http://$host:8000/storage";
   }
 }

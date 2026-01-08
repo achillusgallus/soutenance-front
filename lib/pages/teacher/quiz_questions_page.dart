@@ -3,6 +3,7 @@ import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/utils/security_utils.dart';
 
 class QuizQuestionsPage extends StatefulWidget {
   final Map<String, dynamic> quiz;
@@ -553,8 +554,12 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
 
                           setInternalState(() => isSavingLocal = true);
                           try {
+                            final String safeQuestion =
+                                SecurityUtils.sanitizeInput(
+                                  titleController.text,
+                                );
                             final questionData = {
-                              'question': titleController.text,
+                              'question': safeQuestion,
                               'type': 'qcm',
                             };
                             int? questionId;
@@ -597,8 +602,10 @@ class _QuizQuestionsPageState extends State<QuizQuestionsPage> {
                             }
 
                             for (var a in answers) {
-                              final String reponseText = a['controller'].text
-                                  .trim();
+                              final String reponseText =
+                                  SecurityUtils.sanitizeInput(
+                                    a['controller'].text,
+                                  );
                               if (reponseText.isEmpty) continue;
                               final reponseData = {
                                 'reponse': reponseText,
