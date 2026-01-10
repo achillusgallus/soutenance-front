@@ -134,6 +134,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "6.0.0"
+  flutter_paygateglobal:
+    dependency: "direct main"
+    description:
+      name: flutter_paygateglobal
+      sha256: "0be2beeebb27a9883c32572e3f5f9951371428aca6f5de6d9047769402d9936d"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.1.5"
   flutter_plugin_android_lifecycle:
     dependency: transitive
     description:
@@ -160,6 +168,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "10.12.0"
+  http:
+    dependency: transitive
+    description:
+      name: http
+      sha256: "87721a4a50b19c7f1d49001e51409bddc46303966ce89a65af4f4e6004896412"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.6.0"
   http_parser:
     dependency: transitive
     description:

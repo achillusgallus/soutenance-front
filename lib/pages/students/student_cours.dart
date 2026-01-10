@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/service/download_service.dart';
+import 'package:togoschool/service/paygate_service.dart';
+import 'package:togoschool/pages/students/payment_required_page.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:dio/dio.dart';
@@ -23,11 +26,27 @@ class _StudentCoursState extends State<StudentCours> {
   bool isLoading = true;
   List<dynamic> courses = [];
   Map<String, List<dynamic>> coursesBySubject = {};
+  int? _remainingDownloads;
+  bool _hasPaid = false;
 
   @override
   void initState() {
     super.initState();
     _fetchCourses();
+    _loadDownloadInfo();
+  }
+
+  Future<void> _loadDownloadInfo() async {
+    final paygateService = PaygateService();
+    final hasPaid = await paygateService.hasPaid();
+    final remaining = await DownloadService.getRemainingDownloads();
+
+    if (mounted) {
+      setState(() {
+        _hasPaid = hasPaid;
+        _remainingDownloads = remaining;
+      });
+    }
   }
 
   Future<void> _fetchCourses() async {
@@ -97,8 +116,8 @@ class _StudentCoursState extends State<StudentCours> {
               subtitle1: 'Cours',
               title2: coursesBySubject.length.toString(),
               subtitle2: 'Matières',
-              title3: '',
-              subtitle3: '',
+              title3: _hasPaid ? '∞' : (_remainingDownloads?.toString() ?? '3'),
+              subtitle3: _hasPaid ? 'Illimité' : 'Téléchargements',
               onBack: () => Navigator.pop(context),
             ),
             const SizedBox(height: 10),
@@ -406,6 +425,40 @@ class _StudentCoursState extends State<StudentCours> {
   }
 
   Future<void> _downloadAndOpenFile(String fileUrl, String fileName) async {
+    // Vérifier si l'utilisateur peut télécharger gratuitement
+    final paygateService = PaygateService();
+    final canDownload = await DownloadService.canDownloadFree();
+    final hasPaid = await paygateService.hasPaid();
+
+    // Si limite atteinte et pas de paiement, demander le paiement
+    if (!canDownload && !hasPaid) {
+      final result = await Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => const PaymentRequiredPage(reason: 'download'),
+        ),
+      );
+
+      // Si paiement effectué, continuer le téléchargement
+      if (result != true) {
+        // L'utilisateur a annulé ou le paiement a échoué
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Vous devez payer pour télécharger plus de cours"),
+            backgroundColor: Color(0xFFEF4444),
+          ),
+        );
+        return;
+      }
+
+      // Re-vérifier après paiement
+      final canDownloadNow = await DownloadService.canDownloadFree();
+      final hasPaidNow = await paygateService.hasPaid();
+      if (!canDownloadNow && !hasPaidNow) {
+        return;
+      }
+    }
+
     final fullUrl = ApiService.resolveFileUrl(fileUrl);
     if (fullUrl == null) return;
 
@@ -467,6 +520,12 @@ class _StudentCoursState extends State<StudentCours> {
         final result = await OpenFilex.open(filePath);
         if (result.type == ResultType.done) {
           openedLocally = true;
+          // Incrémenter le compteur de téléchargements seulement si le fichier a été ouvert avec succès
+          final paygateService = PaygateService();
+          final hasPaid = await paygateService.hasPaid();
+          if (!hasPaid) {
+            await DownloadService.incrementDownloadCount();
+          }
         } else {
           print("DEBUG - OpenFilex error: ${result.message}");
         }
@@ -481,9 +540,19 @@ class _StudentCoursState extends State<StudentCours> {
         final Uri uri = Uri.parse(fullUrl);
         if (await canLaunchUrl(uri)) {
           await launchUrl(uri, mode: LaunchMode.externalApplication);
+          // Incrémenter aussi pour les téléchargements via navigateur
+          final paygateService = PaygateService();
+          final hasPaid = await paygateService.hasPaid();
+          if (!hasPaid) {
+            await DownloadService.incrementDownloadCount();
+            await _loadDownloadInfo(); // Recharger les infos
+          }
         } else {
           throw 'Échec du téléchargement et impossible d\'ouvrir dans le navigateur.';
         }
+      } else {
+        // Recharger les infos après téléchargement réussi
+        await _loadDownloadInfo();
       }
     } catch (e) {
       if (mounted) {
