@@ -259,49 +259,55 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                       var teacher = teachers[index];
                       return GestureDetector(
                         onTap: () async {
-                        try {
-                          // Appel au backend pour générer un token du prof
-                          final response = await api.create("/admin/impersonate/${teacher['id']}", {});
-                          if (response != null && response.statusCode == 200) {
-                            final data = response.data;
-                            final token = data['impersonation_token'];
-
-                            // Sauvegarder le token du prof
-                            await TokenStorage.saveToken(token);
-
-                            // Démarrer l’impersonation côté front
-                            ImpersonationService.startImpersonation(data['teacher']);
-
-                            // Ouvrir le dashboard enseignant
-                            await Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => TeacherDashboardPage(
-                                  isAdminViewing: true,
-                                  teacherData: data['teacher'],
-                                ),
-                              ),
-                            );
-
-                            // Quand on revient, arrêter l’impersonation
-                            await api.create("/admin/impersonate/stop", {});
-                            ImpersonationService.stopImpersonation();
-
-                            // Restaurer le token admin (à implémenter dans TokenStorage)
-                            final adminToken = await TokenStorage.getAdminToken();
+                          try {
+                            // Sauvegarder le token admin avant impersonation
+                            final adminToken = await TokenStorage.getToken();
                             if (adminToken != null) {
-                              await TokenStorage.saveToken(adminToken);
+                              await TokenStorage.saveAdminToken(adminToken);
                             }
 
-                            // Rafraîchir les données admin
-                            getTeachers();
+                            // Appel au backend pour générer un token du prof
+                            final response = await api.create("/admin/impersonate/${teacher['id']}", {});
+                            if (response != null && response.statusCode == 200) {
+                              final data = response.data;
+                              final token = data['impersonation_token'];
+
+                              // Sauvegarder le token du prof
+                              await TokenStorage.saveToken(token);
+
+                              // Démarrer l’impersonation côté front
+                              ImpersonationService.startImpersonation(data['teacher']);
+
+                              // Ouvrir le dashboard enseignant
+                              await Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TeacherDashboardPage(
+                                    isAdminViewing: true,
+                                    teacherData: data['teacher'],
+                                  ),
+                                ),
+                              );
+
+                              // Restaurer le token admin AVANT d’appeler /stop
+                              final adminTokenRestored = await TokenStorage.getAdminToken();
+                              if (adminTokenRestored != null) {
+                                await TokenStorage.saveToken(adminTokenRestored);
+                              }
+
+                              // Maintenant appeler le backend pour signaler la fin d’impersonation
+                              await api.create("/admin/impersonate/stop", {});
+                              ImpersonationService.stopImpersonation();
+
+                              // Rafraîchir les données admin
+                              getTeachers();
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Erreur impersonation: $e")),
+                            );
                           }
-                        } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Erreur impersonation: $e")),
-                          );
-                        }
-                      },
+                        },
                         child: _buildRecentCard(
                           "${teacher['name'] ?? ''} ${teacher['surname'] ?? ''}",
                           teacher['email'] ?? '',
