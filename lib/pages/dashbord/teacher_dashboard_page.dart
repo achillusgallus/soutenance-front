@@ -7,7 +7,14 @@ import 'package:togoschool/pages/teacher/teacher_acceuil.dart';
 import 'package:togoschool/pages/teacher/teacher_eleves.dart';
 
 class TeacherDashboardPage extends StatefulWidget {
-  const TeacherDashboardPage({super.key});
+  final bool isAdminViewing;
+  final Map<String, dynamic>? teacherData;
+
+  const TeacherDashboardPage({
+    super.key,
+    this.isAdminViewing = false,
+    this.teacherData,
+  });
 
   @override
   State<TeacherDashboardPage> createState() => _TeacherDashboardPageState();
@@ -36,7 +43,7 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
   void initState() {
     super.initState();
     _pages = [
-      const TeacherAcceuil(),
+      TeacherAcceuil(teacherData: widget.teacherData),
       const TeachCours(),
       const TeacherQuiz(),
       const TeacherForum(),
@@ -47,7 +54,30 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: SafeArea(child: _pages[_currentIndex]),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            _pages[_currentIndex],
+            if (widget.isAdminViewing)
+              Positioned(
+                top: 16,
+                right: 16,
+                child: FloatingActionButton.extended(
+                  onPressed: () => Navigator.pop(context),
+                  backgroundColor: const Color(0xFF6366F1),
+                  icon: const Icon(Icons.arrow_back, color: Colors.white),
+                  label: const Text(
+                    'Retour Admin',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
       bottomNavigationBar: Navbar(
         items: _navItems,
         currentIndex: _currentIndex,

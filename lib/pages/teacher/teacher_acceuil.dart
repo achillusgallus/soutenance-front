@@ -10,7 +10,9 @@ import 'package:togoschool/pages/teacher/teacher_parameter.dart';
 import 'package:togoschool/service/api_service.dart';
 
 class TeacherAcceuil extends StatefulWidget {
-  const TeacherAcceuil({super.key});
+  final Map<String, dynamic>? teacherData;
+
+  const TeacherAcceuil({super.key, this.teacherData});
 
   @override
   State<TeacherAcceuil> createState() => _TeacherAcceuilState();
@@ -53,20 +55,37 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
       isLoading = true;
     });
     try {
-      final results = await Future.wait([
-        getMatieresByUser(),
-        api.read("/me"),
-        api.read("/professeur/cours"),
-        api.read("/professeur/quiz"),
-      ]);
+      // If teacher data is provided (admin viewing), use it instead of fetching from /me
+      if (widget.teacherData != null) {
+        final results = await Future.wait([
+          getMatieresByUser(),
+          api.read("/professeur/cours"),
+          api.read("/professeur/quiz"),
+        ]);
 
-      setState(() {
-        matieres = results[0] as List<dynamic>;
-        profileData = (results[1] as dynamic)?.data;
-        cours = (results[2] as dynamic)?.data ?? [];
-        quiz = (results[3] as dynamic)?.data ?? [];
-        isLoading = false;
-      });
+        setState(() {
+          matieres = results[0] as List<dynamic>;
+          profileData = widget.teacherData;
+          cours = (results[1] as dynamic)?.data ?? [];
+          quiz = (results[2] as dynamic)?.data ?? [];
+          isLoading = false;
+        });
+      } else {
+        final results = await Future.wait([
+          getMatieresByUser(),
+          api.read("/me"),
+          api.read("/professeur/cours"),
+          api.read("/professeur/quiz"),
+        ]);
+
+        setState(() {
+          matieres = results[0] as List<dynamic>;
+          profileData = (results[1] as dynamic)?.data;
+          cours = (results[2] as dynamic)?.data ?? [];
+          quiz = (results[3] as dynamic)?.data ?? [];
+          isLoading = false;
+        });
+      }
     } catch (e) {
       setState(() {
         isLoading = false;

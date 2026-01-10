@@ -11,6 +11,8 @@ import 'package:togoschool/pages/admin/admin_professeur.dart';
 import 'package:togoschool/pages/admin/admin_matiere.dart';
 import 'package:togoschool/pages/admin/admin_student_page.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/service/impersonation_service.dart';
+import 'package:togoschool/pages/dashbord/teacher_dashboard_page.dart';
 
 class AdminAcceuil extends StatefulWidget {
   const AdminAcceuil({super.key});
@@ -62,8 +64,12 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
 
       setState(() {
         final List<dynamic> allUsers = results[0]?.data ?? [];
-        teachers = allUsers.where((user) => user['role_id']?.toString() == "2").toList();
-        students = allUsers.where((user) => user['role_id']?.toString() == "3").toList();
+        teachers = allUsers
+            .where((user) => user['role_id']?.toString() == "2")
+            .toList();
+        students = allUsers
+            .where((user) => user['role_id']?.toString() == "3")
+            .toList();
         matieres = results[1]?.data ?? [];
       });
 
@@ -250,10 +256,27 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                     itemCount: teachers.length > 5 ? 5 : teachers.length,
                     itemBuilder: (context, index) {
                       var teacher = teachers[index];
-                      return _buildRecentCard(
-                        "${teacher['name'] ?? ''} ${teacher['surname'] ?? ''}",
-                        teacher['email'] ?? '',
-                        index,
+                      return GestureDetector(
+                        onTap: () {
+                          ImpersonationService.startImpersonation(teacher);
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TeacherDashboardPage(
+                                isAdminViewing: true,
+                                teacherData: teacher,
+                              ),
+                            ),
+                          ).then((_) {
+                            ImpersonationService.stopImpersonation();
+                            getTeachers(); // Refresh data
+                          });
+                        },
+                        child: _buildRecentCard(
+                          "${teacher['name'] ?? ''} ${teacher['surname'] ?? ''}",
+                          teacher['email'] ?? '',
+                          index,
+                        ),
                       );
                     },
                   ),
