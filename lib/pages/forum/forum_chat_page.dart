@@ -227,66 +227,130 @@ class _ForumChatPageState extends State<ForumChatPage> {
     final content = msg['message'] ?? '';
     final time = msg['created_at_human'] ?? '';
 
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.8,
-        ),
-        child: Column(
-          crossAxisAlignment: isMe
-              ? CrossAxisAlignment.end
-              : CrossAxisAlignment.start,
-          children: [
-            if (!isMe)
-              Padding(
-                padding: const EdgeInsets.only(left: 12, bottom: 4),
-                child: Text(
-                  name,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF64748B),
-                  ),
-                ),
-              ),
+    // Generate avatar color
+    final colors = [
+      const Color(0xFF6366F1),
+      const Color(0xFF10B981),
+      const Color(0xFFEC4899),
+      const Color(0xFFF59E0B),
+    ];
+    final colorIndex = name.hashCode.abs() % colors.length;
+    final avatarColor = colors[colorIndex];
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        mainAxisAlignment: isMe
+            ? MainAxisAlignment.end
+            : MainAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // Avatar for other users' messages
+          if (!isMe) ...[
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              width: 32,
+              height: 32,
+              margin: const EdgeInsets.only(right: 8, bottom: 16),
               decoration: BoxDecoration(
-                color: isMe ? const Color(0xFF6366F1) : Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: const Radius.circular(20),
-                  topRight: const Radius.circular(20),
-                  bottomLeft: Radius.circular(isMe ? 20 : 4),
-                  bottomRight: Radius.circular(isMe ? 4 : 20),
+                gradient: LinearGradient(
+                  colors: [avatarColor.withOpacity(0.8), avatarColor],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
                 ),
+                shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.04),
-                    blurRadius: 8,
+                    color: avatarColor.withOpacity(0.3),
+                    blurRadius: 4,
                     offset: const Offset(0, 2),
                   ),
                 ],
               ),
-              child: Text(
-                content,
-                style: TextStyle(
-                  color: isMe ? Colors.white : const Color(0xFF1E293B),
-                  fontSize: 15,
-                  height: 1.4,
+              child: Center(
+                child: Text(
+                  name.isEmpty ? '?' : name[0].toUpperCase(),
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ),
-            Padding(
-              padding: const EdgeInsets.only(top: 4, left: 4, right: 4),
-              child: Text(
-                time,
-                style: TextStyle(fontSize: 10, color: Colors.grey[400]),
-              ),
-            ),
           ],
-        ),
+          // Message bubble
+          Flexible(
+            child: Column(
+              crossAxisAlignment: isMe
+                  ? CrossAxisAlignment.end
+                  : CrossAxisAlignment.start,
+              children: [
+                if (!isMe)
+                  Padding(
+                    padding: const EdgeInsets.only(left: 12, bottom: 4),
+                    child: Text(
+                      name,
+                      style: const TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF64748B),
+                      ),
+                    ),
+                  ),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: isMe
+                        ? const LinearGradient(
+                            colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          )
+                        : null,
+                    color: isMe ? null : Colors.white,
+                    borderRadius: BorderRadius.only(
+                      topLeft: const Radius.circular(18),
+                      topRight: const Radius.circular(18),
+                      bottomLeft: Radius.circular(isMe ? 18 : 4),
+                      bottomRight: Radius.circular(isMe ? 4 : 18),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: isMe
+                            ? const Color(0xFF6366F1).withOpacity(0.2)
+                            : Colors.black.withOpacity(0.04),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Text(
+                    content,
+                    style: TextStyle(
+                      color: isMe ? Colors.white : const Color(0xFF1E293B),
+                      fontSize: 14,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(
+                    top: 4,
+                    left: isMe ? 0 : 12,
+                    right: isMe ? 12 : 0,
+                  ),
+                  child: Text(
+                    time,
+                    style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

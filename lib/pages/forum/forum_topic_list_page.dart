@@ -240,12 +240,25 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
     final auteur =
         topic['auteur']?['name'] ?? topic['user_name'] ?? 'Utilisateur';
     final time = topic['created_at_human'] ?? '';
+    final messagesCount = topic['messages_count'] ?? 0;
+    final contenu = topic['contenu'] ?? '';
+
+    // Generate avatar color based on author name
+    final colors = [
+      const Color(0xFF6366F1),
+      const Color(0xFF10B981),
+      const Color(0xFFEC4899),
+      const Color(0xFFF59E0B),
+      const Color(0xFF8B5CF6),
+    ];
+    final colorIndex = auteur.hashCode.abs() % colors.length;
+    final avatarColor = colors[colorIndex];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.03),
@@ -254,107 +267,156 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
           ),
         ],
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(24),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      ForumChatPage(topicId: topic['id'], topicTitle: title),
-                ),
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundColor: const Color(
-                          0xFFF59E0B,
-                        ).withOpacity(0.1),
-                        child: const Icon(
-                          Icons.person_rounded,
-                          size: 14,
-                          color: Color(0xFFD97706),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        auteur,
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                          color: Color(0xFF64748B),
-                        ),
-                      ),
-                      const Spacer(),
-                      Text(
-                        time,
-                        style: TextStyle(fontSize: 11, color: Colors.grey[400]),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) =>
+                    ForumChatPage(topicId: topic['id'], topicTitle: title),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Larger avatar
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [avatarColor.withOpacity(0.8), avatarColor],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    boxShadow: [
+                      BoxShadow(
+                        color: avatarColor.withOpacity(0.3),
+                        blurRadius: 6,
+                        offset: const Offset(0, 2),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Color(0xFF1E293B),
-                      height: 1.3,
+                  child: Center(
+                    child: Text(
+                      auteur.isEmpty ? '?' : auteur[0].toUpperCase(),
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    maxLines: 2,
-                    overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 16),
-                  Row(
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 4,
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              auteur,
+                              style: const TextStyle(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: Color(0xFF1E293B),
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            time,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                          color: Color(0xFF1E293B),
+                          height: 1.3,
                         ),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFFF8F9FD),
-                          borderRadius: BorderRadius.circular(8),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (contenu.isNotEmpty) ...[
+                        const SizedBox(height: 6),
+                        Text(
+                          contenu,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: Color(0xFF64748B),
+                            height: 1.4,
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        child: Row(
-                          children: [
+                      ],
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          if (messagesCount > 0) ...[
                             Icon(
-                              Icons.chat_bubble_outline_rounded,
+                              Icons.chat_bubble_outline,
                               size: 14,
-                              color: Colors.grey[500],
+                              color: const Color(0xFFF59E0B),
                             ),
                             const SizedBox(width: 4),
                             Text(
-                              "Rejoindre",
-                              style: TextStyle(
+                              '$messagesCount réponse${messagesCount > 1 ? 's' : ''}',
+                              style: const TextStyle(
                                 fontSize: 12,
-                                color: Colors.grey[600],
-                                fontWeight: FontWeight.w500,
+                                color: Color(0xFFF59E0B),
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                      const Spacer(),
-                      const Icon(
-                        Icons.arrow_forward_rounded,
-                        color: Color(0xFFCBD5E1),
-                        size: 18,
+                          ] else
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.chat_bubble_outline,
+                                  size: 14,
+                                  color: Colors.grey[400],
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  'Pas encore de réponse',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey[400],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          const Spacer(),
+                          Icon(
+                            Icons.arrow_forward_ios_rounded,
+                            size: 14,
+                            color: const Color(0xFFCBD5E1),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),

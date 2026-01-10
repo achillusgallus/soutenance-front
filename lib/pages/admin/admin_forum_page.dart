@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/admin/add_forum.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/pages/forum/forum_topic_list_page.dart';
 
 class AdminForumPage extends StatefulWidget {
   const AdminForumPage({super.key});
@@ -154,11 +155,25 @@ class _AdminForumPageState extends State<AdminForumPage> {
       itemCount: forums.length,
       itemBuilder: (context, index) {
         final forum = forums[index];
+        final sujetsCount = forum['sujets_count'] ?? 0;
+        final messagesCount = forum['messages_count'] ?? 0;
+
+        // Generate color based on index
+        final colors = [
+          const Color(0xFF6366F1),
+          const Color(0xFF10B981),
+          const Color(0xFFEC4899),
+          const Color(0xFFF59E0B),
+          const Color(0xFF8B5CF6),
+        ];
+        final colorIndex = index % colors.length;
+        final color = colors[colorIndex];
+
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.03),
@@ -170,71 +185,132 @@ class _AdminForumPageState extends State<AdminForumPage> {
           child: Material(
             color: Colors.transparent,
             child: InkWell(
-              borderRadius: BorderRadius.circular(24),
-              onTap: null,
+              borderRadius: BorderRadius.circular(20),
+              onTap: () {
+                // Navigate to topics list
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ForumTopicListPage(
+                      forumId: forum['id'],
+                      forumTitle: forum['titre'] ?? 'Forum',
+                    ),
+                  ),
+                );
+              },
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Container(
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            const Color(0xFFF59E0B).withOpacity(0.2),
-                            const Color(0xFFF59E0B).withOpacity(0.1),
-                          ],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(18),
-                      ),
-                      child: const Icon(
-                        Icons.forum_rounded,
-                        color: Color(0xFFF59E0B),
-                        size: 28,
-                      ),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            forum['titre'] ?? 'Sans titre',
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 16,
-                              color: Color(0xFF1E293B),
+                    Row(
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [color.withOpacity(0.8), color],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: [
+                              BoxShadow(
+                                color: color.withOpacity(0.3),
+                                blurRadius: 8,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Center(
+                            child: Text(
+                              (forum['titre'] ?? '?')[0].toUpperCase(),
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
-                          const SizedBox(height: 4),
-                          Text(
-                            "Matière: ${forum['matiere_nom'] ?? 'N/A'}",
-                            style: const TextStyle(
-                              fontSize: 13,
-                              color: Color(0xFF94A3B8),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                forum['titre'] ?? 'Sans titre',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                  color: Color(0xFF1E293B),
+                                ),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.book_outlined,
+                                    size: 14,
+                                    color: color.withOpacity(0.7),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    forum['matiere_nom'] ?? 'N/A',
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF94A3B8),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => _deleteForum(forum['id']),
+                          icon: const Icon(
+                            Icons.delete_outline_rounded,
+                            color: Color(0xFFEF4444),
+                            size: 22,
+                          ),
+                          style: IconButton.styleFrom(
+                            backgroundColor: const Color(
+                              0xFFEF4444,
+                            ).withOpacity(0.05),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => _deleteForum(forum['id']),
-                      icon: const Icon(
-                        Icons.delete_outline_rounded,
-                        color: Color(0xFFEF4444),
-                        size: 24,
-                      ),
-                      style: IconButton.styleFrom(
-                        backgroundColor: const Color(
-                          0xFFEF4444,
-                        ).withOpacity(0.05),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
                         ),
-                      ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        _buildStatBadge(
+                          icon: Icons.chat_bubble_outline,
+                          label:
+                              '$sujetsCount sujet${sujetsCount > 1 ? 's' : ''}',
+                          color: color,
+                        ),
+                        const SizedBox(width: 8),
+                        _buildStatBadge(
+                          icon: Icons.message_outlined,
+                          label:
+                              '$messagesCount message${messagesCount > 1 ? 's' : ''}',
+                          color: const Color(0xFF10B981),
+                        ),
+                        const Spacer(),
+                        Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 14,
+                          color: const Color(0xFFCBD5E1),
+                        ),
+                      ],
                     ),
                   ],
                 ),
@@ -243,6 +319,36 @@ class _AdminForumPageState extends State<AdminForumPage> {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildStatBadge({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: color.withOpacity(0.2)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 14, color: color),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
