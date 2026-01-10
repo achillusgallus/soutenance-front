@@ -13,6 +13,7 @@ import 'package:togoschool/pages/admin/admin_student_page.dart';
 import 'package:togoschool/service/api_service.dart';
 import 'package:togoschool/service/impersonation_service.dart';
 import 'package:togoschool/pages/dashbord/teacher_dashboard_page.dart';
+import 'package:togoschool/service/token_storage.dart';
 
 class AdminAcceuil extends StatefulWidget {
   const AdminAcceuil({super.key});
@@ -257,21 +258,50 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                     itemBuilder: (context, index) {
                       var teacher = teachers[index];
                       return GestureDetector(
-                        onTap: () {
-                          ImpersonationService.startImpersonation(teacher);
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TeacherDashboardPage(
-                                isAdminViewing: true,
-                                teacherData: teacher,
+                        onTap: () async {
+                        try {
+                          // Appel au backend pour générer un token du prof
+                          final response = await api.create("/admin/impersonate/${teacher['id']}", {});
+                          if (response != null && response.statusCode == 200) {
+                            final data = response.data;
+                            final token = data['impersonation_token'];
+
+                            // Sauvegarder le token du prof
+                            await TokenStorage.saveToken(token);
+
+                            // Démarrer l’impersonation côté front
+                            ImpersonationService.startImpersonation(data['teacher']);
+
+                            // Ouvrir le dashboard enseignant
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => TeacherDashboardPage(
+                                  isAdminViewing: true,
+                                  teacherData: data['teacher'],
+                                ),
                               ),
-                            ),
-                          ).then((_) {
+                            );
+
+                            // Quand on revient, arrêter l’impersonation
+                            await api.create("/admin/impersonate/stop", {});
                             ImpersonationService.stopImpersonation();
-                            getTeachers(); // Refresh data
-                          });
-                        },
+
+                            // Restaurer le token admin (à implémenter dans TokenStorage)
+                            final adminToken = await TokenStorage.getAdminToken();
+                            if (adminToken != null) {
+                              await TokenStorage.saveToken(adminToken);
+                            }
+
+                            // Rafraîchir les données admin
+                            getTeachers();
+                          }
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Erreur impersonation: $e")),
+                          );
+                        }
+                      },
                         child: _buildRecentCard(
                           "${teacher['name'] ?? ''} ${teacher['surname'] ?? ''}",
                           teacher['email'] ?? '',

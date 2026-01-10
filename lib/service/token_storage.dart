@@ -35,4 +35,22 @@ class TokenStorage {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getInt('user_id');
   }
+
+  /// Sauvegarder le token admin avant impersonation
+  static Future<void> saveAdminToken(String token) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('admin_token', token);
+  }
+
+  /// Récupérer le token admin pour restaurer après impersonation
+  static Future<String?> getAdminToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getString('admin_token');
+  }
+
+  /// Supprimer le token admin si besoin
+  static Future<void> clearAdminToken() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('admin_token');
+  }
 }
