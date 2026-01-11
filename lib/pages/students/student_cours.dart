@@ -459,8 +459,16 @@ class _StudentCoursState extends State<StudentCours> {
       }
     }
 
-    final fullUrl = ApiService.resolveFileUrl(fileUrl);
-    if (fullUrl == null) return;
+    final fullUrl = await api.getFileUrl(fileUrl);
+    if (fullUrl == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Accès refusé : vous devez payer pour télécharger plus de cours"),
+          backgroundColor: Color(0xFFEF4444),
+        ),
+      );
+      return;
+    }
 
     try {
       if (kIsWeb) {

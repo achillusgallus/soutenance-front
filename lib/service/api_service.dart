@@ -125,21 +125,18 @@ class ApiService {
     }
   }
 
-  // Centralized URL resolution for files
-  static String? resolveFileUrl(String? path) {
-    if (path == null || path.isEmpty) return null;
-    if (path.startsWith('http')) {
-      return path; // Already a full URL
+  // Récupérer l’URL sécurisée d’un fichier via l’API backend
+  Future<String?> getFileUrl(String filePath) async {
+    try {
+      final response = await dio.get("/student/file/$filePath");
+
+      if (response.statusCode == 200 && response.data != null) {
+        return response.data['url']; // L’URL complète renvoyée par le backend
+      } else {
+        return null;
+      }
+    } on DioException catch (e) {
+      throw Exception(handleError(e));
     }
-
-    // Prepend base storage URL from Render
-    return "$baseStorageUrl/$path";
   }
-
-  // Helper for base storage path
-  static String get baseStorageUrl {
-    // Remplace par ton domaine Render
-    return "https://backend-togoschool.onrender.com/storage";
-  }
-
 }
