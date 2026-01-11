@@ -129,29 +129,17 @@ class ApiService {
   static String? resolveFileUrl(String? path) {
     if (path == null || path.isEmpty) return null;
     if (path.startsWith('http')) {
-      // If we are on Android emulator and the URL contains localhost, swap it
-      if (!kIsWeb && Platform.isAndroid && path.contains('localhost')) {
-        return path.replaceAll('localhost', '10.0.2.2');
-      }
-      return path;
+      return path; // Already a full URL
     }
 
-    // Determine host
-    String host = "localhost";
-    if (!kIsWeb && Platform.isAndroid) {
-      host = "10.0.2.2";
-    }
-
-    // Prepend base storage URL
-    return "http://$host:8000/storage/$path";
+    // Prepend base storage URL from Render
+    return "$baseStorageUrl/$path";
   }
 
   // Helper for base storage path
   static String get baseStorageUrl {
-    String host = "localhost";
-    if (!kIsWeb && Platform.isAndroid) {
-      host = "10.0.2.2";
-    }
-    return "http://$host:8000/storage";
+    // Remplace par ton domaine Render
+    return "https://backend-togoschool.onrender.com/storage";
   }
+
 }
