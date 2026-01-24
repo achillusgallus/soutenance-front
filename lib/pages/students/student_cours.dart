@@ -5,11 +5,7 @@ import 'package:togoschool/service/api_service.dart';
 import 'package:togoschool/service/download_service.dart';
 import 'package:togoschool/service/paygate_service.dart';
 import 'package:togoschool/pages/students/payment_required_page.dart';
-import 'package:open_filex/open_filex.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:flutter/foundation.dart';
 import 'package:togoschool/pages/common/video_player_page.dart';
 import 'package:togoschool/pages/common/pdf_viewer_page.dart';
 
@@ -71,9 +67,25 @@ class _StudentCoursState extends State<StudentCours> {
 
   Future<void> _loadDownloadInfo() async {
     final paygateService = PaygateService();
+    final status = await paygateService.getAccessStatus();
+
+    if (mounted) {
+      setState(() {
+        if (status != null) {
+          _hasPaid = status['hasPaid'] ?? false;
+          _remainingDownloads = status['remainingDownloads'] ?? 0;
+        } else {
+          // Fallback local si serveur injoignable
+          _loadDownloadInfoLocal();
+        }
+      });
+    }
+  }
+
+  Future<void> _loadDownloadInfoLocal() async {
+    final paygateService = PaygateService();
     final hasPaid = await paygateService.hasPaid();
     final remaining = await DownloadService.getRemainingDownloads();
-
     if (mounted) {
       setState(() {
         _hasPaid = hasPaid;
@@ -105,17 +117,6 @@ class _StudentCoursState extends State<StudentCours> {
           fetchedCourses = data; // Fallback
         }
 
-        /* print("DEBUG - Courses fetched: ${fetchedCourses.length}");
-        if (widget.matiereId != null) {
-          print("DEBUG - Filtered by matiere_id: ${widget.matiereId}");
-        } */
-
-        // Append to existing if loading more, or replace if first page (handled by logic above somewhat, but need to be careful with refresh)
-        // If we are refreshing (page 1), we should have cleared 'courses' before.
-        // But here we rely on 'courses' state.
-
-        // Let's ensure we merge correctly.
-        // If currentPage is 1, strictly replace.
         List<dynamic> paramCourses;
         if (currentPage == 1) {
           paramCourses = fetchedCourses;
@@ -494,96 +495,115 @@ class _StudentCoursState extends State<StudentCours> {
     );
   }
 
+  Future<bool?> _requestPayment(BuildContext context) async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PaymentRequiredPage(reason: 'download'),
+      ),
+    );
+
+    if (result != true) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Vous devez payer pour télécharger plus de cours"),
+            backgroundColor: Color(0xFFEF4444),
+          ),
+        );
+      }
+    }
+    return result;
+  }
+
   Future<void> _downloadAndOpenFile(String fileUrl, String fileName) async {
-    // Vérifier si l'utilisateur peut télécharger gratuitement
-    final paygateService = PaygateService();
-    final canDownload = await DownloadService.canDownloadFree();
-    final hasPaid = await paygateService.hasPaid();
+    try {
+      // 1. Vérifier si l'utilisateur peut télécharger (Priorité serveur)
+      final paygateService = PaygateService();
+      final status = await paygateService.getAccessStatus();
 
-    // Si limite atteinte et pas de paiement, demander le paiement
-    if (!canDownload && !hasPaid) {
-      final result = await Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const PaymentRequiredPage(reason: 'download'),
-        ),
-      );
+      bool canDownload =
+          status?['canDownloadFree'] ?? await DownloadService.canDownloadFree();
+      bool hasPaid = status?['hasPaid'] ?? await paygateService.hasPaid();
 
-      if (result != true) {
+      // Si limite atteinte et pas de paiement, demander le paiement
+      if (!canDownload && !hasPaid) {
+        final result = await _requestPayment(context);
+        if (result != true) return;
+        await _loadDownloadInfo();
+      }
+
+      // 2. URL complète récupérée
+      String? fullUrl;
+      try {
+        fullUrl = await api.getFileUrl(fileUrl);
+      } catch (e) {
+        // Si le serveur renvoie 403 alors qu'on pensait avoir accès (ex: décalage cache)
+        if (e.toString().contains("403")) {
+          final result = await _requestPayment(context);
+          if (result == true) {
+            await _loadDownloadInfo();
+            fullUrl = await api.getFileUrl(fileUrl);
+          } else {
+            return;
+          }
+        } else {
+          rethrow;
+        }
+      }
+
+      if (fullUrl == null) {
         if (mounted) {
-           ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text("Vous devez payer pour télécharger plus de cours"),
-              backgroundColor: Color(0xFFEF4444),
+              content: Text("Lien invalide"),
+              backgroundColor: Colors.red,
             ),
           );
         }
         return;
       }
 
+      // Synchroniser les infos de téléchargement
+      await _loadDownloadInfo();
 
-      // Re-vérifier après paiement
-      final canDownloadNow = await DownloadService.canDownloadFree();
-      final hasPaidNow = await paygateService.hasPaid();
-      if (!canDownloadNow && !hasPaidNow) {
+      // --- LOGIQUE D'OUVERTURE ---
+
+      // 1. Vidéos
+      if (fileName.toLowerCase().endsWith('.mp4') ||
+          fileName.toLowerCase().endsWith('.mov')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) =>
+                VideoPlayerPage(videoUrl: fullUrl!, title: fileName),
+          ),
+        );
         return;
       }
-    }
 
-    // URL complète récupérée
-    final fullUrl = await api.getFileUrl(fileUrl);
-    
-    if (fullUrl == null) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Lien invalide"), backgroundColor: Colors.red));
+      // 2. PDFs
+      if (fileName.toLowerCase().endsWith('.pdf')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PdfViewerPage(pdfUrl: fullUrl!, title: fileName),
+          ),
+        );
+        return;
       }
-      return;
-    }
 
-    if (!canDownload && !hasPaid) {
-       // Si on est ici, c'est qu'on a déjà "consommé" un téléchargement
-       // On doit incrémenter le compteur
-       try {
-         await DownloadService.incrementDownloadCount();
-         await _loadDownloadInfo();
-       } catch(e) {/* ignore */}
-    }
-
-    // --- LOGIQUE D'OUVERTURE ---
-    
-    // 1. Vidéos
-    if (fileName.toLowerCase().endsWith('.mp4') || fileName.toLowerCase().endsWith('.mov')) {
-       Navigator.push(
-         context,
-         MaterialPageRoute(
-           builder: (_) => VideoPlayerPage(videoUrl: fullUrl, title: fileName),
-         ),
-       );
-       return;
-    }
-
-    // 2. PDFs
-    if (fileName.toLowerCase().endsWith('.pdf')) {
-       // Force HTTPS if needed here too, though PdfViewerPage does it.
-       // Syncfusion handles Web perfectly, no need for external fallback
-       Navigator.push(
-         context,
-         MaterialPageRoute(
-           builder: (_) => PdfViewerPage(pdfUrl: fullUrl, title: fileName),
-         ),
-       );
-       return;
-    }
-
-    // 3. Autres (Open externally)
-    final Uri uri = Uri.parse(fullUrl);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Impossible d'ouvrir le fichier")));
+      // 3. Autres (Open externally)
+      final Uri uri = Uri.parse(fullUrl);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text("Impossible d'ouvrir le fichier")),
+          );
+        }
       }
-    }
     } catch (e) {
       if (mounted) {
         print("DEBUG - File error: $e");

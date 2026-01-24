@@ -80,10 +80,10 @@ class PaygateService {
   Future<bool> hasPaid() async {
     try {
       final response = await api.read("/student/check-access");
-      if (response != null &&
-          response.data is Map &&
-          response.data['has_paid'] == true) {
-        return true;
+      if (response != null && response.data is Map) {
+        // Le backend retourne 'hasPaid' dans FileController.php
+        return response.data['hasPaid'] == true ||
+            response.data['has_paid'] == true;
       }
       return false;
     } catch (e) {
@@ -115,6 +115,20 @@ class PaygateService {
       // En cas d'erreur, on retourne 0
       print("Erreur lors de la récupération du total payé: $e");
       return 0;
+    }
+  }
+
+  /// Récupérer le statut d'accès complet (paiement + téléchargements)
+  Future<Map<String, dynamic>?> getAccessStatus() async {
+    try {
+      final response = await api.read("/student/check-access");
+      if (response != null && response.data is Map) {
+        return Map<String, dynamic>.from(response.data);
+      }
+      return null;
+    } catch (e) {
+      print("Erreur lors de la récupération du statut d'accès: $e");
+      return null;
     }
   }
 }

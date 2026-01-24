@@ -13,8 +13,15 @@ class PdfViewerPage extends StatefulWidget {
 
 class _PdfViewerPageState extends State<PdfViewerPage> {
   late final GlobalKey<SfPdfViewerState> _pdfViewerKey = GlobalKey();
+  late final PdfViewerController _pdfViewerController;
   bool _isLoading = true;
   String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _pdfViewerController = PdfViewerController();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,8 +41,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           IconButton(
             icon: const Icon(Icons.refresh),
             onPressed: () {
-              _pdfViewerKey.currentState
-                  ?.clearSelection(); // Reset visual state if needed
+              _pdfViewerController.clearSelection(); // Reset visual state
               // Simply rebuilding usually triggers reload for SfPdfViewer if key changes,
               // but here we just rely on internal refresh or user could re-open.
               // A better refresh is to setState to trigger key change?
@@ -47,6 +53,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       body: SfPdfViewer.network(
         secureUrl,
         key: _pdfViewerKey,
+        controller: _pdfViewerController,
         onDocumentLoaded: (PdfDocumentLoadedDetails details) {
           setState(() => _isLoading = false);
         },
