@@ -52,18 +52,22 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
     if (phoneNumber.length != 8 || !RegExp(r'^\d+$').hasMatch(phoneNumber)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Le numéro de téléphone doit contenir 8 chiffres"),
+          content: Text("Format incorrect. 8 chiffres requis."),
           backgroundColor: Colors.red,
         ),
       );
       return;
     }
 
+    // Map internal codes to what backend expects in 'method'
+    // Backend validation says: in:TMoney,Flooz
+    final methodForBackend = _selectedMethod == 'TMY' ? 'TMoney' : 'Flooz';
+
     setState(() => _isProcessing = true);
 
     try {
       final success = await _paygateService.pay(
-        method: _selectedMethod!,
+        method: methodForBackend,
         phoneNumber: phoneNumber,
       );
 
@@ -112,11 +116,12 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
   Widget build(BuildContext context) {
     final isForum = widget.reason == 'forum';
     final title = isForum
-        ? "Accès Forum Requis"
-        : "Limite de Téléchargements Atteinte";
+        ? "Accès Premium Requis"
+        : "Quota de téléchargements atteint";
+
     final description = isForum
-        ? "Vous devez effectuer un paiement pour accéder aux forums."
-        : "Vous avez téléchargé ${_downloadCount ?? 3} cours gratuitement. Payer pour continuer.";
+        ? "L'accès aux forums et aux services avancés est réservé aux membres Premium. Activez votre accès maintenant."
+        : "Vous avez atteint la limite de 3 téléchargements gratuits. Passez en Premium pour un accès illimité.";
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
