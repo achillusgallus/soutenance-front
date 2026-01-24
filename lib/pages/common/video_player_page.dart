@@ -1,5 +1,6 @@
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
+import 'package:togoschool/service/token_storage.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerPage extends StatefulWidget {
@@ -29,8 +30,14 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
 
   Future<void> _initializePlayer() async {
     try {
+      final token = await TokenStorage.getToken();
+      final headers = token != null
+          ? {'Authorization': 'Bearer $token'}
+          : <String, String>{};
+
       _videoPlayerController = VideoPlayerController.networkUrl(
         Uri.parse(widget.videoUrl),
+        httpHeaders: headers,
       );
       await _videoPlayerController.initialize();
       _chewieController = ChewieController(

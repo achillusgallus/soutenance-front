@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import 'package:togoschool/service/token_storage.dart';
 
 class PdfViewerPage extends StatefulWidget {
   final String pdfUrl;
@@ -50,22 +51,37 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
           ),
         ],
       ),
-      body: SfPdfViewer.network(
-        secureUrl,
-        key: _pdfViewerKey,
-        controller: _pdfViewerController,
-        onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-          setState(() => _isLoading = false);
+      body: FutureBuilder<String?>(
+        future: TokenStorage.getToken(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          final token = snapshot.data;
+          final headers = token != null
+              ? {'Authorization': 'Bearer $token'}
+              : <String, String>{};
+
+          return SfPdfViewer.network(
+            secureUrl,
+            key: _pdfViewerKey,
+            controller: _pdfViewerController,
+            headers: headers,
+            onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+              setState(() => _isLoading = false);
+            },
+            onDocumentLoadFailed: (PdfDocumentLoadFailedDetails details) {
+              setState(() {
+                _isLoading = false;
+                _errorMessage =
+                    "Erreur de chargement: ${details.error}\n${details.description}";
+              });
+            },
+            canShowScrollHead: true,
+            canShowScrollStatus: true,
+          );
         },
-        onDocumentLoadFailed: (PdfDocumentLoadFailedDetails details) {
-          setState(() {
-            _isLoading = false;
-            _errorMessage =
-                "Erreur de chargement: ${details.error}\n${details.description}";
-          });
-        },
-        canShowScrollHead: true,
-        canShowScrollStatus: true,
       ),
     );
   }
