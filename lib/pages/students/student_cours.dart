@@ -536,7 +536,20 @@ class _StudentCoursState extends State<StudentCours> {
       // 2. URL complète récupérée
       String? fullUrl;
       try {
-        fullUrl = await api.getFileUrl(fileUrl);
+        // Extraire uniquement le chemin relatif si c'est une URL complète (ex: via storage/...)
+        String relativePath = fileUrl;
+        if (fileUrl.contains('/storage/')) {
+          relativePath = fileUrl.split('/storage/').last;
+        } else if (fileUrl.startsWith('http')) {
+          // Si c'est une URL complète mais sans /storage/, on essaie de prendre la fin
+          relativePath = fileUrl.split('/').last;
+        }
+
+        print("DEBUG - Initial fileUrl: $fileUrl");
+        print("DEBUG - Normalized relativePath: $relativePath");
+
+        fullUrl = await api.getFileUrl(relativePath);
+        print("DEBUG - Received fullUrl from API: $fullUrl");
       } catch (e) {
         // Si le serveur renvoie 403 alors qu'on pensait avoir accès (ex: décalage cache)
         if (e.toString().contains("403")) {

@@ -7,7 +7,6 @@ import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
 import 'package:togoschool/pages/common/legal_page.dart';
 import 'package:togoschool/pages/common/notifications_page.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class AdminParameter extends StatefulWidget {
   const AdminParameter({super.key});
