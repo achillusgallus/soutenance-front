@@ -10,6 +10,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:dio/dio.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/foundation.dart';
+import 'package:togoschool/pages/common/video_player_page.dart';
+import 'package:togoschool/pages/common/pdf_viewer_page.dart';
 
 class StudentCours extends StatefulWidget {
   final int? matiereId; // Optional: filter by specific subject
@@ -507,17 +509,18 @@ class _StudentCoursState extends State<StudentCours> {
         ),
       );
 
-      // Si paiement effectué, continuer le téléchargement
       if (result != true) {
-        // L'utilisateur a annulé ou le paiement a échoué
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Vous devez payer pour télécharger plus de cours"),
-            backgroundColor: Color(0xFFEF4444),
-          ),
-        );
+        if (mounted) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Vous devez payer pour télécharger plus de cours"),
+              backgroundColor: Color(0xFFEF4444),
+            ),
+          );
+        }
         return;
       }
+
 
       // Re-vérifier après paiement
       final canDownloadNow = await DownloadService.canDownloadFree();
@@ -527,111 +530,58 @@ class _StudentCoursState extends State<StudentCours> {
       }
     }
 
+    // URL complète récupérée
     final fullUrl = await api.getFileUrl(fileUrl);
+    
     if (fullUrl == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "Accès refusé : vous devez payer pour télécharger plus de cours",
-          ),
-          backgroundColor: Color(0xFFEF4444),
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Lien invalide"), backgroundColor: Colors.red));
+      }
       return;
     }
 
-    try {
-      if (kIsWeb) {
-        final Uri uri = Uri.parse(fullUrl);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-        } else {
-          throw 'Impossible d\'ouvrir le lien : $fullUrl';
-        }
-        return;
+    if (!canDownload && !hasPaid) {
+       // Si on est ici, c'est qu'on a déjà "consommé" un téléchargement
+       // On doit incrémenter le compteur
+       try {
+         await DownloadService.incrementDownloadCount();
+         await _loadDownloadInfo();
+       } catch(e) {/* ignore */}
+    }
+
+    // --- LOGIQUE D'OUVERTURE ---
+    
+    // 1. Vidéos
+    if (fileName.toLowerCase().endsWith('.mp4') || fileName.toLowerCase().endsWith('.mov')) {
+       Navigator.push(
+         context,
+         MaterialPageRoute(
+           builder: (_) => VideoPlayerPage(videoUrl: fullUrl, title: fileName),
+         ),
+       );
+       return;
+    }
+
+    // 2. PDFs
+    if (fileName.toLowerCase().endsWith('.pdf')) {
+       Navigator.push(
+         context,
+         MaterialPageRoute(
+           builder: (_) => PdfViewerPage(pdfUrl: fullUrl, title: fileName),
+         ),
+       );
+       return;
+    }
+
+    // 3. Autres (Open externally)
+    final Uri uri = Uri.parse(fullUrl);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text("Impossible d'ouvrir le fichier")));
       }
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          duration: const Duration(seconds: 2),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(15),
-          ),
-          backgroundColor: const Color(0xFF6366F1),
-          content: Row(
-            children: [
-              const SizedBox(
-                width: 18,
-                height: 18,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: Text(
-                  "Préparation de $fileName...",
-                  style: const TextStyle(fontWeight: FontWeight.w500),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-
-      bool openedLocally = false;
-      try {
-        final tempDir = await getTemporaryDirectory();
-        final filePath = "${tempDir.path}/$fileName";
-
-        // Download file with a specific timeout to handle unstable connections
-        await Dio(
-          BaseOptions(
-            connectTimeout: const Duration(seconds: 15),
-            receiveTimeout: const Duration(seconds: 60),
-          ),
-        ).download(fullUrl, filePath);
-
-        // Try to open the local file
-        final result = await OpenFilex.open(filePath);
-        if (result.type == ResultType.done) {
-          openedLocally = true;
-          // Incrémenter le compteur de téléchargements seulement si le fichier a été ouvert avec succès
-          final paygateService = PaygateService();
-          final hasPaid = await paygateService.hasPaid();
-          if (!hasPaid) {
-            await DownloadService.incrementDownloadCount();
-          }
-        } else {
-          print("DEBUG - OpenFilex error: ${result.message}");
-        }
-      } catch (downloadError) {
-        print(
-          "DEBUG - Download failed, attempting browser fallback: $downloadError",
-        );
-      }
-
-      // Fallback: If local opening failed or download errored, try browser
-      if (!openedLocally) {
-        final Uri uri = Uri.parse(fullUrl);
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.externalApplication);
-          // Incrémenter aussi pour les téléchargements via navigateur
-          final paygateService = PaygateService();
-          final hasPaid = await paygateService.hasPaid();
-          if (!hasPaid) {
-            await DownloadService.incrementDownloadCount();
-            await _loadDownloadInfo(); // Recharger les infos
-          }
-        } else {
-          throw 'Échec du téléchargement et impossible d\'ouvrir dans le navigateur.';
-        }
-      } else {
-        // Recharger les infos après téléchargement réussi
-        await _loadDownloadInfo();
-      }
+    }
     } catch (e) {
       if (mounted) {
         print("DEBUG - File error: $e");
