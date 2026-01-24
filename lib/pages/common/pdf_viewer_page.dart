@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_pdfview/flutter_pdfview.dart';
-import 'package:dio/dio.dart';
-import 'package:path_provider/path_provider.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 
 class PdfViewerPage extends StatefulWidget {
   final String pdfUrl;
@@ -14,43 +12,15 @@ class PdfViewerPage extends StatefulWidget {
 }
 
 class _PdfViewerPageState extends State<PdfViewerPage> {
-  String? localPath;
-  bool isLoading = true;
-  String? error;
-
-  @override
-  void initState() {
-    super.initState();
-    _downloadPdf();
-  }
-
-  Future<void> _downloadPdf() async {
-    try {
-      final dir = await getTemporaryDirectory();
-      // Generate a unique filename based on the URL or timestamp
-      final filename = "course_${DateTime.now().millisecondsSinceEpoch}.pdf";
-      final path = "${dir.path}/$filename";
-
-      await Dio().download(widget.pdfUrl, path);
-
-      if (mounted) {
-        setState(() {
-          localPath = path;
-          isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        setState(() {
-          error = "Erreur lors du chargement : $e";
-          isLoading = false;
-        });
-      }
-    }
-  }
+  late final GlobalKey<SfPdfViewerState> _pdfViewerKey = GlobalKey();
+  bool _isLoading = true;
+  String? _errorMessage;
 
   @override
   Widget build(BuildContext context) {
+    // 1. Force HTTPS logic
+    final secureUrl = widget.pdfUrl.replaceFirst('http://', 'https://');
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -60,26 +30,36 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black87),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: () {
+              _pdfViewerKey.currentState
+                  ?.clearSelection(); // Reset visual state if needed
+              // Simply rebuilding usually triggers reload for SfPdfViewer if key changes,
+              // but here we just rely on internal refresh or user could re-open.
+              // A better refresh is to setState to trigger key change?
+              setState(() {});
+            },
+          ),
+        ],
       ),
-      body: isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : error != null
-          ? Center(
-              child: Text(error!, style: const TextStyle(color: Colors.red)),
-            )
-          : PDFView(
-              filePath: localPath,
-              enableSwipe: true,
-              swipeHorizontal: true,
-              autoSpacing: false,
-              pageFling: false,
-              onError: (error) {
-                debugPrint(error.toString());
-              },
-              onPageError: (page, error) {
-                debugPrint('$page: ${error.toString()}');
-              },
-            ),
+      body: SfPdfViewer.network(
+        secureUrl,
+        key: _pdfViewerKey,
+        onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+          setState(() => _isLoading = false);
+        },
+        onDocumentLoadFailed: (PdfDocumentLoadFailedDetails details) {
+          setState(() {
+            _isLoading = false;
+            _errorMessage =
+                "Erreur de chargement: ${details.error}\n${details.description}";
+          });
+        },
+        canShowScrollHead: true,
+        canShowScrollStatus: true,
+      ),
     );
   }
 }

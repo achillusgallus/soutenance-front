@@ -564,6 +564,8 @@ class _StudentCoursState extends State<StudentCours> {
 
     // 2. PDFs
     if (fileName.toLowerCase().endsWith('.pdf')) {
+       // Force HTTPS if needed here too, though PdfViewerPage does it.
+       // Syncfusion handles Web perfectly, no need for external fallback
        Navigator.push(
          context,
          MaterialPageRoute(
