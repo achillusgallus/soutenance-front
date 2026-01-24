@@ -12,34 +12,96 @@ class StudentQuizPage extends StatefulWidget {
 
 class _StudentQuizPageState extends State<StudentQuizPage> {
   final api = ApiService();
-  bool isLoading = true;
+  final ScrollController _scrollController = ScrollController();
+
+  // State for Quizzes
+  bool isLoadingQuizzes = true;
+  bool isLoadingMoreQuizzes = false;
+  int currentQuizPage = 1;
+  int lastQuizPage = 1;
   List<dynamic> quizzes = [];
+
+  // State for Results
+  bool isLoadingResults = false;
   List<dynamic> results = [];
   double totalPoints = 0;
+
   bool showHistory = false; // Bascule entre quiz disponibles et historique
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _fetchQuizzes();
+    _fetchResults();
+    _scrollController.addListener(_scrollListener);
   }
 
-  Future<void> _loadData() async {
-    setState(() => isLoading = true);
-    await Future.wait([_fetchQuizzes(), _fetchResults()]);
-    if (mounted) setState(() => isLoading = false);
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (!showHistory &&
+        _scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !isLoadingMoreQuizzes &&
+        !isLoadingQuizzes &&
+        currentQuizPage < lastQuizPage) {
+      _loadMoreQuizzes();
+    }
+  }
+
+  Future<void> _loadMoreQuizzes() async {
+    if (mounted) {
+      setState(() {
+        isLoadingMoreQuizzes = true;
+        currentQuizPage++;
+      });
+      await _fetchQuizzes();
+    }
   }
 
   Future<void> _fetchQuizzes() async {
+    if (quizzes.isEmpty) {
+      setState(() => isLoadingQuizzes = true);
+    }
+
     try {
-      final res = await api.read("/quiz");
+      final res = await api.read("/quiz?page=$currentQuizPage");
       if (mounted) {
+        final data = res?.data;
+        List<dynamic> fetchedQuizzes = [];
+
+        if (data is Map && data.containsKey('data')) {
+          fetchedQuizzes = data['data'];
+          lastQuizPage = data['last_page'] ?? 1;
+        } else if (data is List) {
+          fetchedQuizzes = data;
+        }
+
+        List<dynamic> newQuizzesList;
+        if (currentQuizPage == 1) {
+          newQuizzesList = fetchedQuizzes;
+        } else {
+          newQuizzesList = [...quizzes, ...fetchedQuizzes];
+        }
+
         setState(() {
-          quizzes = res?.data ?? [];
+          quizzes = newQuizzesList;
+          isLoadingQuizzes = false;
+          isLoadingMoreQuizzes = false;
         });
       }
     } catch (e) {
       debugPrint("Erreur quiz: $e");
+      if (mounted) {
+        setState(() {
+          isLoadingQuizzes = false;
+          isLoadingMoreQuizzes = false;
+        });
+      }
     }
   }
 
@@ -85,19 +147,33 @@ class _StudentQuizPageState extends State<StudentQuizPage> {
             _buildTabToggle(),
             Expanded(
               child: RefreshIndicator(
-                onRefresh: _loadData,
+                onRefresh: () async {
+                  if (showHistory) {
+                    await _fetchResults();
+                  } else {
+                    setState(() {
+                      currentQuizPage = 1;
+                      quizzes = [];
+                    });
+                    await _fetchQuizzes();
+                  }
+                },
                 color: const Color(0xFF10B981),
-                child: isLoading
-                    ? const Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                            Color(0xFF10B981),
-                          ),
-                        ),
-                      )
-                    : showHistory
-                    ? _buildResultsList()
-                    : _buildQuizzesList(),
+                child: showHistory
+                    ? (isLoadingResults
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF10B981),
+                              ),
+                            )
+                          : _buildResultsList())
+                    : (isLoadingQuizzes
+                          ? const Center(
+                              child: CircularProgressIndicator(
+                                color: Color(0xFF10B981),
+                              ),
+                            )
+                          : _buildQuizzesList()),
               ),
             ),
           ],
@@ -160,12 +236,23 @@ class _StudentQuizPageState extends State<StudentQuizPage> {
   }
 
   Widget _buildQuizzesList() {
-    if (quizzes.isEmpty)
+    if (quizzes.isEmpty && !isLoadingQuizzes)
       return _buildEmptyState("Aucun quiz disponible pour le moment.");
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      itemCount: quizzes.length,
-      itemBuilder: (context, index) => _buildQuizCard(quizzes[index]),
+      itemCount: quizzes.length + (isLoadingMoreQuizzes ? 1 : 0),
+      itemBuilder: (context, index) {
+        if (index == quizzes.length) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(
+              child: CircularProgressIndicator(color: Color(0xFF10B981)),
+            ),
+          );
+        }
+        return _buildQuizCard(quizzes[index]);
+      },
     );
   }
 
@@ -368,7 +455,11 @@ class _StudentQuizPageState extends State<StudentQuizPage> {
           duration: quiz['duree'] ?? 30,
         ),
       ),
-    ).then((_) => _loadData());
+    ).then((_) {
+      // Refresh lists after quiz
+      _fetchResults();
+      // Optionally refresh quiz list if needed, but usually not needed unless status changed
+    });
   }
 
   Widget _buildEmptyState(String message) {

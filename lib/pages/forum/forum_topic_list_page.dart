@@ -22,28 +22,85 @@ class ForumTopicListPage extends StatefulWidget {
 
 class _ForumTopicListPageState extends State<ForumTopicListPage> {
   final api = ApiService();
+  final ScrollController _scrollController = ScrollController();
   bool isLoading = true;
+  bool isLoadingMore = false;
+  int currentPage = 1;
+  int lastPage = 1;
   List<dynamic> topics = [];
 
   @override
   void initState() {
     super.initState();
     _fetchTopics();
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !isLoadingMore &&
+        !isLoading &&
+        currentPage < lastPage) {
+      _loadMoreTopics();
+    }
+  }
+
+  Future<void> _loadMoreTopics() async {
+    if (mounted) {
+      setState(() {
+        isLoadingMore = true;
+        currentPage++;
+      });
+      await _fetchTopics();
+    }
   }
 
   Future<void> _fetchTopics() async {
-    setState(() => isLoading = true);
+    if (topics.isEmpty) {
+      setState(() => isLoading = true);
+    }
+
     try {
-      final res = await api.read("/forums/${widget.forumId}/sujets");
+      final res = await api.read(
+        "/forums/${widget.forumId}/sujets?page=$currentPage",
+      );
       if (mounted) {
+        final data = res?.data;
+        List<dynamic> fetchedTopics = [];
+
+        if (data is Map && data.containsKey('data')) {
+          fetchedTopics = data['data'];
+          lastPage = data['last_page'] ?? 1;
+        } else if (data is List) {
+          fetchedTopics = data;
+        }
+
+        List<dynamic> newTopicsList;
+        if (currentPage == 1) {
+          newTopicsList = fetchedTopics;
+        } else {
+          newTopicsList = [...topics, ...fetchedTopics];
+        }
+
         setState(() {
-          topics = res?.data ?? [];
+          topics = newTopicsList;
           isLoading = false;
+          isLoadingMore = false;
         });
       }
     } catch (e) {
       if (mounted) {
-        setState(() => isLoading = false);
+        setState(() {
+          isLoading = false;
+          isLoadingMore = false;
+        });
       }
     }
   }
@@ -70,7 +127,13 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
             ),
             Expanded(
               child: RefreshIndicator(
-                onRefresh: _fetchTopics,
+                onRefresh: () async {
+                  setState(() {
+                    currentPage = 1;
+                    topics = [];
+                  });
+                  await _fetchTopics();
+                },
                 color: const Color(0xFFF59E0B),
                 child: isLoading
                     ? const Center(
@@ -84,12 +147,23 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
                     ? _buildEmptyState()
                     : ListView.builder(
                         physics: const BouncingScrollPhysics(),
+                        controller: _scrollController,
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
                           vertical: 24,
                         ),
-                        itemCount: topics.length,
+                        itemCount: topics.length + (isLoadingMore ? 1 : 0),
                         itemBuilder: (context, index) {
+                          if (index == topics.length) {
+                            return const Padding(
+                              padding: EdgeInsets.all(16.0),
+                              child: Center(
+                                child: CircularProgressIndicator(
+                                  color: Color(0xFFF59E0B),
+                                ),
+                              ),
+                            );
+                          }
                           final topic = topics[index];
                           return _buildTopicCard(topic);
                         },
@@ -204,6 +278,12 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
                       "contenu": safeContent,
                     });
                     Navigator.pop(ctx);
+
+                    // Refresh topics
+                    setState(() {
+                      currentPage = 1;
+                      topics = [];
+                    });
                     _fetchTopics();
                   } catch (e) {
                     ScaffoldMessenger.of(

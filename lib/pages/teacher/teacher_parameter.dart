@@ -7,6 +7,9 @@ import 'package:togoschool/service/token_storage.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
+import 'package:togoschool/pages/common/legal_page.dart';
+import 'package:togoschool/pages/common/notifications_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class TeacherParameter extends StatefulWidget {
   const TeacherParameter({super.key});
@@ -22,6 +25,7 @@ class _TeacherParameterState extends State<TeacherParameter> {
   bool isEditing = false;
   bool isSaving = false;
   bool _obscurePassword = true;
+  bool _notificationsEnabled = true;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -157,6 +161,10 @@ class _TeacherParameterState extends State<TeacherParameter> {
                   Navigator.pop(context);
                 }
               },
+              // Add trailing icon for notifications here if FormHeader supports it,
+              // but FormHeader implementation was not shown.
+              // Assuming FormHeader is simple. I will add a Row/Stack or modifying FormHeader is risky without seeing it.
+              // I'll stick to adding notification settings in the list.
             ),
             Expanded(
               child: isLoading
@@ -212,17 +220,17 @@ class _TeacherParameterState extends State<TeacherParameter> {
         _buildSettingsTile(
           icon: FontAwesomeIcons.bell,
           title: 'Notifications',
-          onTap: () {},
+          onTap: _showNotificationSettings,
         ),
         _buildSettingsTile(
           icon: FontAwesomeIcons.shieldHalved,
           title: 'Sécurité',
-          onTap: () {},
+          onTap: () => setState(() => isEditing = true),
         ),
         _buildSettingsTile(
           icon: FontAwesomeIcons.circleInfo,
           title: 'À propos',
-          onTap: () {},
+          onTap: _openAbout,
         ),
         const SizedBox(height: 20),
         _buildSettingsTile(
@@ -320,6 +328,83 @@ class _TeacherParameterState extends State<TeacherParameter> {
       title: Text(title, style: TextStyle(fontSize: 16, color: color)),
       trailing: const Icon(Icons.arrow_forward_ios, size: 14),
       onTap: onTap,
+    );
+  }
+
+  void _showNotificationSettings() {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text("Notifications"),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text("Recevoir des notifications"),
+                    Switch(
+                      value: _notificationsEnabled,
+                      onChanged: (v) {
+                        setDialogState(() => _notificationsEnabled = v);
+                        setState(() {});
+                      },
+                      activeColor: Colors.green,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pop(context);
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsPage(),
+                        ),
+                      );
+                    },
+                    icon: const Icon(FontAwesomeIcons.bell, size: 16),
+                    label: const Text("Voir mes notifications"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green,
+                      foregroundColor: Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Fermer"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _openAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LegalPage(
+          title: "À propos",
+          content: """
+**Espace Enseignant v1.0.0**
+
+Gérez vos cours, évaluez vos élèves et participez aux forums de discussion.
+
+© 2026 TogoSchool.
+          """,
+        ),
+      ),
     );
   }
 }

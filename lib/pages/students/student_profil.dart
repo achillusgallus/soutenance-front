@@ -6,6 +6,9 @@ import 'package:togoschool/service/token_storage.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
+import 'package:togoschool/pages/common/legal_page.dart';
+import 'package:togoschool/pages/common/notifications_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class StudentProfil extends StatefulWidget {
   const StudentProfil({super.key});
@@ -21,6 +24,7 @@ class _StudentProfilState extends State<StudentProfil> {
   bool isEditing = false;
   bool isSaving = false;
   bool _obscurePassword = true;
+  bool _notificationsEnabled = true; // Local state for now
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -212,7 +216,19 @@ class _StudentProfilState extends State<StudentProfil> {
                   letterSpacing: 1.5,
                 ),
               ),
-              const SizedBox(width: 48), // Spacer
+              const SizedBox(width: 20),
+              IconButton(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NotificationsPage()),
+                ),
+                icon: const Icon(
+                  Icons.notifications_outlined,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 10),
             ],
           ),
           const SizedBox(height: 20),
@@ -280,13 +296,13 @@ class _StudentProfilState extends State<StudentProfil> {
         _buildSettingsTile(
           icon: FontAwesomeIcons.bell,
           title: 'Préférences de notification',
-          onTap: () {},
+          onTap: _showNotificationSettings,
           color: const Color(0xFFF59E0B),
         ),
         _buildSettingsTile(
           icon: FontAwesomeIcons.shieldHalved,
           title: 'Sécurité & Mot de passe',
-          onTap: () {},
+          onTap: () => setState(() => isEditing = true),
           color: const Color(0xFF10B981),
         ),
         const SizedBox(height: 32),
@@ -303,13 +319,13 @@ class _StudentProfilState extends State<StudentProfil> {
         _buildSettingsTile(
           icon: FontAwesomeIcons.circleInfo,
           title: 'À propos de TogoSchool',
-          onTap: () {},
+          onTap: _openAbout,
           color: const Color(0xFF64748B),
         ),
         _buildSettingsTile(
           icon: FontAwesomeIcons.headset,
           title: 'Aide & Support',
-          onTap: () {},
+          onTap: _showSupportDialog,
           color: const Color(0xFF6366F1),
         ),
         const SizedBox(height: 40),
@@ -513,6 +529,119 @@ class _StudentProfilState extends State<StudentProfil> {
               ),
             ),
             child: const Text("DÉCONNEXION"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showNotificationSettings() {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text("Notifications"),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Recevoir des notifications"),
+                Switch(
+                  value: _notificationsEnabled,
+                  onChanged: (v) {
+                    setDialogState(() => _notificationsEnabled = v);
+                    // Update main state/persist if needed
+                    setState(() {});
+                  },
+                  activeColor: const Color(0xFF6366F1),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Fermer"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _openAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LegalPage(
+          title: "À propos de TogoSchool",
+          content: """
+**TogoSchool v1.0.0**
+
+TogoSchool est une initiative visant à numériser l'éducation au Togo. Nous fournissons aux élèves et aux enseignants une plateforme moderne pour échanger, apprendre et progresser.
+
+© 2026 TogoSchool. Tous droits réservés.
+          """,
+        ),
+      ),
+    );
+  }
+
+  void _showSupportDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Besoin d'aide ?"),
+        content: const Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "Contactez notre équipe de support technique pour toute assistance.",
+            ),
+            SizedBox(height: 16),
+            Row(
+              children: [
+                Icon(Icons.email, size: 16, color: Colors.grey),
+                SizedBox(width: 8),
+                Text(
+                  "support@togoschool.tg",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            SizedBox(height: 8),
+            Row(
+              children: [
+                Icon(Icons.phone, size: 16, color: Colors.grey),
+                SizedBox(width: 8),
+                Text(
+                  "+228 90 00 00 00",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Fermer"),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              // Launch email
+              try {
+                launchUrl(Uri.parse("mailto:support@togoschool.tg"));
+              } catch (e) {}
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6366F1),
+            ),
+            child: const Text(
+              "Contacter",
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),

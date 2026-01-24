@@ -23,7 +23,11 @@ class StudentCours extends StatefulWidget {
 
 class _StudentCoursState extends State<StudentCours> {
   final api = ApiService();
+  final ScrollController _scrollController = ScrollController();
   bool isLoading = true;
+  bool isLoadingMore = false;
+  int currentPage = 1;
+  int lastPage = 1;
   List<dynamic> courses = [];
   Map<String, List<dynamic>> coursesBySubject = {};
   int? _remainingDownloads;
@@ -34,6 +38,33 @@ class _StudentCoursState extends State<StudentCours> {
     super.initState();
     _fetchCourses();
     _loadDownloadInfo();
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 200 &&
+        !isLoadingMore &&
+        !isLoading &&
+        currentPage < lastPage) {
+      _loadMoreCourses();
+    }
+  }
+
+  Future<void> _loadMoreCourses() async {
+    if (mounted) {
+      setState(() {
+        isLoadingMore = true;
+        currentPage++;
+      });
+      await _fetchCourses();
+    }
   }
 
   Future<void> _loadDownloadInfo() async {
@@ -50,26 +81,49 @@ class _StudentCoursState extends State<StudentCours> {
   }
 
   Future<void> _fetchCourses() async {
-    setState(() => isLoading = true);
+    if (courses.isEmpty) {
+      setState(() => isLoading = true);
+    }
     try {
       // Build the endpoint with optional matiere_id parameter
-      String endpoint = "/cours";
+      String endpoint = "/cours?page=$currentPage";
       if (widget.matiereId != null) {
-        endpoint = "/cours?matiere_id=${widget.matiereId}";
+        endpoint += "&matiere_id=${widget.matiereId}";
       }
 
       final res = await api.read(endpoint);
       if (mounted) {
-        List<dynamic> fetchedCourses = res?.data ?? [];
+        final data = res?.data;
+        List<dynamic> fetchedCourses = [];
 
-        print("DEBUG - Courses fetched: ${fetchedCourses.length}");
+        if (data is Map && data.containsKey('data')) {
+          fetchedCourses = data['data'];
+          lastPage = data['last_page'] ?? 1;
+        } else if (data is List) {
+          fetchedCourses = data; // Fallback
+        }
+
+        /* print("DEBUG - Courses fetched: ${fetchedCourses.length}");
         if (widget.matiereId != null) {
           print("DEBUG - Filtered by matiere_id: ${widget.matiereId}");
+        } */
+
+        // Append to existing if loading more, or replace if first page (handled by logic above somewhat, but need to be careful with refresh)
+        // If we are refreshing (page 1), we should have cleared 'courses' before.
+        // But here we rely on 'courses' state.
+
+        // Let's ensure we merge correctly.
+        // If currentPage is 1, strictly replace.
+        List<dynamic> paramCourses;
+        if (currentPage == 1) {
+          paramCourses = fetchedCourses;
+        } else {
+          paramCourses = [...courses, ...fetchedCourses];
         }
 
         // Group courses by subject
         Map<String, List<dynamic>> grouped = {};
-        for (var course in fetchedCourses) {
+        for (var course in paramCourses) {
           final matiere = course['matiere'];
           final matiereName = matiere?['nom'] ?? 'Sans matière';
 
@@ -80,9 +134,10 @@ class _StudentCoursState extends State<StudentCours> {
         }
 
         setState(() {
-          courses = fetchedCourses;
+          courses = paramCourses;
           coursesBySubject = grouped;
           isLoading = false;
+          isLoadingMore = false;
         });
       }
     } catch (e) {
@@ -123,7 +178,13 @@ class _StudentCoursState extends State<StudentCours> {
             const SizedBox(height: 10),
             Expanded(
               child: RefreshIndicator(
-                onRefresh: _fetchCourses,
+                onRefresh: () async {
+                  setState(() {
+                    currentPage = 1;
+                    courses = [];
+                  });
+                  await _fetchCourses();
+                },
                 color: const Color(0xFF6366F1),
                 child: isLoading
                     ? const Center(child: CircularProgressIndicator())
@@ -140,9 +201,16 @@ class _StudentCoursState extends State<StudentCours> {
 
   Widget _buildCoursesList() {
     return ListView.builder(
+      controller: _scrollController,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-      itemCount: coursesBySubject.length,
+      itemCount: coursesBySubject.length + (isLoadingMore ? 1 : 0),
       itemBuilder: (context, index) {
+        if (index == coursesBySubject.length) {
+          return const Padding(
+            padding: EdgeInsets.all(16.0),
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
         final matiereName = coursesBySubject.keys.elementAt(index);
         final subjectCourses = coursesBySubject[matiereName]!;
 
@@ -463,7 +531,9 @@ class _StudentCoursState extends State<StudentCours> {
     if (fullUrl == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Accès refusé : vous devez payer pour télécharger plus de cours"),
+          content: Text(
+            "Accès refusé : vous devez payer pour télécharger plus de cours",
+          ),
           backgroundColor: Color(0xFFEF4444),
         ),
       );

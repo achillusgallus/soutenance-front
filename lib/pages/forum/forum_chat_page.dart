@@ -24,39 +24,78 @@ class _ForumChatPageState extends State<ForumChatPage> {
   final ScrollController _scrollController = ScrollController();
   List<dynamic> messages = [];
   bool isLoading = true;
+  bool isLoadingMore = false;
+  int currentPage = 1;
+  int lastPage = 1;
   bool isSending = false;
 
   @override
   void initState() {
     super.initState();
     _fetchMessages();
+    _scrollController.addListener(_scrollListener);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _scrollListener() {
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 50 &&
+        !isLoadingMore &&
+        !isLoading &&
+        currentPage < lastPage) {
+      _loadMoreMessages();
+    }
+  }
+
+  Future<void> _loadMoreMessages() async {
+    if (mounted) {
+      setState(() {
+        isLoadingMore = true;
+        currentPage++;
+      });
+      await _fetchMessages();
+    }
   }
 
   Future<void> _fetchMessages() async {
     try {
-      final res = await api.read("/sujets/${widget.topicId}/messages");
+      final res = await api.read(
+        "/sujets/${widget.topicId}/messages?page=$currentPage",
+      );
       if (mounted) {
+        final data = res?.data;
+        List<dynamic> fetchedMessages = [];
+
+        if (data is Map && data.containsKey('data')) {
+          fetchedMessages = data['data'];
+          lastPage = data['last_page'] ?? 1;
+        } else if (data is List) {
+          fetchedMessages = data;
+        }
+
         setState(() {
-          messages = res?.data ?? [];
+          if (currentPage == 1) {
+            messages = fetchedMessages;
+          } else {
+            messages.addAll(fetchedMessages);
+          }
           isLoading = false;
+          isLoadingMore = false;
         });
-        _scrollToBottom();
       }
     } catch (e) {
-      if (mounted) setState(() => isLoading = false);
-    }
-  }
-
-  void _scrollToBottom() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (_scrollController.hasClients) {
-        _scrollController.animateTo(
-          _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
-          curve: Curves.easeOut,
-        );
+      if (mounted) {
+        setState(() {
+          isLoading = false;
+          isLoadingMore = false;
+        });
       }
-    });
+    }
   }
 
   Future<void> _sendMessage() async {
@@ -80,6 +119,11 @@ class _ForumChatPageState extends State<ForumChatPage> {
       }
 
       _messageController.clear();
+      // Reload page 1 to get the new message properly formatted from backend
+      // OR insert locally. Re-fetching page 1 is safer for ID/Consistency.
+      setState(() {
+        currentPage = 1;
+      });
       await _fetchMessages();
     } catch (e) {
       ScaffoldMessenger.of(
@@ -162,19 +206,42 @@ class _ForumChatPageState extends State<ForumChatPage> {
                 : ListView.builder(
                     controller: _scrollController,
                     physics: const BouncingScrollPhysics(),
+                    reverse: true, // Chat mode: bottom to top
                     padding: const EdgeInsets.fromLTRB(
                       16,
                       20,
                       16,
                       100,
                     ), // Extra bottom padding for input
-                    itemCount: messages.length,
+                    itemCount: messages.length + (isLoadingMore ? 1 : 0),
                     itemBuilder: (context, index) {
+                      if (index == messages.length) {
+                        return const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(8.0),
+                            child: CircularProgressIndicator(),
+                          ),
+                        );
+                      }
+
                       final msg = messages[index];
                       final isMe = msg['is_me'] ?? false;
-                      final showDate =
-                          index == 0 ||
-                          _shouldShowDate(messages[index - 1], msg);
+
+                      // Date logic for reverse list:
+                      // Current item is 'index'. Previous item (visually above, so chronologically older)
+                      // is 'index + 1'.
+                      // We show date if diff between current and older is significant,
+                      // OR if it's the last item (top of screen, oldest loaded).
+
+                      bool showDate = false;
+                      if (index == messages.length - 1) {
+                        showDate = true;
+                      } else if (index < messages.length - 1) {
+                        final olderMsg = messages[index + 1];
+                        showDate =
+                            msg['created_at_human'] !=
+                            olderMsg['created_at_human'];
+                      }
 
                       return Column(
                         children: [
@@ -190,11 +257,6 @@ class _ForumChatPageState extends State<ForumChatPage> {
         ],
       ),
     );
-  }
-
-  bool _shouldShowDate(dynamic prev, dynamic current) {
-    // Basic logic for date separator - could be improved with actual timestamp comparison
-    return prev['created_at_human'] != current['created_at_human'];
   }
 
   Widget _buildDateSeparator(String? date) {

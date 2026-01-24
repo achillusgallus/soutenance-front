@@ -3,6 +3,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
 import 'package:togoschool/service/api_service.dart';
 import 'package:togoschool/utils/security_utils.dart';
+import 'package:togoschool/pages/common/legal_page.dart';
 
 class StudentInscriptionPage extends StatefulWidget {
   const StudentInscriptionPage({super.key});
@@ -21,6 +22,7 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
   final _api = ApiService();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  bool _acceptedTerms = false;
 
   final List<Map<String, String>> _classes = [
     {'value': 'tle_D', 'label': 'Terminale D'},
@@ -36,6 +38,16 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
 
   Future<void> _handleRegister() async {
     if (!_formKey.currentState!.validate()) return;
+
+    if (!_acceptedTerms) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Vous devez accepter les conditions d'utilisation."),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -236,7 +248,64 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 40),
+                        const SizedBox(height: 20),
+
+                        // Terms and Conditions Checkbox
+                        Row(
+                          children: [
+                            SizedBox(
+                              width: 24,
+                              height: 24,
+                              child: Checkbox(
+                                value: _acceptedTerms,
+                                activeColor: const Color(0xFF6366F1),
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                onChanged: (v) =>
+                                    setState(() => _acceptedTerms = v ?? false),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Wrap(
+                                crossAxisAlignment: WrapCrossAlignment.center,
+                                children: [
+                                  const Text(
+                                    "J'accepte les ",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  _buildLegalLink(
+                                    "conditions",
+                                    () => _openTerms(context),
+                                  ),
+                                  const Text(
+                                    " et la ",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                  _buildLegalLink(
+                                    "politique de confidentialité",
+                                    () => _openPrivacy(context),
+                                  ),
+                                  const Text(
+                                    ".",
+                                    style: TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF64748B),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 30),
                         SizedBox(
                           width: double.infinity,
                           height: 56,
@@ -491,6 +560,101 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildLegalLink(String text, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: Color(0xFF6366F1),
+          fontSize: 13,
+          decoration: TextDecoration.underline,
+        ),
+      ),
+    );
+  }
+
+  void _openTerms(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LegalPage(
+          title: "Conditions Générales d'Utilisation",
+          content: """
+**Dernière mise à jour : 24 Janvier 2026**
+
+Bienvenue sur **TogoSchool**, la plateforme numérique d'excellence pour l'éducation au Togo. L'utilisation de cette application est soumise aux présentes conditions générales. En créant un compte, vous acceptez de vous y conformer sans réserve.
+
+### 1. Accès au Service
+L'accès à TogoSchool est réservé aux élèves et enseignants régulièrement inscrits. L'utilisateur est responsable de la confidentialité de ses identifiants (email et mot de passe). Toute action effectuée depuis votre compte est réputée être effectuée par vous.
+
+### 2. Propriété Intellectuelle
+Tous les contenus pédagogiques présents sur l'application (cours vidéo, fiches PDF, questions de quiz, corrigés) sont la propriété exclusive de TogoSchool et de ses enseignants partenaires.
+* **Il est strictement interdit** de copier, distribuer, vendre ou publier ces contenus sur d'autres plateformes (WhatsApp, Telegram, Facebook, etc.) sans autorisation écrite.
+* Tout contrevenant s'expose à la suppression immédiate de son compte et à des poursuites judiciaires.
+
+### 3. Usage des Forums et Communauté
+Les espaces de discussion (Forums) sont destinés à l'entraide pédagogique.
+* **Respect** : Aucun propos injurieux, haineux ou discriminatoire ne sera toléré.
+* **Pertinence** : Les messages doivent concerner les cours ou la vie scolaire.
+* **Sécurité** : Ne partagez jamais vos informations personnelles (numéro de téléphone, adresse) publiquement sur le forum.
+
+### 4. Téléchargements et Paiements
+Certains contenus peuvent être soumis à un quota de téléchargement gratuit. Au-delà, l'utilisateur peut être invité à utiliser des services de paiement mobile (ex: Flooz, T-Money via PayGate) pour accéder à des ressources supplémentaires. Ces transactions sont définitives et non remboursables, sauf dysfonctionnement technique avéré de notre part.
+
+### 5. Disponibilité
+Nous nous efforçons de maintenir la plateforme accessible 24h/24 et 7j/7. Toutefois, l'accès peut être suspendu pour maintenance ou en cas de force majeure. TogoSchool ne saurait être tenu responsable des interruptions liées au réseau internet de l'utilisateur.
+
+### 6. Sanctions
+Le non-respect de ces règles peut entraîner un avertissement, une suspension temporaire ou la suppression définitive du compte, selon la gravité de l'infraction.
+""",
+        ),
+      ),
+    );
+  }
+
+  void _openPrivacy(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LegalPage(
+          title: "Politique de Confidentialité",
+          content: """
+**Engagement de confidentialité TogoSchool**
+
+Votre vie privée est essentielle. Cette politique détaille comment nous traitons vos données personnelles dans le cadre de votre scolarité sur TogoSchool.
+
+### 1. Les Données que nous collectons
+Pour assurer le bon fonctionnement du service, nous collectons :
+* **Informations d'inscription** : Nom, Prénom, Email, Classe, Établissement.
+* **Données d'activité** : Cours consultés, vidéos regardées, fichiers téléchargés.
+* **Données pédagogiques** : Scores aux quiz, progrès dans les chapitres, questions posées sur les forums.
+
+### 2. Pourquoi utilisons-nous vos données ?
+Vos données ne sont utilisées que dans un but éducatif et technique :
+* **Suivi Pédagogique** : Permettre à vos enseignants de suivre vos progrès et d'adapter leurs cours.
+* **Personnalisation** : Vous proposer des contenus adaptés à votre niveau (ex: Terminale D).
+* **Amélioration** : Analyser les statistiques globales pour améliorer la qualité de l'application.
+
+### 3. Partage des Données
+**Nous ne vendons jamais vos données à des tiers.**
+Vos informations sont accessibles uniquement :
+* À l'équipe technique de TogoSchool (pour la maintenance).
+* À l'équipe pédagogique (Professeurs et Administration) pour le suivi scolaire.
+* Aux autorités compétentes si la loi l'exige.
+
+### 4. Sécurité
+Vos mots de passe sont chiffrés et nous utilisons des protocoles sécurisés pour protéger les échanges de données. Cependant, la sécurité dépend aussi de vous : choisissez un mot de passe complexe et gardez-le secret.
+
+### 5. Vos Droits
+Conformément à la réglementation en vigueur au Togo sur la protection des données à caractère personnel, vous disposez d'un droit d'accès, de rectification et suppression de vos informations. Pour toute demande, veuillez contacter le support via l'application ou par email à support@togoschool.tg.
+""",
+        ),
       ),
     );
   }

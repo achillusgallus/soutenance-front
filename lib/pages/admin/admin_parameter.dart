@@ -5,6 +5,9 @@ import 'package:togoschool/service/token_storage.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
+import 'package:togoschool/pages/common/legal_page.dart';
+import 'package:togoschool/pages/common/notifications_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AdminParameter extends StatefulWidget {
   const AdminParameter({super.key});
@@ -20,6 +23,7 @@ class _AdminParameterState extends State<AdminParameter> {
   bool isEditing = false;
   bool isSaving = false;
   bool _obscurePassword = true;
+  bool _notificationsEnabled = true;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -212,6 +216,20 @@ class _AdminParameterState extends State<AdminParameter> {
                       fontSize: 16,
                     ),
                   ),
+                  const Spacer(),
+                  IconButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (_) => const NotificationsPage(),
+                      ),
+                    ),
+                    icon: const Icon(
+                      Icons.notifications_outlined,
+                      color: Colors.white,
+                      size: 24,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -300,21 +318,21 @@ class _AdminParameterState extends State<AdminParameter> {
               _buildSettingsTile(
                 icon: Icons.notifications_none_rounded,
                 title: 'Notifications',
-                onTap: () {},
+                onTap: _showNotificationSettings,
                 color: const Color(0xFFF59E0B),
               ),
               const Divider(height: 1, indent: 60),
               _buildSettingsTile(
                 icon: Icons.shield_outlined,
                 title: 'Sécurité du compte',
-                onTap: () {},
+                onTap: () => setState(() => isEditing = true),
                 color: const Color(0xFF10B981),
               ),
               const Divider(height: 1, indent: 60),
               _buildSettingsTile(
                 icon: Icons.info_outline_rounded,
                 title: 'À propos de TogoSchool',
-                onTap: () {},
+                onTap: _openAbout,
                 color: const Color(0xFF8B5CF6),
               ),
             ],
@@ -552,6 +570,57 @@ class _AdminParameterState extends State<AdminParameter> {
           : null,
       onTap: onTap,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+    );
+  }
+
+  void _showNotificationSettings() {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            title: const Text("Notifications"),
+            content: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text("Recevoir des notifications"),
+                Switch(
+                  value: _notificationsEnabled,
+                  onChanged: (v) {
+                    setDialogState(() => _notificationsEnabled = v);
+                    setState(() {});
+                  },
+                  activeColor: const Color(0xFF6366F1),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: const Text("Fermer"),
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  void _openAbout() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const LegalPage(
+          title: "À propos de TogoSchool",
+          content: """
+**TogoSchool Admin v1.0.0**
+
+Outil de gestion pour la plateforme éducative TogoSchool.
+
+© 2026 TogoSchool.
+          """,
+        ),
+      ),
     );
   }
 }
