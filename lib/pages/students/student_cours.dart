@@ -4,6 +4,7 @@ import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/service/api_service.dart';
 import 'package:togoschool/service/download_service.dart';
 import 'package:togoschool/service/paygate_service.dart';
+import 'package:togoschool/service/progress_service.dart';
 import 'package:togoschool/pages/students/payment_required_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:togoschool/pages/common/video_player_page.dart';
@@ -21,6 +22,7 @@ class StudentCours extends StatefulWidget {
 
 class _StudentCoursState extends State<StudentCours> {
   final api = ApiService();
+  final ProgressService _progressService = ProgressService();
   final ScrollController _scrollController = ScrollController();
   bool isLoading = true;
   bool isLoadingMore = false;
@@ -28,6 +30,7 @@ class _StudentCoursState extends State<StudentCours> {
   int lastPage = 1;
   List<dynamic> courses = [];
   Map<String, List<dynamic>> coursesBySubject = {};
+  Set<int> _favoriteCourseIds = {};
   int? _remainingDownloads;
   bool _hasPaid = false;
 
@@ -36,6 +39,7 @@ class _StudentCoursState extends State<StudentCours> {
     super.initState();
     _fetchCourses();
     _loadDownloadInfo();
+    _loadFavorites();
     _scrollController.addListener(_scrollListener);
   }
 
@@ -62,6 +66,19 @@ class _StudentCoursState extends State<StudentCours> {
         currentPage++;
       });
       await _fetchCourses();
+    }
+  }
+
+  Future<void> _loadFavorites() async {
+    try {
+      final favorites = await _progressService.getFavorites();
+      if (mounted) {
+        setState(() {
+          _favoriteCourseIds = favorites.map<int>((fav) => fav['id'] ?? 0).toSet();
+        });
+      }
+    } catch (e) {
+      // En cas d'erreur, on continue avec une liste vide
     }
   }
 
@@ -285,6 +302,8 @@ class _StudentCoursState extends State<StudentCours> {
 
   Widget _buildCourseCard(dynamic course) {
     final hasFile = course['fichier'] != null;
+    final courseId = course['id'] ?? 0;
+    final isFavorite = _favoriteCourseIds.contains(courseId);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -304,62 +323,87 @@ class _StudentCoursState extends State<StudentCours> {
         child: InkWell(
           onTap: () => _showCourseDetail(course),
           borderRadius: BorderRadius.circular(20),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Row(
-              children: [
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF1F5F9),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Icon(
-                    hasFile
-                        ? Icons.file_present_rounded
-                        : Icons.article_rounded,
-                    color: const Color(0xFF64748B),
-                    size: 24,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        course['titre'] ?? 'Sans titre',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 15,
-                          color: Color(0xFF1E293B),
-                        ),
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 48,
+                      height: 48,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF1F5F9),
+                        borderRadius: BorderRadius.circular(14),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        course['professeur']?['name'] ?? 'Professeur',
-                        style: const TextStyle(
-                          color: Color(0xFF94A3B8),
-                          fontSize: 13,
-                        ),
+                      child: Icon(
+                        hasFile
+                            ? Icons.file_present_rounded
+                            : Icons.article_rounded,
+                        color: const Color(0xFF64748B),
+                        size: 24,
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            course['titre'] ?? 'Sans titre',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: Color(0xFF1E293B),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            course['professeur']?['name'] ?? 'Professeur',
+                            style: const TextStyle(
+                              color: Color(0xFF94A3B8),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (hasFile)
+                      const Icon(
+                        Icons.attachment_rounded,
+                        size: 18,
+                        color: Color(0xFF10B981),
+                      ),
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.chevron_right_rounded,
+                      color: Color(0xFFCBD5E1),
+                    ),
+                  ],
                 ),
-                if (hasFile)
-                  const Icon(
-                    Icons.attachment_rounded,
-                    size: 18,
-                    color: Color(0xFF10B981),
+              ),
+              // Icône de favori en haut à droite
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  icon: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: Colors.red,
                   ),
-                const SizedBox(width: 8),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: Color(0xFFCBD5E1),
+                  onPressed: () async {
+                    await _progressService.toggleFavorite(courseId);
+                    setState(() {
+                      if (isFavorite) {
+                        _favoriteCourseIds.remove(courseId);
+                      } else {
+                        _favoriteCourseIds.add(courseId);
+                      }
+                    });
+                  },
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),

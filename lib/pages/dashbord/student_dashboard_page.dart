@@ -7,7 +7,8 @@ import 'package:togoschool/pages/students/student_profil.dart';
 import 'package:togoschool/pages/students/student_quiz_page.dart';
 
 class StudentDashboardPage extends StatefulWidget {
-  const StudentDashboardPage({super.key});
+  final VoidCallback? toggleTheme;
+  const StudentDashboardPage({super.key, this.toggleTheme});
 
   @override
   State<StudentDashboardPage> createState() => _StudentDashboardPageState();
@@ -36,7 +37,7 @@ class _StudentDashboardPageState extends State<StudentDashboardPage> {
   void initState() {
     super.initState();
     _pages = [
-      const StudentAcceuil(),
+      StudentAcceuil(toggleTheme: widget.toggleTheme),
       const StudentCours(),
       const StudentQuizPage(),
       const StudentForum(),

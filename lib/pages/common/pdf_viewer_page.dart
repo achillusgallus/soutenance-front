@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:togoschool/service/token_storage.dart';
+import 'package:togoschool/service/progress_service.dart';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -15,8 +16,9 @@ import 'dart:html' as html;
 class PdfViewerPage extends StatefulWidget {
   final String pdfUrl;
   final String title;
+  final int? courseId;
 
-  const PdfViewerPage({super.key, required this.pdfUrl, required this.title});
+  const PdfViewerPage({super.key, required this.pdfUrl, required this.title, this.courseId});
 
   @override
   State<PdfViewerPage> createState() => _PdfViewerPageState();
@@ -25,6 +27,7 @@ class PdfViewerPage extends StatefulWidget {
 class _PdfViewerPageState extends State<PdfViewerPage> {
   late final GlobalKey<SfPdfViewerState> _pdfViewerKey = GlobalKey();
   final PdfViewerController _pdfViewerController = PdfViewerController();
+  final ProgressService _progressService = ProgressService();
 
   Uint8List? _pdfBytes;
   String? _blobUrl;
@@ -32,17 +35,35 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   bool _isLoading = true;
   String? _errorMessage;
   bool _isOffline = false;
+  DateTime? _startTime;
 
   @override
   void initState() {
     super.initState();
+    _startTime = DateTime.now();
     _loadPdf();
   }
 
   @override
   void dispose() {
+    _saveProgress();
     _cleanupBlob();
     super.dispose();
+  }
+
+  Future<void> _saveProgress() async {
+    if (_startTime != null && widget.courseId != null) {
+      final timeSpent = DateTime.now().difference(_startTime!).inSeconds;
+      try {
+        await _progressService.saveProgressLocally(
+          widget.courseId!,
+          100, // Considérer comme complété quand le PDF est ouvert
+          timeSpent,
+        );
+      } catch (e) {
+        print('Erreur sauvegarde progression: $e');
+      }
+    }
   }
 
   void _cleanupBlob() {

@@ -6,6 +6,7 @@ import 'package:togoschool/pages/dashbord/student_dashboard_page.dart';
 import 'package:togoschool/pages/dashbord/teacher_dashboard_page.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
 import 'package:togoschool/service/token_storage.dart';
+import 'package:togoschool/service/theme_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_windowmanager/flutter_windowmanager.dart';
@@ -36,19 +37,43 @@ Future<void> main() async {
   runApp(MyApp(isLoggedIn: token != null, roleId: roleId));
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   final bool isLoggedIn;
   final int? roleId;
   const MyApp({super.key, this.isLoggedIn = false, this.roleId});
 
   @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isDarkMode = false;
+  final ThemeService _themeService = ThemeService();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadTheme();
+  }
+
+  Future<void> _loadTheme() async {
+    final isDark = await _themeService.getTheme();
+    setState(() => _isDarkMode = isDark);
+  }
+
+  void _toggleTheme() async {
+    final newTheme = await _themeService.toggleTheme();
+    setState(() => _isDarkMode = newTheme);
+  }
+
+  @override
   Widget build(BuildContext context) {
     Widget homePage;
 
-    if (!isLoggedIn) {
+    if (!widget.isLoggedIn) {
       homePage = const LoginPage();
     } else {
-      switch (roleId) {
+      switch (widget.roleId) {
         case 1:
           homePage = const AdminDashboardPage();
           break;
@@ -56,7 +81,7 @@ class MyApp extends StatelessWidget {
           homePage = const TeacherDashboardPage();
           break;
         case 3:
-          homePage = const StudentDashboardPage();
+          homePage = StudentDashboardPage(toggleTheme: _toggleTheme);
           break;
         default:
           homePage = const LoginPage();
@@ -67,8 +92,18 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'TogoSchool',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.light,
+        ),
       ),
+      darkTheme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: Colors.deepPurple,
+          brightness: Brightness.dark,
+        ),
+      ),
+      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
       home: homePage,
     );
   }

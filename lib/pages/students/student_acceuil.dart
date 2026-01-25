@@ -5,11 +5,16 @@ import 'package:togoschool/pages/students/student_cours.dart';
 import 'package:togoschool/pages/students/student_forum.dart';
 import 'package:togoschool/pages/students/student_profil.dart';
 import 'package:togoschool/pages/students/student_quiz_page.dart';
+import 'package:togoschool/pages/students/student_progress_page.dart';
+import 'package:togoschool/pages/students/student_favorites_page.dart';
+import 'package:togoschool/pages/students/student_notes_page.dart';
 import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/service/progress_service.dart';
 import 'package:togoschool/utils/security_utils.dart'; // Used for search input sanitization
 
 class StudentAcceuil extends StatefulWidget {
-  const StudentAcceuil({super.key});
+  final VoidCallback? toggleTheme;
+  const StudentAcceuil({super.key, this.toggleTheme});
 
   @override
   State<StudentAcceuil> createState() => _StudentAcceuilState();
@@ -17,6 +22,7 @@ class StudentAcceuil extends StatefulWidget {
 
 class _StudentAcceuilState extends State<StudentAcceuil> {
   final api = ApiService();
+  final ProgressService _progressService = ProgressService();
   bool isLoading = true;
   String studentName = "Étudiant";
   String studentClasse = "";
@@ -24,12 +30,14 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
   List<dynamic> filteredMatieres = [];
   int quizCount = 0;
   int forumCount = 0;
+  int favoriteCount = 0;
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
     studentMatieres();
+    _loadFavorites();
   }
 
   @override
@@ -51,6 +59,24 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
         return nom.contains(safeQuery) || desc.contains(safeQuery);
       }).toList();
     });
+  }
+
+  Future<void> _loadFavorites() async {
+    try {
+      final favorites = await _progressService.getFavorites();
+      if (mounted) {
+        setState(() {
+          favoriteCount = favorites.length;
+        });
+      }
+    } catch (e) {
+      // En cas d'erreur, on garde 0
+      if (mounted) {
+        setState(() {
+          favoriteCount = 0;
+        });
+      }
+    }
   }
 
   Future<void> studentMatieres() async {
@@ -258,45 +284,94 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
   }
 
   Widget _buildStatsGrid() {
-    return Row(
+    return Column(
       children: [
-        Expanded(
-          child: _buildStatCard(
-            "Cours",
-            matieres.length.toString(),
-            FontAwesomeIcons.bookOpen,
-            const Color(0xFF6366F1),
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const StudentCours()),
+        // Première ligne de cartes existantes
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                "Cours",
+                matieres.length.toString(),
+                FontAwesomeIcons.bookOpen,
+                const Color(0xFF6366F1),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StudentCours()),
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildStatCard(
+                "Quiz",
+                quizCount.toString(),
+                FontAwesomeIcons.vial,
+                const Color(0xFF10B981),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StudentQuizPage()),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildStatCard(
+                "Forums",
+                forumCount.toString(),
+                FontAwesomeIcons.comments,
+                const Color(0xFFF59E0B),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StudentForum()),
+                ),
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildStatCard(
-            "Quiz",
-            quizCount.toString(),
-            FontAwesomeIcons.vial,
-            const Color(0xFF10B981),
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const StudentQuizPage()),
+        const SizedBox(height: 16),
+        // Deuxième ligne avec les nouvelles fonctionnalités
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                "Progression",
+                "Voir",
+                FontAwesomeIcons.chartLine,
+                const Color(0xFF8B5CF6),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StudentProgressPage()),
+                ),
+              ),
             ),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: _buildStatCard(
-            "Forums",
-            forumCount.toString(),
-            FontAwesomeIcons.comments,
-            const Color(0xFFF59E0B),
-            () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const StudentForum()),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildStatCard(
+                "Favoris",
+                favoriteCount.toString(),
+                FontAwesomeIcons.heart,
+                const Color(0xFFEC4899),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StudentFavoritesPage()),
+                ),
+              ),
             ),
-          ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: _buildStatCard(
+                "Notes",
+                "Voir",
+                FontAwesomeIcons.stickyNote,
+                const Color(0xFF14B8A6),
+                () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StudentNotesPage()),
+                ),
+              ),
+            ),
+          ],
         ),
       ],
     );
