@@ -568,6 +568,9 @@ class _StudentCoursState extends State<StudentCours> {
         print("DEBUG - Normalized relativePath: $relativePath");
 
         fullUrl = await api.getFileUrl(relativePath);
+        if (fullUrl != null) {
+          fullUrl = fullUrl.replaceFirst('http://', 'https://');
+        }
         print("DEBUG - Received fullUrl from API: $fullUrl");
       } catch (e) {
         // Si le serveur renvoie 403 alors qu'on pensait avoir accès (ex: décalage cache)
