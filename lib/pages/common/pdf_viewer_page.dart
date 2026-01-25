@@ -3,6 +3,11 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:togoschool/service/token_storage.dart';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+
+// Conditionnels pour Web
+import 'dart:ui_web' as ui_web;
+import 'dart:html' as html;
 
 class PdfViewerPage extends StatefulWidget {
   final String pdfUrl;
@@ -19,6 +24,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   final PdfViewerController _pdfViewerController = PdfViewerController();
 
   Uint8List? _pdfBytes;
+  String? _blobUrl;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -26,6 +32,14 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   void initState() {
     super.initState();
     _loadPdf();
+  }
+
+  @override
+  void dispose() {
+    if (_blobUrl != null) {
+      html.Url.revokeObjectUrl(_blobUrl!);
+    }
+    super.dispose();
   }
 
   Future<void> _loadPdf() async {
@@ -46,10 +60,35 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
       if (response.statusCode == 200) {
         if (mounted) {
-          setState(() {
-            _pdfBytes = Uint8List.fromList(response.data);
-            _isLoading = false;
-          });
+          final bytes = Uint8List.fromList(response.data);
+
+          if (kIsWeb) {
+            // Sur Web, on crée un Blob URL pour l'IFrame
+            final blob = html.Blob([bytes], 'application/pdf');
+            final url = html.Url.createObjectUrlFromBlob(blob);
+
+            // Enregistrement de la vue IFrame
+            final viewId = 'pdf-view-${DateTime.now().millisecondsSinceEpoch}';
+            ui_web.platformViewRegistry.registerViewFactory(
+              viewId,
+              (int viewId) => html.IFrameElement()
+                ..src = url
+                ..style.border = 'none'
+                ..width = '100%'
+                ..height = '100%',
+            );
+
+            setState(() {
+              _blobUrl = url;
+              _pdfBytes = bytes;
+              _isLoading = false;
+            });
+          } else {
+            setState(() {
+              _pdfBytes = bytes;
+              _isLoading = false;
+            });
+          }
         }
       } else {
         throw Exception("Erreur serveur: ${response.statusCode}");
@@ -88,7 +127,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 children: [
                   CircularProgressIndicator(),
                   SizedBox(height: 16),
-                  Text("Chargement du document sécurisé..."),
+                  Text("Préparation du document sécurisé..."),
                 ],
               ),
             )
@@ -119,6 +158,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 ),
               ),
             )
+          : kIsWeb && _blobUrl != null
+          ? HtmlElementView(viewType: 'pdf-view-${_blobUrl!.split("/").last}')
           : SfPdfViewer.memory(
               _pdfBytes!,
               key: _pdfViewerKey,
