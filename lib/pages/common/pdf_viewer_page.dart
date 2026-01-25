@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:togoschool/service/token_storage.dart';
+import 'dart:typed_data';
+import 'package:dio/dio.dart';
 
 class PdfViewerPage extends StatefulWidget {
   final String pdfUrl;
@@ -14,21 +16,58 @@ class PdfViewerPage extends StatefulWidget {
 
 class _PdfViewerPageState extends State<PdfViewerPage> {
   late final GlobalKey<SfPdfViewerState> _pdfViewerKey = GlobalKey();
-  late final PdfViewerController _pdfViewerController;
+  final PdfViewerController _pdfViewerController = PdfViewerController();
+
+  Uint8List? _pdfBytes;
   bool _isLoading = true;
   String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _pdfViewerController = PdfViewerController();
+    _loadPdf();
+  }
+
+  Future<void> _loadPdf() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final token = await TokenStorage.getToken();
+      final options = Options(
+        headers: token != null ? {'Authorization': 'Bearer $token'} : {},
+        responseType: ResponseType.bytes,
+      );
+
+      final dio = Dio();
+      final response = await dio.get(widget.pdfUrl, options: options);
+
+      if (response.statusCode == 200) {
+        if (mounted) {
+          setState(() {
+            _pdfBytes = Uint8List.fromList(response.data);
+            _isLoading = false;
+          });
+        }
+      } else {
+        throw Exception("Erreur serveur: ${response.statusCode}");
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+          _errorMessage =
+              "Impossible de charger le PDF. \nAssurez-vous que le fichier n'a pas été supprimé par l'hébergement temporaire.\nErreur: $e";
+        });
+        print("DEBUG - PDF Load Error: $e");
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // 1. Force HTTPS logic
-    final secureUrl = widget.pdfUrl.replaceFirst('http://', 'https://');
-
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -39,50 +78,54 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black87),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.refresh),
-            onPressed: () {
-              _pdfViewerController.clearSelection(); // Reset visual state
-              // Simply rebuilding usually triggers reload for SfPdfViewer if key changes,
-              // but here we just rely on internal refresh or user could re-open.
-              // A better refresh is to setState to trigger key change?
-              setState(() {});
-            },
-          ),
+          IconButton(icon: const Icon(Icons.refresh), onPressed: _loadPdf),
         ],
       ),
-      body: FutureBuilder<String?>(
-        future: TokenStorage.getToken(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          final token = snapshot.data;
-          final headers = token != null
-              ? {'Authorization': 'Bearer $token'}
-              : <String, String>{};
-
-          return SfPdfViewer.network(
-            secureUrl,
-            key: _pdfViewerKey,
-            controller: _pdfViewerController,
-            headers: headers,
-            onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-              setState(() => _isLoading = false);
-            },
-            onDocumentLoadFailed: (PdfDocumentLoadFailedDetails details) {
-              setState(() {
-                _isLoading = false;
-                _errorMessage =
-                    "Erreur de chargement: ${details.error}\n${details.description}";
-              });
-            },
-            canShowScrollHead: true,
-            canShowScrollStatus: true,
-          );
-        },
-      ),
+      body: _isLoading
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text("Chargement du document sécurisé..."),
+                ],
+              ),
+            )
+          : _errorMessage != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 64,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      _errorMessage!,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(color: Colors.red),
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: _loadPdf,
+                      child: const Text("Réessayer"),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          : SfPdfViewer.memory(
+              _pdfBytes!,
+              key: _pdfViewerKey,
+              controller: _pdfViewerController,
+              canShowScrollHead: true,
+              canShowScrollStatus: true,
+            ),
     );
   }
 }
