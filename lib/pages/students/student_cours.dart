@@ -99,7 +99,6 @@ class _StudentCoursState extends State<StudentCours> {
       setState(() => isLoading = true);
     }
     try {
-      // Build the endpoint with optional matiere_id parameter
       String endpoint = "/cours?page=$currentPage";
       if (widget.matiereId != null) {
         endpoint += "&matiere_id=${widget.matiereId}";
@@ -111,24 +110,44 @@ class _StudentCoursState extends State<StudentCours> {
         List<dynamic> fetchedCourses = [];
 
         if (data is Map && data.containsKey('data')) {
-          fetchedCourses = data['data'];
+          final rawData = data['data'];
+          if (rawData is List) {
+            fetchedCourses = rawData;
+          } else if (rawData is Map) {
+            // Laravel peut parfois retourner un objet associatif au lieu d'un tableau
+            fetchedCourses = rawData.values.toList();
+          }
           lastPage = data['last_page'] ?? 1;
         } else if (data is List) {
-          fetchedCourses = data; // Fallback
+          fetchedCourses = data;
+        } else if (data is Map) {
+          fetchedCourses = data.values.toList();
+        }
+
+        print("DEBUG - Courses fetched count: ${fetchedCourses.length}");
+        if (widget.matiereId != null) {
+          print("DEBUG - Filtered by matiere_id: ${widget.matiereId}");
         }
 
         List<dynamic> paramCourses;
         if (currentPage == 1) {
-          paramCourses = fetchedCourses;
+          paramCourses = List.from(fetchedCourses);
         } else {
           paramCourses = [...courses, ...fetchedCourses];
         }
 
         // Group courses by subject
         Map<String, List<dynamic>> grouped = {};
-        for (var course in paramCourses) {
+        for (var item in paramCourses) {
+          if (item is! Map) continue;
+
+          final Map course = item;
           final matiere = course['matiere'];
-          final matiereName = matiere?['nom'] ?? 'Sans matière';
+          String matiereName = 'Sans matière';
+
+          if (matiere is Map && matiere.containsKey('nom')) {
+            matiereName = matiere['nom']?.toString() ?? 'Sans matière';
+          }
 
           if (!grouped.containsKey(matiereName)) {
             grouped[matiereName] = [];
@@ -146,7 +165,7 @@ class _StudentCoursState extends State<StudentCours> {
     } catch (e) {
       if (mounted) {
         setState(() => isLoading = false);
-        print("DEBUG - Error fetching courses: $e");
+        print("DEBUG - Error in _fetchCourses: $e");
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text("Erreur de chargement: $e")));
