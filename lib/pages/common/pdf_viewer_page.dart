@@ -4,6 +4,9 @@ import 'package:togoschool/service/token_storage.dart';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:hive_flutter/hive_flutter.dart';
+import 'dart:convert';
+import 'package:crypto/crypto.dart';
 
 // Conditionnels pour Web
 import 'dart:ui_web' as ui_web;
@@ -28,6 +31,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
   String? _currentViewId;
   bool _isLoading = true;
   String? _errorMessage;
+  bool _isOffline = false;
 
   @override
   void initState() {
@@ -48,6 +52,11 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
     }
   }
 
+  // Créer une clé de cache unique basée sur l'URL
+  String _getCacheKey() {
+    return md5.convert(utf8.encode(widget.pdfUrl)).toString();
+  }
+
   Future<void> _loadPdf() async {
     if (!mounted) return;
     setState(() {
@@ -55,6 +64,22 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       _errorMessage = null;
       _currentViewId = null;
     });
+
+    final cacheKey = _getCacheKey();
+    final box = Hive.box('pdf_cache');
+
+    // 1. Vérifier le cache local pour l'accès hors-ligne
+    if (box.containsKey(cacheKey)) {
+      final cachedData = box.get(cacheKey);
+      if (cachedData is Uint8List) {
+        setState(() {
+          _pdfBytes = cachedData;
+          _isOffline = true;
+        });
+        _prepareView(cachedData);
+        return;
+      }
+    }
 
     try {
       final token = await TokenStorage.getToken();
@@ -69,35 +94,12 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       if (response.statusCode == 200) {
         if (mounted) {
           final bytes = Uint8List.fromList(response.data);
-          _cleanupBlob();
 
-          if (kIsWeb) {
-            final blob = html.Blob([bytes], 'application/pdf');
-            final url = html.Url.createObjectUrlFromBlob(blob);
-            // On utilise un ID unique temporel pour forcer le rafraîchissement
-            final viewId = 'pdf-view-${DateTime.now().millisecondsSinceEpoch}';
+          // Sauvegarder en cache
+          await box.put(cacheKey, bytes);
 
-            ui_web.platformViewRegistry.registerViewFactory(
-              viewId,
-              (int viewId) => html.IFrameElement()
-                ..src = url
-                ..style.border = 'none'
-                ..width = '100%'
-                ..height = '100%',
-            );
-
-            setState(() {
-              _blobUrl = url;
-              _currentViewId = viewId;
-              _pdfBytes = bytes;
-              _isLoading = false;
-            });
-          } else {
-            setState(() {
-              _pdfBytes = bytes;
-              _isLoading = false;
-            });
-          }
+          setState(() => _isOffline = false);
+          _prepareView(bytes);
         }
       } else {
         throw Exception("Erreur serveur: ${response.statusCode}");
@@ -107,9 +109,44 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         setState(() {
           _isLoading = false;
           _errorMessage =
-              "Impossible de charger le document sécurisé. \nErreur: $e";
+              "Impossible de charger le document sécurisé (vérifiez votre connexion). \nErreur: $e";
         });
       }
+    }
+  }
+
+  void _prepareView(Uint8List bytes) {
+    if (!mounted) return;
+    _cleanupBlob();
+
+    if (kIsWeb) {
+      final blob = html.Blob([bytes], 'application/pdf');
+      // On ajoute des paramètres pour cacher la barre d'outils du navigateur
+      final url =
+          html.Url.createObjectUrlFromBlob(blob) +
+          "#toolbar=0&navpanes=0&scrollbar=0";
+      final viewId = 'pdf-view-${DateTime.now().millisecondsSinceEpoch}';
+
+      ui_web.platformViewRegistry.registerViewFactory(
+        viewId,
+        (int viewId) => html.IFrameElement()
+          ..src = url
+          ..style.border = 'none'
+          ..width = '100%'
+          ..height = '100%',
+      );
+
+      setState(() {
+        _blobUrl = url;
+        _currentViewId = viewId;
+        _pdfBytes = bytes;
+        _isLoading = false;
+      });
+    } else {
+      setState(() {
+        _pdfBytes = bytes;
+        _isLoading = false;
+      });
     }
   }
 
@@ -118,19 +155,13 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          widget.title,
-          style: const TextStyle(color: Colors.black87, fontSize: 14),
+          widget.title + (_isOffline ? " (Hors-ligne)" : ""),
+          style: const TextStyle(color: Colors.black87, fontSize: 13),
         ),
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black87),
         actions: [
-          if (_blobUrl != null && kIsWeb)
-            IconButton(
-              icon: const Icon(Icons.open_in_new),
-              tooltip: "Ouvrir dans le navigateur",
-              onPressed: () => html.window.open(_blobUrl!, "_blank"),
-            ),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadPdf),
         ],
       ),

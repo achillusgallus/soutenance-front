@@ -6,9 +6,21 @@ import 'package:togoschool/pages/dashbord/student_dashboard_page.dart';
 import 'package:togoschool/pages/dashbord/teacher_dashboard_page.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
 import 'package:togoschool/service/token_storage.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_windowmanager/flutter_windowmanager.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialiser Hive pour le cache hors-ligne
+  await Hive.initFlutter();
+  await Hive.openBox('pdf_cache');
+
+  // Bloquer les captures d'écran sur Mobile (Android/iOS)
+  if (!kIsWeb) {
+    await FlutterWindowManager.addFlags(FlutterWindowManager.FLAG_SECURE);
+  }
 
   // Initialiser PayGate avec la clé API
   Paygate.init(
