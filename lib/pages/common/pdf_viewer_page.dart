@@ -25,6 +25,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
   Uint8List? _pdfBytes;
   String? _blobUrl;
+  String? _currentViewId;
   bool _isLoading = true;
   String? _errorMessage;
 
@@ -36,16 +37,23 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
   @override
   void dispose() {
-    if (_blobUrl != null) {
-      html.Url.revokeObjectUrl(_blobUrl!);
-    }
+    _cleanupBlob();
     super.dispose();
   }
 
+  void _cleanupBlob() {
+    if (_blobUrl != null) {
+      html.Url.revokeObjectUrl(_blobUrl!);
+      _blobUrl = null;
+    }
+  }
+
   Future<void> _loadPdf() async {
+    if (!mounted) return;
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _currentViewId = null;
     });
 
     try {
@@ -61,14 +69,14 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       if (response.statusCode == 200) {
         if (mounted) {
           final bytes = Uint8List.fromList(response.data);
+          _cleanupBlob();
 
           if (kIsWeb) {
-            // Sur Web, on crée un Blob URL pour l'IFrame
             final blob = html.Blob([bytes], 'application/pdf');
             final url = html.Url.createObjectUrlFromBlob(blob);
-
-            // Enregistrement de la vue IFrame
+            // On utilise un ID unique temporel pour forcer le rafraîchissement
             final viewId = 'pdf-view-${DateTime.now().millisecondsSinceEpoch}';
+
             ui_web.platformViewRegistry.registerViewFactory(
               viewId,
               (int viewId) => html.IFrameElement()
@@ -80,6 +88,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
 
             setState(() {
               _blobUrl = url;
+              _currentViewId = viewId;
               _pdfBytes = bytes;
               _isLoading = false;
             });
@@ -98,9 +107,8 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
         setState(() {
           _isLoading = false;
           _errorMessage =
-              "Impossible de charger le PDF. \nAssurez-vous que le fichier n'a pas été supprimé par l'hébergement temporaire.\nErreur: $e";
+              "Impossible de charger le document sécurisé. \nErreur: $e";
         });
-        print("DEBUG - PDF Load Error: $e");
       }
     }
   }
@@ -111,12 +119,18 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
       appBar: AppBar(
         title: Text(
           widget.title,
-          style: const TextStyle(color: Colors.black87, fontSize: 16),
+          style: const TextStyle(color: Colors.black87, fontSize: 14),
         ),
         backgroundColor: Colors.white,
         elevation: 1,
         iconTheme: const IconThemeData(color: Colors.black87),
         actions: [
+          if (_blobUrl != null && kIsWeb)
+            IconButton(
+              icon: const Icon(Icons.open_in_new),
+              tooltip: "Ouvrir dans le navigateur",
+              onPressed: () => html.window.open(_blobUrl!, "_blank"),
+            ),
           IconButton(icon: const Icon(Icons.refresh), onPressed: _loadPdf),
         ],
       ),
@@ -144,11 +158,7 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                       size: 64,
                     ),
                     const SizedBox(height: 16),
-                    Text(
-                      _errorMessage!,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.red),
-                    ),
+                    Text(_errorMessage!, textAlign: TextAlign.center),
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: _loadPdf,
@@ -158,14 +168,12 @@ class _PdfViewerPageState extends State<PdfViewerPage> {
                 ),
               ),
             )
-          : kIsWeb && _blobUrl != null
-          ? HtmlElementView(viewType: 'pdf-view-${_blobUrl!.split("/").last}')
+          : kIsWeb && _currentViewId != null
+          ? HtmlElementView(viewType: _currentViewId!)
           : SfPdfViewer.memory(
               _pdfBytes!,
               key: _pdfViewerKey,
               controller: _pdfViewerController,
-              canShowScrollHead: true,
-              canShowScrollStatus: true,
             ),
     );
   }
