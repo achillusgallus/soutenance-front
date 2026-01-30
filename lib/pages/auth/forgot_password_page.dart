@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/utils/security_utils.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
@@ -34,12 +35,12 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
       if (res?.statusCode == 200) {
         setState(() => _currentStep = 1);
-        _showSnackBar("Code envoyé à votre email !", Colors.green);
+        _showSnackBar("Code envoyé à votre email !", AppTheme.successColor);
       } else {
-        _showSnackBar("Erreur lors de l'envoi du code", Colors.red);
+        _showSnackBar("Erreur lors de l'envoi du code", AppTheme.errorColor);
       }
     } catch (e) {
-      _showSnackBar("Une erreur est survenue", Colors.red);
+      _showSnackBar("Une erreur est survenue", AppTheme.errorColor);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -47,7 +48,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   Future<void> _verifyCode() async {
     if (_codeController.text.length != 6) {
-      _showSnackBar("Le code doit contenir 6 chiffres", Colors.orange);
+      _showSnackBar("Le code doit contenir 6 chiffres", AppTheme.warningColor);
       return;
     }
     setState(() => _isLoading = true);
@@ -66,10 +67,10 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       if (res?.statusCode == 200) {
         setState(() => _currentStep = 2);
       } else {
-        _showSnackBar("Code invalide", Colors.red);
+        _showSnackBar("Code invalide", AppTheme.errorColor);
       }
     } catch (e) {
-      _showSnackBar("Erreur de vérification", Colors.red);
+      _showSnackBar("Erreur de vérification", AppTheme.errorColor);
     } finally {
       setState(() => _isLoading = false);
     }
@@ -125,8 +126,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Background accents
@@ -138,7 +140,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF6366F1).withOpacity(0.05),
+                color: theme.primaryColor.withOpacity(0.05),
               ),
             ),
           ),
@@ -153,9 +155,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
                     const SizedBox(height: 20),
                     // Back button
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.arrow_back_ios_new,
-                        color: Color(0xFF1E293B),
+                        color: theme.textTheme.titleLarge?.color,
                       ),
                       onPressed: () => Navigator.pop(context),
                     ),
@@ -292,9 +294,9 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       children: [
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w600,
-            color: Color(0xFF475569),
+            color: Theme.of(context).textTheme.bodyMedium?.color,
           ),
         ),
         const SizedBox(height: 8),
@@ -321,6 +323,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
   }
 
   Widget _buildActionButton() {
+    final theme = Theme.of(context);
     String text = "ENVOYER LE CODE";
     VoidCallback? action = _sendResetCode;
 
@@ -338,7 +341,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       child: ElevatedButton(
         onPressed: _isLoading ? null : action,
         style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF6366F1),
+          backgroundColor: theme.primaryColor,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),

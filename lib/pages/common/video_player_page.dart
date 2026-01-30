@@ -1,16 +1,19 @@
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
-import 'package:togoschool/service/token_storage.dart';
+import 'package:togoschool/services/token_storage.dart';
+import 'package:togoschool/services/progress_service.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerPage extends StatefulWidget {
   final String videoUrl;
   final String title;
+  final int? courseId;
 
   const VideoPlayerPage({
     super.key,
     required this.videoUrl,
     required this.title,
+    this.courseId,
   });
 
   @override
@@ -21,10 +24,12 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   late VideoPlayerController _videoPlayerController;
   ChewieController? _chewieController;
   bool _error = false;
+  DateTime? _startTime;
 
   @override
   void initState() {
     super.initState();
+    _startTime = DateTime.now();
     _initializePlayer();
   }
 
@@ -61,8 +66,25 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
     }
   }
 
+  Future<void> _saveProgress() async {
+    if (_startTime != null && widget.courseId != null) {
+      final timeSpent = DateTime.now().difference(_startTime!).inSeconds;
+      try {
+        final ProgressService progressService = ProgressService();
+        await progressService.saveProgressLocally(
+          widget.courseId!,
+          100, // Mark as completed
+          timeSpent,
+        );
+      } catch (e) {
+        print('Erreur sauvegarde progression vidéo: $e');
+      }
+    }
+  }
+
   @override
   void dispose() {
+    _saveProgress();
     _videoPlayerController.dispose();
     _chewieController?.dispose();
     super.dispose();

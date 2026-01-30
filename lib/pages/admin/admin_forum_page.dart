@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/admin/add_forum.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/pages/forum/forum_topic_list_page.dart';
 
 class AdminForumPage extends StatefulWidget {
@@ -80,13 +81,14 @@ class _AdminForumPageState extends State<AdminForumPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           DashHeader(
-            color1: const Color(0xFFF59E0B),
-            color2: const Color(0xFFD97706),
+            color1: AppTheme.warningColor,
+            color2: AppTheme.warningColor.withOpacity(0.8),
             title: "GESTION FORUMS",
             subtitle: "Supervisez les espaces de discussion",
             title1: forums.length.toString(),
@@ -108,12 +110,12 @@ class _AdminForumPageState extends State<AdminForumPage> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: _fetchForums,
-              color: const Color(0xFFF59E0B),
+              color: AppTheme.warningColor,
               child: isLoading
                   ? const Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFFF59E0B),
+                          AppTheme.warningColor,
                         ),
                       ),
                     )
@@ -132,7 +134,7 @@ class _AdminForumPageState extends State<AdminForumPage> {
           );
           if (result == true) _fetchForums();
         },
-        backgroundColor: const Color(0xFFF59E0B),
+        backgroundColor: AppTheme.warningColor,
         elevation: 4,
         icon: const Icon(Icons.add_comment_rounded, color: Colors.white),
         label: const Text(
@@ -149,6 +151,7 @@ class _AdminForumPageState extends State<AdminForumPage> {
   }
 
   Widget _buildForumList() {
+    final theme = Theme.of(context);
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 100),
@@ -160,10 +163,10 @@ class _AdminForumPageState extends State<AdminForumPage> {
 
         // Generate color based on index
         final colors = [
-          const Color(0xFF6366F1),
-          const Color(0xFF10B981),
+          AppTheme.primaryColor,
+          AppTheme.successColor,
           const Color(0xFFEC4899),
-          const Color(0xFFF59E0B),
+          AppTheme.warningColor,
           const Color(0xFF8B5CF6),
         ];
         final colorIndex = index % colors.length;
@@ -172,11 +175,11 @@ class _AdminForumPageState extends State<AdminForumPage> {
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: theme.shadowColor.withOpacity(0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -241,10 +244,10 @@ class _AdminForumPageState extends State<AdminForumPage> {
                             children: [
                               Text(
                                 forum['titre'] ?? 'Sans titre',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
-                                  color: Color(0xFF1E293B),
+                                  color: theme.textTheme.bodyLarge?.color,
                                 ),
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
@@ -260,9 +263,9 @@ class _AdminForumPageState extends State<AdminForumPage> {
                                   const SizedBox(width: 4),
                                   Text(
                                     forum['matiere_nom'] ?? 'N/A',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                       fontSize: 13,
-                                      color: Color(0xFF94A3B8),
+                                      color: theme.textTheme.bodySmall?.color,
                                     ),
                                   ),
                                 ],
@@ -272,15 +275,15 @@ class _AdminForumPageState extends State<AdminForumPage> {
                         ),
                         IconButton(
                           onPressed: () => _deleteForum(forum['id']),
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.delete_outline_rounded,
-                            color: Color(0xFFEF4444),
+                            color: AppTheme.errorColor,
                             size: 22,
                           ),
                           style: IconButton.styleFrom(
-                            backgroundColor: const Color(
-                              0xFFEF4444,
-                            ).withOpacity(0.05),
+                            backgroundColor: AppTheme.errorColor.withOpacity(
+                              0.05,
+                            ),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12),
                             ),
@@ -302,13 +305,13 @@ class _AdminForumPageState extends State<AdminForumPage> {
                           icon: Icons.message_outlined,
                           label:
                               '$messagesCount message${messagesCount > 1 ? 's' : ''}',
-                          color: const Color(0xFF10B981),
+                          color: AppTheme.successColor,
                         ),
                         const Spacer(),
                         Icon(
                           Icons.arrow_forward_ios_rounded,
                           size: 14,
-                          color: const Color(0xFFCBD5E1),
+                          color: theme.disabledColor,
                         ),
                       ],
                     ),
@@ -353,6 +356,7 @@ class _AdminForumPageState extends State<AdminForumPage> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -360,28 +364,28 @@ class _AdminForumPageState extends State<AdminForumPage> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: const Color(0xFFF59E0B).withOpacity(0.05),
+              color: AppTheme.warningColor.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.forum_outlined,
               size: 80,
-              color: const Color(0xFFF59E0B).withOpacity(0.2),
+              color: AppTheme.warningColor.withOpacity(0.2),
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             "Aucun forum trouvé",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: theme.textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "Commencez par créer votre premier espace de discussion.",
-            style: TextStyle(color: Color(0xFF64748B)),
+            style: TextStyle(color: theme.textTheme.bodySmall?.color),
           ),
         ],
       ),

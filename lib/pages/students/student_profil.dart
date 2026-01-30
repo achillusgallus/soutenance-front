@@ -1,14 +1,28 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/utils/security_utils.dart';
-import 'package:togoschool/service/api_service.dart';
-import 'package:togoschool/service/token_storage.dart';
+import 'package:dio/dio.dart';
+import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/services/token_storage.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
 import 'package:togoschool/pages/common/legal_page.dart';
 import 'package:togoschool/pages/common/notifications_page.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
+import 'package:togoschool/theme/app_theme.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:togoschool/pages/students/student_cours.dart';
+import 'package:togoschool/pages/students/student_forum.dart';
+import 'package:togoschool/pages/students/student_quiz_page.dart';
+import 'package:togoschool/pages/students/student_progress_page.dart';
+import 'package:togoschool/pages/students/student_favorites_page.dart';
+import 'package:togoschool/pages/students/student_notes_page.dart';
+import 'package:togoschool/pages/students/student_calendar_page.dart';
+import 'package:togoschool/pages/students/student_flashcards_page.dart';
+import 'package:togoschool/pages/students/student_questions_page.dart';
+import 'package:togoschool/pages/students/student_achievements_page.dart';
+import 'package:togoschool/services/progress_service.dart';
 
 class StudentProfil extends StatefulWidget {
   const StudentProfil({super.key});
@@ -24,7 +38,13 @@ class _StudentProfilState extends State<StudentProfil> {
   bool isEditing = false;
   bool isSaving = false;
   bool _obscurePassword = true;
-  bool _notificationsEnabled = true; // Local state for now
+  bool _notificationsEnabled = true;
+
+  final ProgressService _progressService = ProgressService();
+  int quizCount = 0;
+  int forumCount = 0;
+  int favoriteCount = 0;
+  int matieresCount = 0;
 
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
@@ -36,6 +56,54 @@ class _StudentProfilState extends State<StudentProfil> {
   void initState() {
     super.initState();
     getProfile();
+    _loadStats();
+  }
+
+  Future<void> _loadStats() async {
+    try {
+      final results = await Future.wait([
+        api.read("/student/matieres"),
+        api.read("/quiz"),
+        api.read("/forums"),
+        _progressService.getFavorites(),
+      ]);
+
+      if (mounted) {
+        setState(() {
+          // Matieres
+          final matRes = (results[0] as Response?)?.data;
+          if (matRes is List) {
+            matieresCount = matRes.length;
+          } else if (matRes is Map && matRes.containsKey('data')) {
+            matieresCount = (matRes['data'] as List).length;
+          }
+
+          // Quiz
+          final quizRes = (results[1] as Response?)?.data;
+          if (quizRes is List) {
+            quizCount = quizRes.length;
+          } else if (quizRes is Map && quizRes.containsKey('total')) {
+            quizCount = quizRes['total'] ?? 0;
+          } else if (quizRes is Map && quizRes.containsKey('data')) {
+            quizCount = (quizRes['data'] as List).length;
+          }
+
+          // Forums
+          final forumsRes = (results[2] as Response?)?.data;
+          if (forumsRes is List) {
+            forumCount = forumsRes.length;
+          } else if (forumsRes is Map && forumsRes.containsKey('data')) {
+            forumCount = (forumsRes['data'] as List).length;
+          }
+
+          // Favorites
+          final favRes = results[3];
+          if (favRes is List) favoriteCount = favRes.length;
+        });
+      }
+    } catch (e) {
+      debugPrint("Erreur Stats Profil: $e");
+    }
   }
 
   @override
@@ -132,9 +200,9 @@ class _StudentProfilState extends State<StudentProfil> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Échec de la mise à jour"),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text("Échec de la mise à jour"),
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -145,18 +213,19 @@ class _StudentProfilState extends State<StudentProfil> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
             _buildCustomHeader(),
             Expanded(
               child: isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF6366F1),
+                          theme.primaryColor,
                         ),
                       ),
                     )
@@ -176,18 +245,19 @@ class _StudentProfilState extends State<StudentProfil> {
   }
 
   Widget _buildCustomHeader() {
+    final theme = Theme.of(context);
     final name = profileData?['name'] ?? 'Élève';
     final surname = profileData?['surname'] ?? '';
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+          colors: [theme.primaryColor, theme.primaryColorDark],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(40),
           bottomRight: Radius.circular(40),
         ),
@@ -241,13 +311,13 @@ class _StudentProfilState extends State<StudentProfil> {
                 width: 3,
               ),
             ),
-            child: const CircleAvatar(
+            child: CircleAvatar(
               radius: 44,
               backgroundColor: Colors.white,
               child: Icon(
                 FontAwesomeIcons.userGraduate,
                 size: 36,
-                color: Color(0xFF6366F1),
+                color: theme.primaryColor,
               ),
             ),
           ),
@@ -274,13 +344,14 @@ class _StudentProfilState extends State<StudentProfil> {
   }
 
   Widget _buildProfileView() {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           "PARAMÈTRES DU COMPTE",
           style: TextStyle(
-            color: Color(0xFF94A3B8),
+            color: theme.hintColor,
             fontWeight: FontWeight.bold,
             fontSize: 11,
             letterSpacing: 1.2,
@@ -291,25 +362,126 @@ class _StudentProfilState extends State<StudentProfil> {
           icon: FontAwesomeIcons.userPen,
           title: 'Modifier mes informations',
           onTap: () => setState(() => isEditing = true),
-          color: const Color(0xFF6366F1),
+          color: theme.primaryColor,
         ),
         _buildSettingsTile(
           icon: FontAwesomeIcons.bell,
           title: 'Préférences de notification',
           onTap: _showNotificationSettings,
-          color: const Color(0xFFF59E0B),
+          color: AppTheme.warningColor,
         ),
         _buildSettingsTile(
           icon: FontAwesomeIcons.shieldHalved,
           title: 'Sécurité & Mot de passe',
           onTap: () => setState(() => isEditing = true),
-          color: const Color(0xFF10B981),
+          color: AppTheme.successColor,
         ),
         const SizedBox(height: 32),
-        const Text(
+        Text(
+          "MES OUTILS & APPRENTISSAGE",
+          style: TextStyle(
+            color: theme.hintColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 11,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 16),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.bookOpen,
+          title: "Mes Cours",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StudentCours()),
+          ),
+          color: theme.primaryColor,
+        ),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.vial,
+          title: "Mes Quiz",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StudentQuizPage()),
+          ),
+          color: const Color(0xFF10B981),
+        ),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.comments,
+          title: "Forums de discussion",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StudentForum()),
+          ),
+          color: const Color(0xFFF59E0B),
+        ),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.chartLine,
+          title: "Suivi de Progression",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StudentProgressPage()),
+          ),
+          color: const Color(0xFF8B5CF6),
+        ),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.heart,
+          title: "Mes Favoris",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StudentFavoritesPage()),
+          ),
+          color: const Color(0xFFEC4899),
+        ),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.stickyNote,
+          title: "Mes Notes",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StudentNotesPage()),
+          ),
+          color: const Color(0xFF10B981),
+        ),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.calendarDay,
+          title: "Calendrier de la session",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StudentCalendarPage()),
+          ),
+          color: const Color(0xFFF59E0B),
+        ),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.layerGroup,
+          title: "Révision Flashcards",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StudentFlashcardsPage()),
+          ),
+          color: const Color(0xFF6366F1),
+        ),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.questionCircle,
+          title: "Questions & Réponses",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StudentQuestionsPage()),
+          ),
+          color: const Color(0xFF10B981),
+        ),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.trophy,
+          title: "Mes Succès & Badges",
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const StudentAchievementsPage()),
+          ),
+          color: const Color(0xFF8B5CF6),
+        ),
+        const SizedBox(height: 32),
+        Text(
           "RESSOURCES",
           style: TextStyle(
-            color: Color(0xFF94A3B8),
+            color: theme.hintColor,
             fontWeight: FontWeight.bold,
             fontSize: 11,
             letterSpacing: 1.2,
@@ -320,13 +492,13 @@ class _StudentProfilState extends State<StudentProfil> {
           icon: FontAwesomeIcons.circleInfo,
           title: 'À propos de TogoSchool',
           onTap: _openAbout,
-          color: const Color(0xFF64748B),
+          color: Colors.blueGrey,
         ),
         _buildSettingsTile(
           icon: FontAwesomeIcons.headset,
           title: 'Aide & Support',
           onTap: _showSupportDialog,
-          color: const Color(0xFF6366F1),
+          color: theme.primaryColor,
         ),
         const SizedBox(height: 40),
         SizedBox(
@@ -339,8 +511,8 @@ class _StudentProfilState extends State<StudentProfil> {
               style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFFEE2E2),
-              foregroundColor: const Color(0xFFEF4444),
+              backgroundColor: AppTheme.errorColor.withOpacity(0.1),
+              foregroundColor: AppTheme.errorColor,
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 18),
               shape: RoundedRectangleBorder(
@@ -349,20 +521,22 @@ class _StudentProfilState extends State<StudentProfil> {
             ),
           ),
         ),
+        const SizedBox(height: 32),
       ],
     );
   }
 
   Widget _buildEditForm() {
+    final theme = Theme.of(context);
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "MISE À JOUR DU PROFIL",
             style: TextStyle(
-              color: Color(0xFF94A3B8),
+              color: theme.hintColor,
               fontWeight: FontWeight.bold,
               fontSize: 11,
               letterSpacing: 1.2,
@@ -406,7 +580,7 @@ class _StudentProfilState extends State<StudentProfil> {
             suffixIcon: IconButton(
               icon: Icon(
                 _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                color: const Color(0xFF94A3B8),
+                color: theme.hintColor,
                 size: 18,
               ),
               onPressed: () =>
@@ -423,10 +597,10 @@ class _StudentProfilState extends State<StudentProfil> {
           Center(
             child: TextButton(
               onPressed: () => setState(() => isEditing = false),
-              child: const Text(
+              child: Text(
                 "Annuler les modifications",
                 style: TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: theme.hintColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -438,14 +612,15 @@ class _StudentProfilState extends State<StudentProfil> {
   }
 
   Widget _buildFieldLabel(String label) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF1E293B),
+          color: theme.textTheme.bodyLarge?.color,
         ),
       ),
     );
@@ -457,10 +632,11 @@ class _StudentProfilState extends State<StudentProfil> {
     required VoidCallback onTap,
     required Color color,
   }) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -482,16 +658,13 @@ class _StudentProfilState extends State<StudentProfil> {
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
+            color: theme.textTheme.bodyLarge?.color,
           ),
         ),
-        trailing: const Icon(
-          Icons.chevron_right_rounded,
-          color: Color(0xFFCBD5E1),
-        ),
+        trailing: Icon(Icons.chevron_right_rounded, color: theme.dividerColor),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         onTap: onTap,
       ),
@@ -499,6 +672,7 @@ class _StudentProfilState extends State<StudentProfil> {
   }
 
   void _showLogoutDialog() {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -511,9 +685,9 @@ class _StudentProfilState extends State<StudentProfil> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text(
+            child: Text(
               "ANNULER",
-              style: TextStyle(color: Color(0xFF94A3B8)),
+              style: TextStyle(color: theme.disabledColor),
             ),
           ),
           ElevatedButton(
@@ -522,7 +696,7 @@ class _StudentProfilState extends State<StudentProfil> {
               logout();
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -553,7 +727,7 @@ class _StudentProfilState extends State<StudentProfil> {
                     // Update main state/persist if needed
                     setState(() {});
                   },
-                  activeColor: const Color(0xFF6366F1),
+                  activeColor: Theme.of(context).primaryColor,
                 ),
               ],
             ),
@@ -588,34 +762,35 @@ TogoSchool est une initiative visant à numériser l'éducation au Togo. Nous fo
   }
 
   void _showSupportDialog() {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text("Besoin d'aide ?"),
-        content: const Column(
+        content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
+            const Text(
               "Contactez notre équipe de support technique pour toute assistance.",
             ),
-            SizedBox(height: 16),
+            const SizedBox(height: 16),
             Row(
               children: [
-                Icon(Icons.email, size: 16, color: Colors.grey),
-                SizedBox(width: 8),
-                Text(
+                Icon(Icons.email, size: 16, color: theme.hintColor),
+                const SizedBox(width: 8),
+                const Text(
                   "support@togoschool.tg",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ],
             ),
-            SizedBox(height: 8),
+            const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.phone, size: 16, color: Colors.grey),
-                SizedBox(width: 8),
-                Text(
+                Icon(Icons.phone, size: 16, color: theme.hintColor),
+                const SizedBox(width: 8),
+                const Text(
                   "+228 90 00 00 00",
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
@@ -636,7 +811,7 @@ TogoSchool est une initiative visant à numériser l'éducation au Togo. Nous fo
               } catch (e) {}
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF6366F1),
+              backgroundColor: theme.primaryColor,
             ),
             child: const Text(
               "Contacter",

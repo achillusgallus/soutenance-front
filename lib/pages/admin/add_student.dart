@@ -3,7 +3,7 @@ import 'package:togoschool/components/class_dropdown.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/utils/security_utils.dart';
 
 class AddStudent extends StatefulWidget {
@@ -94,6 +94,7 @@ class _AddStudentState extends State<AddStudent> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: const Color(0xFFF8F9FD),
       body: Column(
@@ -217,7 +218,7 @@ class _AddStudentState extends State<AddStudent> {
                             _obscurePassword
                                 ? Icons.visibility_off_rounded
                                 : Icons.visibility_rounded,
-                            color: const Color(0xFF94A3B8),
+                            color: theme.iconTheme.color,
                             size: 20,
                           ),
                           onPressed: () => setState(

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:togoschool/service/progress_service.dart';
+import 'package:togoschool/services/progress_service.dart';
 
 class StudentNotesPage extends StatefulWidget {
   final int? courseId;
@@ -314,14 +314,15 @@ class _StudentNotesPageState extends State<StudentNotesPage> {
   }
 
   Widget _buildNoteCard(Map<String, dynamic> note) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: theme.shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -338,10 +339,10 @@ class _StudentNotesPageState extends State<StudentNotesPage> {
                 Expanded(
                   child: Text(
                     note['course_name'] ?? 'Note',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: Color(0xFF8B5CF6),
+                      color: theme.primaryColor,
                     ),
                   ),
                 ),
@@ -349,18 +350,18 @@ class _StudentNotesPageState extends State<StudentNotesPage> {
                   children: [
                     IconButton(
                       onPressed: () => _editNote(note),
-                      icon: const Icon(
+                      icon: Icon(
                         FontAwesomeIcons.edit,
                         size: 16,
-                        color: Color(0xFF64748B),
+                        color: theme.iconTheme.color?.withOpacity(0.7) ?? const Color(0xFF64748B),
                       ),
                     ),
                     IconButton(
                       onPressed: () => _deleteNote(note['id']),
-                      icon: const Icon(
+                      icon: Icon(
                         FontAwesomeIcons.trash,
                         size: 16,
-                        color: Colors.red,
+                        color: theme.colorScheme.error,
                       ),
                     ),
                   ],
@@ -370,17 +371,17 @@ class _StudentNotesPageState extends State<StudentNotesPage> {
             const SizedBox(height: 8),
             Text(
               note['content'] ?? '',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF1E293B),
+                color: theme.textTheme.bodyLarge?.color,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               _formatDate(note['updated_at'] ?? note['created_at']),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
-                color: Color(0xFF64748B),
+                color: theme.textTheme.bodySmall?.color,
               ),
             ),
           ],

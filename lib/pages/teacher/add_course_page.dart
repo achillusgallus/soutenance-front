@@ -3,11 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/utils/security_utils.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:dio/dio.dart' as dio_multipart;
 import 'package:path/path.dart' as p;
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class AddCoursePage extends StatefulWidget {
   final Map<String, dynamic>? course;
@@ -242,7 +243,7 @@ class _AddCoursePageState extends State<AddCoursePage> {
                   borderRadius: BorderRadius.circular(32),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF6366F1).withOpacity(0.06),
+                      color: AppTheme.primaryColor.withOpacity(0.06),
                       blurRadius: 24,
                       offset: const Offset(0, 8),
                     ),
@@ -399,9 +400,9 @@ class _AddCoursePageState extends State<AddCoursePage> {
               ),
             ),
             if (hasFile)
-              const Icon(
+              Icon(
                 Icons.edit_rounded,
-                color: Color(0xFF6366F1),
+                color: AppTheme.primaryColor,
                 size: 20,
               ),
           ],

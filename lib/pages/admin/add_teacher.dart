@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
-import 'package:togoschool/components/primary_button.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/utils/security_utils.dart';
 
 class AddTeacherPage extends StatefulWidget {
@@ -84,8 +84,9 @@ class _AddTeacherPageState extends State<AddTeacherPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           FormHeader(
@@ -99,11 +100,11 @@ class _AddTeacherPageState extends State<AddTeacherPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF6366F1).withOpacity(0.08),
+                      color: AppTheme.primaryColor.withOpacity(0.08),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
@@ -119,12 +120,12 @@ class _AddTeacherPageState extends State<AddTeacherPage> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1).withOpacity(0.1),
+                              color: AppTheme.primaryColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Icon(
                               Icons.person_add_alt_1_rounded,
-                              color: Color(0xFF6366F1),
+                              color: AppTheme.primaryColor,
                               size: 24,
                             ),
                           ),
@@ -137,17 +138,17 @@ class _AddTeacherPageState extends State<AddTeacherPage> {
                                   isEditMode
                                       ? "Édition du profil"
                                       : "Informations du Compte",
-                                  style: const TextStyle(
+                                  style: theme.textTheme.titleMedium?.copyWith(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1E293B),
+                                    color: theme.textTheme.titleLarge?.color,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   "Configurez les accès pour ce professeur.",
-                                  style: TextStyle(
-                                    color: const Color(0xFF64748B),
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    color: theme.textTheme.bodyMedium?.color,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -201,7 +202,7 @@ class _AddTeacherPageState extends State<AddTeacherPage> {
                             _obscurePassword
                                 ? Icons.visibility_off_rounded
                                 : Icons.visibility_rounded,
-                            color: const Color(0xFF94A3B8),
+                            color: theme.disabledColor,
                             size: 20,
                           ),
                           onPressed: () => setState(
@@ -214,90 +215,145 @@ class _AddTeacherPageState extends State<AddTeacherPage> {
                             : null,
                       ),
                       const SizedBox(height: 40),
-                      PrimaryButton(
-                        text: isEditMode
-                            ? 'ENREGISTRER LES MODIFICATIONS'
-                            : 'CRÉER LE COMPTE PROFESSEUR',
-                        isLoading: isSaving,
-                        onPressed: () async {
-                          if (_formKey.currentState!.validate()) {
-                            setState(() => isSaving = true);
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton(
+                          onPressed: isSaving
+                              ? null
+                              : () async {
+                                  if (_formKey.currentState!.validate()) {
+                                    setState(() => isSaving = true);
 
-                            final String name = SecurityUtils.sanitizeInput(
-                              _nameController.text,
-                            );
-                            final String surname = SecurityUtils.sanitizeInput(
-                              _surnameController.text,
-                            );
-                            final String email = SecurityUtils.sanitizeInput(
-                              _emailController.text,
-                            );
-                            final String password = _passwordController.text
-                                .trim();
+                                    final String name =
+                                        SecurityUtils.sanitizeInput(
+                                          _nameController.text,
+                                        );
+                                    final String surname =
+                                        SecurityUtils.sanitizeInput(
+                                          _surnameController.text,
+                                        );
+                                    final String email =
+                                        SecurityUtils.sanitizeInput(
+                                          _emailController.text,
+                                        );
+                                    final String password = _passwordController
+                                        .text
+                                        .trim();
 
-                            bool success;
-                            if (isEditMode) {
-                              success = await updateTeacher(
-                                widget.teacher!['id'],
-                                name,
-                                surname,
-                                email,
-                                password,
-                              );
-                            } else {
-                              success = await addTeacherAPI(
-                                name,
-                                surname,
-                                email,
-                                password,
-                              );
-                            }
+                                    bool success;
+                                    if (isEditMode) {
+                                      success = await updateTeacher(
+                                        widget.teacher!['id'],
+                                        name,
+                                        surname,
+                                        email,
+                                        password,
+                                      );
+                                    } else {
+                                      success = await addTeacherAPI(
+                                        name,
+                                        surname,
+                                        email,
+                                        password,
+                                      );
+                                    }
 
-                            if (!mounted) return;
-                            setState(() => isSaving = false);
+                                    if (!mounted) return;
+                                    setState(() => isSaving = false);
 
-                            if (success) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    isEditMode
-                                        ? "Professeur mis à jour avec succès !"
-                                        : "Nouveau professeur créé avec succès !",
+                                    if (success) {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: Text(
+                                            isEditMode
+                                                ? "Professeur mis à jour avec succès !"
+                                                : "Nouveau professeur créé avec succès !",
+                                          ),
+                                          backgroundColor:
+                                              AppTheme.successColor,
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                      Navigator.pop(context, true);
+                                    } else {
+                                      ScaffoldMessenger.of(
+                                        context,
+                                      ).showSnackBar(
+                                        SnackBar(
+                                          content: const Text(
+                                            "Une erreur est survenue lors de l'enregistrement",
+                                          ),
+                                          backgroundColor: AppTheme.errorColor,
+                                          behavior: SnackBarBehavior.floating,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(
+                                              10,
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }
+                                  }
+                                },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: AppTheme.primaryColor,
+                            foregroundColor: Colors.white,
+                            elevation: 4,
+                            shadowColor: AppTheme.primaryColor.withOpacity(0.4),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          child: isSaving
+                              ? const SizedBox(
+                                  height: 24,
+                                  width: 24,
+                                  child: CircularProgressIndicator(
+                                    color: Colors.white,
+                                    strokeWidth: 2,
                                   ),
-                                  backgroundColor: const Color(0xFF10B981),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
+                                )
+                              : Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      isEditMode
+                                          ? Icons.save_rounded
+                                          : Icons.check_circle_outline_rounded,
+                                      size: 22,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      isEditMode
+                                          ? "Enregistrer les modifications"
+                                          : "Créer le compte",
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        letterSpacing: 0.5,
+                                      ),
+                                    ),
+                                  ],
                                 ),
-                              );
-                              Navigator.pop(context, true);
-                            } else {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: const Text(
-                                    "Une erreur est survenue lors de l'enregistrement",
-                                  ),
-                                  backgroundColor: const Color(0xFFEF4444),
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(10),
-                                  ),
-                                ),
-                              );
-                            }
-                          }
-                        },
+                        ),
                       ),
                       if (isEditMode) ...[
                         const SizedBox(height: 16),
                         Center(
                           child: TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text(
+                            child: Text(
                               "ANNULER",
-                              style: TextStyle(
-                                color: Color(0xFF94A3B8),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.hintColor,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1,
                               ),

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/utils/security_utils.dart';
 
 class AddForumPage extends StatefulWidget {
@@ -41,8 +42,9 @@ class _AddForumPageState extends State<AddForumPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           FormHeader(
@@ -56,11 +58,11 @@ class _AddForumPageState extends State<AddForumPage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFFF59E0B).withOpacity(0.08),
+                      color: AppTheme.warningColor.withOpacity(0.08),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
@@ -76,12 +78,12 @@ class _AddForumPageState extends State<AddForumPage> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFF59E0B).withOpacity(0.1),
+                              color: AppTheme.warningColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.forum_rounded,
-                              color: Color(0xFFF59E0B),
+                              color: AppTheme.warningColor,
                               size: 24,
                             ),
                           ),
@@ -90,19 +92,19 @@ class _AddForumPageState extends State<AddForumPage> {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
+                                Text(
                                   "Informations du Forum",
                                   style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1E293B),
+                                    color: theme.textTheme.bodyLarge?.color,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   "Créez un nouvel espace de discussion.",
                                   style: TextStyle(
-                                    color: const Color(0xFF64748B),
+                                    color: theme.textTheme.bodySmall?.color,
                                     fontSize: 13,
                                   ),
                                 ),

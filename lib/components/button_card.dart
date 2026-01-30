@@ -16,10 +16,11 @@ class ButtonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       child: Material(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         child: InkWell(
           onTap: onTap,
@@ -34,7 +35,7 @@ class ButtonCard extends StatelessWidget {
               border: Border.all(color: color.withOpacity(0.1), width: 1),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.02),
+                  color: theme.shadowColor.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -58,7 +59,7 @@ class ButtonCard extends StatelessWidget {
                   style: TextStyle(
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
-                    color: const Color(0xFF1E293B),
+                    color: theme.textTheme.bodyLarge?.color,
                     letterSpacing: 0.2,
                   ),
                 ),

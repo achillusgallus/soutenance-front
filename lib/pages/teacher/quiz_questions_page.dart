@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/utils/security_utils.dart';
 
 class QuizQuestionsPage extends StatefulWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/pages/forum/forum_list_page.dart';
-import 'package:togoschool/service/paygate_service.dart';
+import 'package:togoschool/services/paygate_service.dart';
 import 'package:togoschool/pages/students/payment_required_page.dart';
 
 class StudentForum extends StatefulWidget {
@@ -63,11 +63,12 @@ class _StudentForumState extends State<StudentForum> {
   @override
   Widget build(BuildContext context) {
     if (_isChecking) {
+      final theme = Theme.of(context);
       return Scaffold(
-        backgroundColor: const Color(0xFFF8F9FD),
-        body: const Center(
+        backgroundColor: theme.scaffoldBackgroundColor,
+        body: Center(
           child: CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+            valueColor: AlwaysStoppedAnimation<Color>(theme.primaryColor),
           ),
         ),
       );

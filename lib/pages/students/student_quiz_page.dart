@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/components/dash_header.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/pages/students/quiz_taking_page.dart';
 
 class StudentQuizPage extends StatefulWidget {

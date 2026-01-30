@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_paygateglobal/flutter_paygateglobal.dart';
 import 'package:togoschool/config/paygate_config.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/pages/dashbord/admin_dashboard_page.dart';
 import 'package:togoschool/pages/dashbord/student_dashboard_page.dart';
 import 'package:togoschool/pages/dashbord/teacher_dashboard_page.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
-import 'package:togoschool/service/token_storage.dart';
-import 'package:togoschool/service/theme_service.dart';
+import 'package:togoschool/services/token_storage.dart';
+import 'package:togoschool/services/theme_service.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter_windowmanager/flutter_windowmanager.dart';
@@ -90,18 +91,16 @@ class _MyAppState extends State<MyApp> {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'TogoSchool',
-      theme: ThemeData(
+      title: AppConstants.appName,
+      theme: AppTheme.modernTheme,
+      darkTheme: AppTheme.modernTheme.copyWith(
+        brightness: Brightness.dark,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
-          brightness: Brightness.light,
-        ),
-      ),
-      darkTheme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.deepPurple,
+          seedColor: AppTheme.primaryColor,
           brightness: Brightness.dark,
         ),
+        scaffoldBackgroundColor: const Color(0xFF0F172A),
+        cardColor: const Color(0xFF1E293B),
       ),
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
       home: homePage,

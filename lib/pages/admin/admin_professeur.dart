@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/admin/add_teacher.dart';
-import 'package:togoschool/service/api_service.dart';
-import 'package:togoschool/service/impersonation_service.dart';
+import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/services/impersonation_service.dart';
 import 'package:togoschool/pages/dashbord/teacher_dashboard_page.dart';
 
 class AdminProfesseur extends StatefulWidget {
@@ -84,13 +85,14 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           DashHeader(
-            color1: const Color(0xFF6366F1),
-            color2: const Color(0xFF4F46E5),
+            color1: AppTheme.primaryColor,
+            color2: AppTheme.primaryColor.withOpacity(0.8),
             title: "GESTION ENSEIGNANTS",
             subtitle: "Administrez le corps professoral de l'établissement",
             title1: teachers.length.toString(),
@@ -105,12 +107,12 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: getData,
-              color: const Color(0xFF6366F1),
+              color: AppTheme.primaryColor,
               child: isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF6366F1),
+                          AppTheme.primaryColor,
                         ),
                       ),
                     )
@@ -122,6 +124,7 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
         ],
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: "add_teacher_btn",
         onPressed: () async {
           final result = await Navigator.push(
             context,
@@ -129,7 +132,7 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
           );
           if (result == true) getData();
         },
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: AppTheme.successColor,
         elevation: 4,
         icon: const Icon(Icons.person_add_rounded, color: Colors.white),
         label: const Text(
@@ -146,15 +149,16 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
   }
 
   Widget _buildSearchBar() {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF6366F1).withOpacity(0.06),
+              color: AppTheme.primaryColor.withOpacity(0.06),
               blurRadius: 15,
               offset: const Offset(0, 4),
             ),
@@ -163,10 +167,13 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
         child: TextField(
           decoration: InputDecoration(
             hintText: 'Rechercher un professeur...',
-            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-            prefixIcon: const Icon(
+            hintStyle: TextStyle(
+              color: theme.textTheme.bodySmall?.color,
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(
               Icons.search_rounded,
-              color: Color(0xFF6366F1),
+              color: AppTheme.primaryColor,
               size: 22,
             ),
             border: InputBorder.none,
@@ -184,6 +191,7 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
   }
 
   Widget _buildTeacherList() {
+    final theme = Theme.of(context);
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
@@ -212,11 +220,11 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
           child: Container(
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: theme.shadowColor.withOpacity(0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -256,18 +264,18 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
                           children: [
                             Text(
                               "${teacher['name'] ?? ''} ${teacher['surname'] ?? ''}",
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Color(0xFF1E293B),
+                                color: theme.textTheme.bodyLarge?.color,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
                               teacher['email'] ?? '',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF94A3B8),
+                                color: theme.textTheme.bodySmall?.color,
                               ),
                             ),
                           ],
@@ -281,19 +289,19 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
                     width: double.infinity,
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF8FAFC),
+                      color: theme.scaffoldBackgroundColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: const Color(0xFFF1F5F9)),
+                      border: Border.all(color: theme.dividerColor),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.book_outlined,
                               size: 14,
-                              color: Color(0xFF64748B),
+                              color: theme.textTheme.bodyMedium?.color,
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -301,7 +309,7 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
                               style: TextStyle(
                                 fontSize: 10,
                                 fontWeight: FontWeight.w800,
-                                color: const Color(0xFF64748B),
+                                color: theme.textTheme.bodyMedium?.color,
                                 letterSpacing: 0.5,
                               ),
                             ),
@@ -313,7 +321,7 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
                             "Aucune matière affectée",
                             style: TextStyle(
                               fontSize: 12,
-                              color: const Color(0xFF94A3B8),
+                              color: theme.textTheme.bodySmall?.color,
                               fontStyle: FontStyle.italic,
                             ),
                           )
@@ -357,8 +365,12 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
   }
 
   Widget _buildTeacherActions(dynamic teacher) {
+    final theme = Theme.of(context);
     return PopupMenuButton<String>(
-      icon: const Icon(Icons.more_vert_rounded, color: Color(0xFF94A3B8)),
+      icon: Icon(
+        Icons.more_vert_rounded,
+        color: theme.textTheme.bodySmall?.color,
+      ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       onSelected: (value) {
         if (value == 'edit') {
@@ -368,30 +380,33 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
         }
       },
       itemBuilder: (context) => [
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'edit',
           child: Row(
             children: [
-              Icon(Icons.edit_rounded, size: 18, color: Color(0xFF6366F1)),
-              SizedBox(width: 12),
-              Text("Modifier", style: TextStyle(fontWeight: FontWeight.w500)),
+              Icon(Icons.edit_rounded, size: 18, color: AppTheme.primaryColor),
+              const SizedBox(width: 12),
+              const Text(
+                "Modifier",
+                style: TextStyle(fontWeight: FontWeight.w500),
+              ),
             ],
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
           child: Row(
             children: [
               Icon(
                 Icons.delete_outline_rounded,
                 size: 18,
-                color: Color(0xFFEF4444),
+                color: AppTheme.errorColor,
               ),
-              SizedBox(width: 12),
+              const SizedBox(width: 12),
               Text(
                 "Supprimer",
                 style: TextStyle(
-                  color: Color(0xFFEF4444),
+                  color: AppTheme.errorColor,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -403,6 +418,7 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
   }
 
   void _showDeleteConfirmation(dynamic teacher) {
+    final theme = Theme.of(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -417,9 +433,9 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
+            child: Text(
               "ANNULER",
-              style: TextStyle(color: Color(0xFF94A3B8)),
+              style: TextStyle(color: theme.textTheme.bodySmall?.color),
             ),
           ),
           ElevatedButton(
@@ -428,7 +444,7 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
               deleteTeacher(teacher['id']);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -442,6 +458,7 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -449,28 +466,28 @@ class _AdminProfesseurState extends State<AdminProfesseur> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.05),
+              color: AppTheme.primaryColor.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.person_off_rounded,
               size: 80,
-              color: const Color(0xFF6366F1).withOpacity(0.2),
+              color: AppTheme.primaryColor.withOpacity(0.2),
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             "Aucun enseignant trouvé",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: theme.textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "Commencez par ajouter votre premier professeur.",
-            style: TextStyle(color: Color(0xFF64748B)),
+            style: TextStyle(color: theme.textTheme.bodySmall?.color),
           ),
         ],
       ),

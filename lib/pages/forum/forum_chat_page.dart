@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/utils/security_utils.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class ForumChatPage extends StatefulWidget {
   final int topicId;
@@ -136,15 +137,18 @@ class _ForumChatPageState extends State<ForumChatPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Color(0xFF1E293B),
+            color: theme.iconTheme.color,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
@@ -154,10 +158,8 @@ class _ForumChatPageState extends State<ForumChatPage> {
           children: [
             Text(
               widget.topicTitle,
-              style: const TextStyle(
-                fontSize: 16,
+              style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
               ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -187,17 +189,17 @@ class _ForumChatPageState extends State<ForumChatPage> {
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: const Color(0xFFE2E8F0), height: 1),
+          child: Container(color: theme.dividerColor, height: 1),
         ),
       ),
       body: Column(
         children: [
           Expanded(
             child: isLoading
-                ? const Center(
+                ? Center(
                     child: CircularProgressIndicator(
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF6366F1),
+                        AppTheme.primaryColor,
                       ),
                     ),
                   )
@@ -270,10 +272,10 @@ class _ForumChatPageState extends State<ForumChatPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Text(
               date.toUpperCase(),
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF94A3B8),
+                color: Theme.of(context).hintColor,
                 letterSpacing: 1,
               ),
             ),
@@ -288,16 +290,18 @@ class _ForumChatPageState extends State<ForumChatPage> {
     final name = msg['user']?['name'] ?? 'Utilisateur';
     final content = msg['message'] ?? '';
     final time = msg['created_at_human'] ?? '';
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     // Generate avatar color
     final colors = [
-      const Color(0xFF6366F1),
+      AppTheme.primaryColor,
       const Color(0xFF10B981),
       const Color(0xFFEC4899),
       const Color(0xFFF59E0B),
     ];
-    final colorIndex = name.hashCode.abs() % colors.length;
-    final avatarColor = colors[colorIndex];
+    final avatarColor =
+        colors[(msg['user_id'] ?? name).hashCode.abs() % colors.length];
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
@@ -352,10 +356,10 @@ class _ForumChatPageState extends State<ForumChatPage> {
                     padding: const EdgeInsets.only(left: 12, bottom: 4),
                     child: Text(
                       name,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF64748B),
+                        color: theme.hintColor,
                       ),
                     ),
                   ),
@@ -366,13 +370,18 @@ class _ForumChatPageState extends State<ForumChatPage> {
                   ),
                   decoration: BoxDecoration(
                     gradient: isMe
-                        ? const LinearGradient(
-                            colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+                        ? LinearGradient(
+                            colors: [
+                              AppTheme.primaryColor,
+                              const Color(0xFF4F46E5),
+                            ],
                             begin: Alignment.topLeft,
                             end: Alignment.bottomRight,
                           )
                         : null,
-                    color: isMe ? null : Colors.white,
+                    color: isMe
+                        ? null
+                        : (isDark ? theme.cardColor : Colors.white),
                     borderRadius: BorderRadius.only(
                       topLeft: const Radius.circular(18),
                       topRight: const Radius.circular(18),
@@ -382,7 +391,7 @@ class _ForumChatPageState extends State<ForumChatPage> {
                     boxShadow: [
                       BoxShadow(
                         color: isMe
-                            ? const Color(0xFF6366F1).withOpacity(0.2)
+                            ? AppTheme.primaryColor.withOpacity(0.2)
                             : Colors.black.withOpacity(0.04),
                         blurRadius: 8,
                         offset: const Offset(0, 2),
@@ -392,7 +401,9 @@ class _ForumChatPageState extends State<ForumChatPage> {
                   child: Text(
                     content,
                     style: TextStyle(
-                      color: isMe ? Colors.white : const Color(0xFF1E293B),
+                      color: isMe
+                          ? Colors.white
+                          : theme.textTheme.bodyMedium?.color,
                       fontSize: 14,
                       height: 1.4,
                     ),
@@ -406,7 +417,7 @@ class _ForumChatPageState extends State<ForumChatPage> {
                   ),
                   child: Text(
                     time,
-                    style: TextStyle(fontSize: 10, color: Colors.grey[400]),
+                    style: TextStyle(fontSize: 10, color: theme.hintColor),
                   ),
                 ),
               ],
@@ -418,6 +429,9 @@ class _ForumChatPageState extends State<ForumChatPage> {
   }
 
   Widget _buildMessageInput() {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         16,
@@ -426,7 +440,7 @@ class _ForumChatPageState extends State<ForumChatPage> {
         MediaQuery.of(context).padding.bottom + 16,
       ),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? theme.cardColor : Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.05),
@@ -440,17 +454,22 @@ class _ForumChatPageState extends State<ForumChatPage> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: const Color(0xFFF1F5F9),
+                color: isDark
+                    ? theme.scaffoldBackgroundColor
+                    : const Color(0xFFF1F5F9),
                 borderRadius: BorderRadius.circular(24),
               ),
               child: TextField(
                 controller: _messageController,
-                style: const TextStyle(fontSize: 15),
-                decoration: const InputDecoration(
+                style: TextStyle(
+                  fontSize: 15,
+                  color: theme.textTheme.bodyMedium?.color,
+                ),
+                decoration: InputDecoration(
                   hintText: "Votre message...",
-                  hintStyle: TextStyle(color: Color(0xFF94A3B8)),
+                  hintStyle: TextStyle(color: theme.hintColor),
                   border: InputBorder.none,
-                  contentPadding: EdgeInsets.symmetric(
+                  contentPadding: const EdgeInsets.symmetric(
                     horizontal: 20,
                     vertical: 12,
                   ),
@@ -468,11 +487,11 @@ class _ForumChatPageState extends State<ForumChatPage> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1),
+                color: AppTheme.primaryColor,
                 shape: BoxShape.circle,
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFF6366F1).withOpacity(0.3),
+                    color: AppTheme.primaryColor.withOpacity(0.3),
                     blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
@@ -506,20 +525,20 @@ class _ForumChatPageState extends State<ForumChatPage> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.05),
+              color: AppTheme.primaryColor.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.chat_bubble_outline_rounded,
               size: 64,
-              color: const Color(0xFF6366F1).withOpacity(0.3),
+              color: AppTheme.primaryColor.withOpacity(0.3),
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             "Aucun message",
             style: TextStyle(
-              color: Color(0xFF1E293B),
+              color: Theme.of(context).textTheme.titleLarge?.color,
               fontSize: 18,
               fontWeight: FontWeight.bold,
             ),
@@ -527,7 +546,7 @@ class _ForumChatPageState extends State<ForumChatPage> {
           const SizedBox(height: 8),
           Text(
             "Commencez la discussion maintenant !",
-            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            style: TextStyle(color: Theme.of(context).hintColor, fontSize: 14),
           ),
         ],
       ),

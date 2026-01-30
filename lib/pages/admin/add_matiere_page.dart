@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:togoschool/components/primary_button.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/utils/security_utils.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class AddMatierePage extends StatefulWidget {
   final Map<String, dynamic>? matiere;
@@ -94,8 +95,9 @@ class _AddMatierePageState extends State<AddMatierePage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           FormHeader(
@@ -109,11 +111,11 @@ class _AddMatierePageState extends State<AddMatierePage> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(30),
                   boxShadow: [
                     BoxShadow(
-                      color: const Color(0xFF6366F1).withOpacity(0.08),
+                      color: AppTheme.primaryColor.withOpacity(0.08),
                       blurRadius: 30,
                       offset: const Offset(0, 10),
                     ),
@@ -129,12 +131,12 @@ class _AddMatierePageState extends State<AddMatierePage> {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF6366F1).withOpacity(0.1),
+                              color: AppTheme.primaryColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Icon(
+                            child: Icon(
                               Icons.menu_book_rounded,
-                              color: Color(0xFF6366F1),
+                              color: AppTheme.primaryColor,
                               size: 24,
                             ),
                           ),
@@ -147,17 +149,17 @@ class _AddMatierePageState extends State<AddMatierePage> {
                                   isEditMode
                                       ? "Édition des détails"
                                       : "Informations Générales",
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
-                                    color: Color(0xFF1E293B),
+                                    color: theme.textTheme.bodyLarge?.color,
                                   ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   "Configurez les paramètres de cette matière.",
                                   style: TextStyle(
-                                    color: const Color(0xFF64748B),
+                                    color: theme.textTheme.bodySmall?.color,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -200,12 +202,12 @@ class _AddMatierePageState extends State<AddMatierePage> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             "CLASSE ASSIGNÉE",
                             style: TextStyle(
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFF6366F1),
+                              color: theme.primaryColor,
                               letterSpacing: 1.2,
                             ),
                           ),
@@ -213,13 +215,13 @@ class _AddMatierePageState extends State<AddMatierePage> {
                           DropdownButtonFormField<String>(
                             value: _selectedClasse,
                             decoration: InputDecoration(
-                              prefixIcon: const Icon(
+                              prefixIcon: Icon(
                                 Icons.school_rounded,
-                                color: Color(0xFF6366F1),
+                                color: theme.primaryColor,
                                 size: 20,
                               ),
                               filled: true,
-                              fillColor: const Color(0xFFF8F9FD),
+                              fillColor: theme.scaffoldBackgroundColor,
                               contentPadding: const EdgeInsets.symmetric(
                                 horizontal: 16,
                                 vertical: 16,
@@ -234,15 +236,15 @@ class _AddMatierePageState extends State<AddMatierePage> {
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(16),
-                                borderSide: const BorderSide(
-                                  color: Color(0xFF6366F1),
+                                borderSide: BorderSide(
+                                  color: theme.primaryColor,
                                   width: 1.5,
                                 ),
                               ),
                             ),
-                            dropdownColor: Colors.white,
-                            style: const TextStyle(
-                              color: Color(0xFF1E293B),
+                            dropdownColor: theme.cardColor,
+                            style: TextStyle(
+                              color: theme.textTheme.bodyLarge?.color,
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
                             ),
@@ -313,7 +315,7 @@ class _AddMatierePageState extends State<AddMatierePage> {
                                         ? "Matière mise à jour avec succès !"
                                         : "Nouvelle matière créée avec succès !",
                                   ),
-                                  backgroundColor: const Color(0xFF10B981),
+                                  backgroundColor: AppTheme.successColor,
                                   behavior: SnackBarBehavior.floating,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
@@ -327,7 +329,7 @@ class _AddMatierePageState extends State<AddMatierePage> {
                                   content: const Text(
                                     "Une erreur est survenue lors de l'enregistrement",
                                   ),
-                                  backgroundColor: const Color(0xFFEF4444),
+                                  backgroundColor: AppTheme.errorColor,
                                   behavior: SnackBarBehavior.floating,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(10),
@@ -343,10 +345,10 @@ class _AddMatierePageState extends State<AddMatierePage> {
                         Center(
                           child: TextButton(
                             onPressed: () => Navigator.pop(context),
-                            child: const Text(
+                            child: Text(
                               "ANNULER",
                               style: TextStyle(
-                                color: Color(0xFF94A3B8),
+                                color: theme.disabledColor,
                                 fontWeight: FontWeight.bold,
                                 letterSpacing: 1,
                               ),

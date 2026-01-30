@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/pages/students/quiz_result_page.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 

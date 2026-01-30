@@ -1,22 +1,23 @@
 import 'package:hive_flutter/hive_flutter.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 
 class ProgressService {
   static const String _boxName = 'student_progress';
   final ApiService _api = ApiService();
 
-  // Récupérer la progression depuis le serveur
-  Future<Map<String, dynamic>?> getProgressFromServer() async {
+  Future<List<dynamic>?> getProgressFromServer() async {
     try {
       final response = await _api.read('/student/progress');
-      return response?.data;
+      if (response?.data is List) {
+        return response!.data;
+      }
+      return null;
     } catch (e) {
       print('Erreur récupération progression: $e');
       return null;
     }
   }
 
-  // Sauvegarder la progression localement
   Future<void> saveProgressLocally(
     int courseId,
     int progress,
@@ -30,13 +31,11 @@ class ProgressService {
     });
   }
 
-  // Récupérer la progression locale
   Future<Map<String, dynamic>?> getLocalProgress(int courseId) async {
     final box = await Hive.openBox(_boxName);
     return box.get('course_$courseId');
   }
 
-  // Synchroniser avec le serveur
   Future<void> syncProgress() async {
     try {
       final box = await Hive.openBox(_boxName);
@@ -57,7 +56,6 @@ class ProgressService {
     }
   }
 
-  // Marquer un cours comme favori
   Future<bool> toggleFavorite(int courseId) async {
     try {
       final response = await _api.create('/student/favorites/toggle', {
@@ -70,7 +68,6 @@ class ProgressService {
     }
   }
 
-  // Récupérer les favoris
   Future<List<dynamic>> getFavorites() async {
     try {
       final response = await _api.read('/student/favorites');
@@ -86,7 +83,6 @@ class ProgressService {
     }
   }
 
-  // Sauvegarder une note
   Future<bool> saveNote(int courseId, String content) async {
     try {
       final response = await _api.create('/student/notes', {
@@ -100,7 +96,6 @@ class ProgressService {
     }
   }
 
-  // Récupérer les notes d'un cours
   Future<List<dynamic>> getNotes(int courseId) async {
     try {
       final response = await _api.read('/student/notes/$courseId');
@@ -116,7 +111,6 @@ class ProgressService {
     }
   }
 
-  // Récupérer les statistiques
   Future<Map<String, dynamic>?> getStats() async {
     try {
       final response = await _api.read('/student/stats');

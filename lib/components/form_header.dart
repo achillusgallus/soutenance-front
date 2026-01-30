@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class FormHeader extends StatelessWidget {
   final String title;
@@ -11,9 +12,9 @@ class FormHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+          colors: [AppTheme.primaryColor, AppTheme.primaryColor.withOpacity(0.8)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:togoschool/service/progress_service.dart';
+import 'package:togoschool/services/progress_service.dart';
 import 'package:togoschool/pages/students/student_cours.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class StudentFavoritesPage extends StatefulWidget {
   const StudentFavoritesPage({super.key});
@@ -61,7 +62,7 @@ class _StudentFavoritesPageState extends State<StudentFavoritesPage> {
   }
 
   void _navigateToCourse(Map<String, dynamic> course) {
-      Navigator.push(
+    Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => StudentCours(
@@ -76,28 +77,25 @@ class _StudentFavoritesPageState extends State<StudentFavoritesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Mes Favoris',
-          style: TextStyle(color: Colors.white),
-        ),
+        title: const Text('Mes Favoris', style: TextStyle(color: Colors.white)),
         backgroundColor: const Color(0xFFEC4899),
         elevation: 0,
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _favorites.isEmpty
-              ? _buildEmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadFavorites,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _favorites.length,
-                    itemBuilder: (context, index) {
-                      final course = _favorites[index];
-                      return _buildFavoriteCard(course);
-                    },
-                  ),
-                ),
+          ? _buildEmptyState()
+          : RefreshIndicator(
+              onRefresh: _loadFavorites,
+              child: ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: _favorites.length,
+                itemBuilder: (context, index) {
+                  final course = _favorites[index];
+                  return _buildFavoriteCard(course);
+                },
+              ),
+            ),
     );
   }
 
@@ -106,11 +104,7 @@ class _StudentFavoritesPageState extends State<StudentFavoritesPage> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            FontAwesomeIcons.heart,
-            size: 80,
-            color: Colors.grey[400],
-          ),
+          Icon(FontAwesomeIcons.heart, size: 80, color: Colors.grey[400]),
           const SizedBox(height: 16),
           Text(
             'Aucun cours favori',
@@ -123,10 +117,7 @@ class _StudentFavoritesPageState extends State<StudentFavoritesPage> {
           const SizedBox(height: 8),
           Text(
             'Ajoutez des cours à vos favoris pour les retrouver facilement',
-            style: TextStyle(
-              fontSize: 14,
-              color: Colors.grey[500],
-            ),
+            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
             textAlign: TextAlign.center,
           ),
         ],

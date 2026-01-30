@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import 'package:togoschool/service/token_storage.dart';
-import 'package:togoschool/service/progress_service.dart';
+import 'package:togoschool/services/token_storage.dart';
+import 'package:togoschool/services/progress_service.dart';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;

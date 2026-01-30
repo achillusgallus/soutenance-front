@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/components/form_header.dart';
-import 'package:togoschool/model/forum_model.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/models/student_progress.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class ForumListPage extends StatefulWidget {
   const ForumListPage({super.key});
@@ -45,8 +46,9 @@ class _ForumListPageState extends State<ForumListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Colors.white70,
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
@@ -64,9 +66,9 @@ class _ForumListPageState extends State<ForumListPage> {
                   right: 16,
                   bottom: 0,
                 ),
-                decoration: const BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
+                decoration: BoxDecoration(
+                  color: theme.cardColor,
+                  borderRadius: const BorderRadius.only(
                     topLeft: Radius.circular(30),
                     topRight: Radius.circular(30),
                   ),
@@ -76,9 +78,9 @@ class _ForumListPageState extends State<ForumListPage> {
                   builder: (context, snapshot) {
                     // Loading state
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
+                      return Center(
                         child: CircularProgressIndicator(
-                          color: Color.fromARGB(255, 50, 6, 132),
+                          color: AppTheme.primaryColor,
                         ),
                       );
                     }
@@ -89,17 +91,17 @@ class _ForumListPageState extends State<ForumListPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               FontAwesomeIcons.triangleExclamation,
                               size: 60,
-                              color: Colors.red,
+                              color: theme.colorScheme.error,
                             ),
                             const SizedBox(height: 16),
                             Text(
                               'Erreur: ${snapshot.error}',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 16,
-                                color: Colors.red,
+                                color: theme.colorScheme.error,
                               ),
                               textAlign: TextAlign.center,
                             ),
@@ -109,12 +111,7 @@ class _ForumListPageState extends State<ForumListPage> {
                               icon: const Icon(Icons.refresh),
                               label: const Text('Réessayer'),
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color.fromARGB(
-                                  255,
-                                  50,
-                                  6,
-                                  132,
-                                ),
+                                backgroundColor: AppTheme.primaryColor,
                                 foregroundColor: Colors.white,
                               ),
                             ),
@@ -129,26 +126,26 @@ class _ForumListPageState extends State<ForumListPage> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(
+                            Icon(
                               FontAwesomeIcons.comments,
                               size: 60,
-                              color: Colors.grey,
+                              color: theme.disabledColor,
                             ),
                             const SizedBox(height: 16),
-                            const Text(
+                            Text(
                               'Aucun forum disponible',
                               style: TextStyle(
                                 fontSize: 18,
-                                color: Colors.grey,
+                                color: theme.disabledColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
+                            Text(
                               'Créez votre premier forum',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.grey,
+                                color: theme.disabledColor,
                               ),
                             ),
                           ],
@@ -170,6 +167,7 @@ class _ForumListPageState extends State<ForumListPage> {
                           return Card(
                             margin: const EdgeInsets.only(bottom: 12),
                             elevation: 2,
+                            color: theme.cardColor,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
@@ -181,38 +179,34 @@ class _ForumListPageState extends State<ForumListPage> {
                               leading: Container(
                                 padding: const EdgeInsets.all(12),
                                 decoration: BoxDecoration(
-                                  color: const Color.fromARGB(
-                                    255,
-                                    181,
-                                    114,
-                                    14,
-                                  ).withOpacity(0.1),
+                                  color: AppTheme.warningColor.withOpacity(0.1),
                                   borderRadius: BorderRadius.circular(10),
                                 ),
-                                child: const Icon(
+                                child: Icon(
                                   FontAwesomeIcons.message,
-                                  color: Color.fromARGB(255, 181, 114, 14),
+                                  color: AppTheme.warningColor,
                                   size: 24,
                                 ),
                               ),
                               title: Text(
                                 forum.titre,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.bold,
                                   fontSize: 16,
+                                  color: theme.textTheme.bodyLarge?.color,
                                 ),
                               ),
                               subtitle: Text(
                                 'Matière: ${forum.matiereNom}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 14,
-                                  color: Colors.grey,
+                                  color: theme.textTheme.bodyMedium?.color,
                                 ),
                               ),
-                              trailing: const Icon(
+                              trailing: Icon(
                                 Icons.arrow_forward_ios,
                                 size: 16,
-                                color: Colors.grey,
+                                color: theme.dividerColor,
                               ),
                               onTap: () {
                                 // TODO: Navigate to forum details

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/utils/security_utils.dart';
-import 'package:togoschool/service/api_service.dart';
-import 'package:togoschool/service/token_storage.dart';
+import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/services/token_storage.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
@@ -141,18 +142,21 @@ class _TeacherProfilState extends State<TeacherProfil> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
             _buildCustomHeader(),
             Expanded(
               child: isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF6366F1),
+                          AppTheme.primaryColor,
                         ),
                       ),
                     )
@@ -177,13 +181,13 @@ class _TeacherProfilState extends State<TeacherProfil> {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+          colors: [AppTheme.primaryColor, const Color(0xFF4F46E5)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        borderRadius: BorderRadius.only(
+        borderRadius: const BorderRadius.only(
           bottomLeft: Radius.circular(40),
           bottomRight: Radius.circular(40),
         ),
@@ -225,13 +229,13 @@ class _TeacherProfilState extends State<TeacherProfil> {
                 width: 3,
               ),
             ),
-            child: const CircleAvatar(
+            child: CircleAvatar(
               radius: 44,
               backgroundColor: Colors.white,
               child: Icon(
                 FontAwesomeIcons.chalkboardUser,
                 size: 36,
-                color: Color(0xFF6366F1),
+                color: AppTheme.primaryColor,
               ),
             ),
           ),
@@ -258,13 +262,14 @@ class _TeacherProfilState extends State<TeacherProfil> {
   }
 
   Widget _buildProfileView() {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           "PARAMÈTRES DU COMPTE",
           style: TextStyle(
-            color: Color(0xFF94A3B8),
+            color: theme.hintColor,
             fontWeight: FontWeight.bold,
             fontSize: 11,
             letterSpacing: 1.2,
@@ -275,7 +280,7 @@ class _TeacherProfilState extends State<TeacherProfil> {
           icon: FontAwesomeIcons.userPen,
           title: 'Modifier mes informations',
           onTap: () => setState(() => isEditing = true),
-          color: const Color(0xFF6366F1),
+          color: AppTheme.primaryColor,
         ),
         _buildSettingsTile(
           icon: FontAwesomeIcons.bell,
@@ -290,10 +295,10 @@ class _TeacherProfilState extends State<TeacherProfil> {
           color: const Color(0xFF10B981),
         ),
         const SizedBox(height: 32),
-        const Text(
+        Text(
           "ACTIVITÉ",
           style: TextStyle(
-            color: Color(0xFF94A3B8),
+            color: theme.hintColor,
             fontWeight: FontWeight.bold,
             fontSize: 11,
             letterSpacing: 1.2,
@@ -337,16 +342,54 @@ class _TeacherProfilState extends State<TeacherProfil> {
     );
   }
 
+  Widget _buildTextField(
+    String label,
+    TextEditingController controller,
+    IconData icon,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: TextField(
+        controller: controller,
+        enabled: isEditing,
+        style: TextStyle(color: theme.textTheme.bodyMedium?.color),
+        decoration: InputDecoration(
+          labelText: label,
+          labelStyle: TextStyle(color: theme.hintColor),
+          prefixIcon: Icon(icon, color: theme.iconTheme.color),
+          filled: true,
+          fillColor: isDark
+              ? theme.scaffoldBackgroundColor
+              : const Color(0xFFF8FAFC),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide(color: AppTheme.primaryColor, width: 2),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildEditForm() {
     return Form(
       key: _formKey,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "MISE À JOUR DU PROFIL",
             style: TextStyle(
-              color: Color(0xFF94A3B8),
+              color: Theme.of(context).hintColor,
               fontWeight: FontWeight.bold,
               fontSize: 11,
               letterSpacing: 1.2,
@@ -390,7 +433,7 @@ class _TeacherProfilState extends State<TeacherProfil> {
             suffixIcon: IconButton(
               icon: Icon(
                 _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                color: const Color(0xFF94A3B8),
+                color: Theme.of(context).hintColor,
                 size: 18,
               ),
               onPressed: () =>
@@ -407,10 +450,10 @@ class _TeacherProfilState extends State<TeacherProfil> {
           Center(
             child: TextButton(
               onPressed: () => setState(() => isEditing = false),
-              child: const Text(
+              child: Text(
                 "Annuler les modifications",
                 style: TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: Theme.of(context).hintColor,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -426,10 +469,10 @@ class _TeacherProfilState extends State<TeacherProfil> {
       padding: const EdgeInsets.only(left: 4, bottom: 8),
       child: Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.bold,
-          color: Color(0xFF1E293B),
+          color: Theme.of(context).textTheme.titleMedium?.color,
         ),
       ),
     );
@@ -441,10 +484,13 @@ class _TeacherProfilState extends State<TeacherProfil> {
     required VoidCallback onTap,
     required Color color,
   }) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? theme.cardColor : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -466,16 +512,13 @@ class _TeacherProfilState extends State<TeacherProfil> {
         ),
         title: Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 15,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF1E293B),
+            color: theme.textTheme.bodyMedium?.color,
           ),
         ),
-        trailing: const Icon(
-          Icons.chevron_right_rounded,
-          color: Color(0xFFCBD5E1),
-        ),
+        trailing: Icon(Icons.chevron_right_rounded, color: theme.dividerColor),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         onTap: onTap,
       ),

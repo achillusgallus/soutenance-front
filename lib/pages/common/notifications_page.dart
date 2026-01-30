@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class NotificationsPage extends StatefulWidget {
   const NotificationsPage({super.key});
@@ -127,6 +128,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
   }
 
   Widget _buildNotificationCard(dynamic n, int index, bool isRead) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
     return InkWell(
       onTap: () {
         if (!isRead) _markAsRead(n['id'], index);
@@ -135,14 +139,18 @@ class _NotificationsPageState extends State<NotificationsPage> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isRead ? Colors.white : const Color(0xFFEEF2FF),
+          color: isRead
+              ? (isDark ? theme.cardColor : Colors.white)
+              : (isDark
+                    ? AppTheme.primaryColor.withOpacity(0.1)
+                    : const Color(0xFFEEF2FF)),
           borderRadius: BorderRadius.circular(16),
           border: isRead
-              ? Border.all(color: Colors.grey.shade200)
-              : Border.all(color: const Color(0xFF6366F1).withOpacity(0.3)),
+              ? Border.all(color: theme.dividerColor)
+              : Border.all(color: AppTheme.primaryColor.withOpacity(0.3)),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.02),
+              color: Colors.black.withOpacity(isDark ? 0.3 : 0.02),
               blurRadius: 8,
               offset: const Offset(0, 2),
             ),
@@ -154,7 +162,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: isRead ? Colors.grey.shade100 : Colors.white,
+                color: isRead
+                    ? (isDark ? Colors.white10 : Colors.grey.shade100)
+                    : (isDark ? theme.cardColor : Colors.white),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -178,7 +188,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                             fontWeight: isRead
                                 ? FontWeight.w600
                                 : FontWeight.bold,
-                            color: const Color(0xFF1E293B),
+                            color: theme.textTheme.titleMedium?.color,
                             fontSize: 15,
                           ),
                           maxLines: 1,
@@ -190,8 +200,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                           margin: const EdgeInsets.only(left: 8),
                           width: 8,
                           height: 8,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFF6366F1),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryColor,
                             shape: BoxShape.circle,
                           ),
                         ),
@@ -200,8 +210,8 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   const SizedBox(height: 6),
                   Text(
                     n['message'] ?? '',
-                    style: const TextStyle(
-                      color: Color(0xFF64748B),
+                    style: TextStyle(
+                      color: theme.textTheme.bodyMedium?.color,
                       fontSize: 13,
                       height: 1.4,
                     ),
@@ -214,7 +224,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       )[0], // Simple date formating
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.grey.shade400,
+                        color: theme.textTheme.bodySmall?.color,
                       ),
                     ),
                 ],
@@ -244,7 +254,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
       case 'success':
         return Colors.green;
       default:
-        return const Color(0xFF6366F1);
+        return AppTheme.primaryColor;
     }
   }
 }

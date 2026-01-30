@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/utils/security_utils.dart';
 import 'package:togoschool/pages/common/legal_page.dart';
 
@@ -41,9 +42,11 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
 
     if (!_acceptedTerms) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Vous devez accepter les conditions d'utilisation."),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: const Text(
+            "Vous devez accepter les conditions d'utilisation.",
+          ),
+          backgroundColor: AppTheme.warningColor,
         ),
       );
       return;
@@ -73,7 +76,7 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text("Inscription réussie ! Connectez-vous."),
-            backgroundColor: Color(0xFF10B981),
+            backgroundColor: AppTheme.successColor,
           ),
         );
 
@@ -84,11 +87,11 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
       } else {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
+          SnackBar(
+            content: const Text(
               "Échec de l'inscription. L'email est peut-être déjà utilisé.",
             ),
-            backgroundColor: Colors.redAccent,
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -113,8 +116,9 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
           // Background accents
@@ -126,7 +130,7 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: const Color(0xFF6366F1).withOpacity(0.05),
+                color: theme.primaryColor.withOpacity(0.05),
               ),
             ),
           ),
@@ -139,27 +143,23 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                   const SizedBox(height: 20),
                   // App Bar like back button
                   IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.arrow_back_ios_new,
-                      color: Color(0xFF1E293B),
+                      color: theme.textTheme.titleLarge?.color,
                     ),
                     onPressed: () => Navigator.pop(context),
                   ),
                   const SizedBox(height: 20),
-                  const Text(
+                  Text(
                     "Créer un compte",
-                    style: TextStyle(
-                      fontSize: 32,
+                    style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
-                      color: Color(0xFF1E293B),
                       letterSpacing: -0.5,
                     ),
                   ),
-                  const Text(
+                  Text(
                     "Rejoignez TOGOSCHOOL dès aujourd'hui",
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF64748B),
+                    style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -168,7 +168,7 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                     width: 60,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1),
+                      color: theme.primaryColor,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -235,7 +235,7 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                               _obscurePassword
                                   ? Icons.visibility_off_outlined
                                   : Icons.visibility_outlined,
-                              color: const Color(0xFF94A3B8),
+                              color: theme.hintColor,
                             ),
                             onPressed: () => setState(
                               () => _obscurePassword = !_obscurePassword,
@@ -258,7 +258,7 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                               height: 24,
                               child: Checkbox(
                                 value: _acceptedTerms,
-                                activeColor: const Color(0xFF6366F1),
+                                activeColor: theme.primaryColor,
                                 materialTapTargetSize:
                                     MaterialTapTargetSize.shrinkWrap,
                                 onChanged: (v) =>
@@ -270,35 +270,23 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                               child: Wrap(
                                 crossAxisAlignment: WrapCrossAlignment.center,
                                 children: [
-                                  const Text(
+                                  Text(
                                     "J'accepte les ",
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF64748B),
-                                    ),
+                                    style: theme.textTheme.bodyMedium,
                                   ),
                                   _buildLegalLink(
                                     "conditions",
                                     () => _openTerms(context),
                                   ),
-                                  const Text(
+                                  Text(
                                     " et la ",
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF64748B),
-                                    ),
+                                    style: theme.textTheme.bodyMedium,
                                   ),
                                   _buildLegalLink(
                                     "politique de confidentialité",
                                     () => _openPrivacy(context),
                                   ),
-                                  const Text(
-                                    ".",
-                                    style: TextStyle(
-                                      fontSize: 13,
-                                      color: Color(0xFF64748B),
-                                    ),
-                                  ),
+                                  Text(".", style: theme.textTheme.bodyMedium),
                                 ],
                               ),
                             ),
@@ -312,7 +300,7 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                           child: ElevatedButton(
                             onPressed: _isLoading ? null : _handleRegister,
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF6366F1),
+                              backgroundColor: theme.primaryColor,
                               foregroundColor: Colors.white,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
@@ -347,9 +335,9 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Text(
+                        Text(
                           "Déjà un compte ?",
-                          style: TextStyle(color: Color(0xFF64748B)),
+                          style: theme.textTheme.bodyMedium,
                         ),
                         TextButton(
                           onPressed: () {
@@ -360,10 +348,10 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                               ),
                             );
                           },
-                          child: const Text(
+                          child: Text(
                             "Connectez-vous",
                             style: TextStyle(
-                              color: Color(0xFF6366F1),
+                              color: theme.primaryColor,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -374,13 +362,13 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
                   const SizedBox(height: 40),
                   _buildBenefitItem(
                     icon: FontAwesomeIcons.bookOpen,
-                    color: const Color(0xFF6366F1),
+                    color: theme.primaryColor,
                     title: "Cours complets",
                     desc: "PDF, audio et vidéo à portée de main",
                   ),
                   _buildBenefitItem(
                     icon: FontAwesomeIcons.vials,
-                    color: const Color(0xFF10B981),
+                    color: AppTheme.successColor,
                     title: "Quiz interactifs",
                     desc: "Testez vos connaissances en temps réel",
                   ),
@@ -403,15 +391,14 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 14,
+          style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: Color(0xFF475569),
           ),
         ),
         const SizedBox(height: 8),
@@ -422,11 +409,11 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
           validator: validator,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 15),
-            prefixIcon: Icon(icon, color: const Color(0xFF6366F1), size: 22),
+            hintStyle: TextStyle(color: theme.hintColor, fontSize: 15),
+            prefixIcon: Icon(icon, color: theme.primaryColor, size: 22),
             suffixIcon: suffixIcon,
             filled: true,
-            fillColor: Colors.white,
+            fillColor: theme.cardColor,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
               borderSide: BorderSide.none,
@@ -437,14 +424,11 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(
-                color: Color(0xFF6366F1),
-                width: 1.5,
-              ),
+              borderSide: BorderSide(color: theme.primaryColor, width: 1.5),
             ),
             errorBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(16),
-              borderSide: const BorderSide(color: Colors.redAccent, width: 1),
+              borderSide: BorderSide(color: AppTheme.errorColor, width: 1),
             ),
           ),
         ),
@@ -453,22 +437,21 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
   }
 
   Widget _buildDropdownField() {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           "Classe",
-          style: TextStyle(
-            fontSize: 14,
+          style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w600,
-            color: Color(0xFF475569),
           ),
         ),
         const SizedBox(height: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(16),
             boxShadow: [
               BoxShadow(
@@ -481,15 +464,12 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
           child: DropdownButtonHideUnderline(
             child: DropdownButtonFormField<String>(
               value: _selectedClasse,
-              icon: const Icon(
-                Icons.keyboard_arrow_down,
-                color: Color(0xFF6366F1),
-              ),
-              decoration: const InputDecoration(
+              icon: Icon(Icons.keyboard_arrow_down, color: theme.primaryColor),
+              decoration: InputDecoration(
                 border: InputBorder.none,
                 prefixIcon: Icon(
                   Icons.school_outlined,
-                  color: Color(0xFF6366F1),
+                  color: theme.primaryColor,
                   size: 22,
                 ),
               ),
@@ -513,11 +493,12 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
     required String title,
     required String desc,
   }) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -544,18 +525,11 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
                   ),
                 ),
-                Text(
-                  desc,
-                  style: const TextStyle(
-                    color: Color(0xFF64748B),
-                    fontSize: 13,
-                  ),
-                ),
+                Text(desc, style: theme.textTheme.bodySmall),
               ],
             ),
           ),
@@ -565,13 +539,14 @@ class _StudentInscriptionPageState extends State<StudentInscriptionPage> {
   }
 
   Widget _buildLegalLink(String text, VoidCallback onTap) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Text(
         text,
-        style: const TextStyle(
+        style: TextStyle(
           fontWeight: FontWeight.bold,
-          color: Color(0xFF6366F1),
+          color: theme.primaryColor,
           fontSize: 13,
           decoration: TextDecoration.underline,
         ),

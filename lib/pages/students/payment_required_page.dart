@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:togoschool/service/paygate_service.dart';
-import 'package:togoschool/service/download_service.dart';
+import 'package:togoschool/services/paygate_service.dart';
+import 'package:togoschool/services/download_service.dart';
 
 class PaymentRequiredPage extends StatefulWidget {
   final String reason; // 'forum' ou 'download'
@@ -79,9 +80,9 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
           }
 
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Paiement initié avec succès !"),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text("Paiement initié avec succès !"),
+              backgroundColor: AppTheme.successColor,
             ),
           );
 
@@ -92,9 +93,9 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
           }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Échec du paiement. Veuillez réessayer."),
-              backgroundColor: Colors.red,
+            SnackBar(
+              content: const Text("Échec du paiement. Veuillez réessayer."),
+              backgroundColor: AppTheme.errorColor,
             ),
           );
         }
@@ -102,7 +103,10 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text("Erreur: $e"), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text("Erreur: $e"),
+            backgroundColor: AppTheme.errorColor,
+          ),
         );
       }
     } finally {
@@ -114,6 +118,7 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isForum = widget.reason == 'forum';
     final title = isForum
         ? "Accès Premium Requis"
@@ -124,18 +129,18 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
         : "Vous avez atteint la limite de 3 téléchargements gratuits. Passez en Premium pour un accès illimité.";
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF1E293B)),
+          icon: Icon(Icons.arrow_back, color: theme.textTheme.bodyLarge?.color),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           "Paiement",
           style: TextStyle(
-            color: Color(0xFF1E293B),
+            color: theme.textTheme.bodyLarge?.color,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -149,7 +154,7 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -165,31 +170,31 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
                       width: 80,
                       height: 80,
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6366F1).withOpacity(0.1),
+                        color: theme.primaryColor.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         FontAwesomeIcons.lock,
-                        color: Color(0xFF6366F1),
+                        color: theme.primaryColor,
                         size: 40,
                       ),
                     ),
                     const SizedBox(height: 24),
                     Text(
                       title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E293B),
+                        color: theme.textTheme.bodyLarge?.color,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 12),
                     Text(
                       description,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 15,
-                        color: Color(0xFF64748B),
+                        color: theme.textTheme.bodyMedium?.color,
                         height: 1.5,
                       ),
                       textAlign: TextAlign.center,
@@ -201,7 +206,7 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: theme.cardColor,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
@@ -214,41 +219,41 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       "Montant à payer",
                       style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF64748B),
+                        color: theme.textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        const Text(
+                        Text(
                           "2 000",
                           style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF6366F1),
+                            color: theme.primaryColor,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Text(
+                        Text(
                           "FCFA",
                           style: TextStyle(
                             fontSize: 18,
-                            color: Color(0xFF94A3B8),
+                            color: theme.hintColor,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 32),
-                    const Text(
+                    Text(
                       "Méthode de paiement",
                       style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF64748B),
+                        color: theme.textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -260,7 +265,8 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
                             'TMY',
                             'TMoney',
                             FontAwesomeIcons.mobileScreen,
-                            const Color(0xFF10B981),
+                            AppTheme.successColor,
+                            theme,
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -269,17 +275,18 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
                             'FLZ',
                             'Flooz',
                             FontAwesomeIcons.mobileScreen,
-                            const Color(0xFF6366F1),
+                            theme.primaryColor,
+                            theme,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       "Numéro de téléphone",
                       style: TextStyle(
                         fontSize: 14,
-                        color: Color(0xFF64748B),
+                        color: theme.textTheme.bodyMedium?.color,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -292,7 +299,7 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
                         hintText: "90123456",
                         prefixIcon: const Icon(Icons.phone),
                         filled: true,
-                        fillColor: const Color(0xFFF8F9FD),
+                        fillColor: theme.scaffoldBackgroundColor,
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: BorderSide.none,
@@ -303,8 +310,8 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
-                          borderSide: const BorderSide(
-                            color: Color(0xFF6366F1),
+                          borderSide: BorderSide(
+                            color: theme.primaryColor,
                             width: 2,
                           ),
                         ),
@@ -317,7 +324,7 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
                       child: ElevatedButton(
                         onPressed: _isProcessing ? null : _handlePayment,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF6366F1),
+                          backgroundColor: theme.primaryColor,
                           foregroundColor: Colors.white,
                           elevation: 0,
                           shape: RoundedRectangleBorder(
@@ -357,6 +364,7 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
     String label,
     IconData icon,
     Color color,
+    ThemeData theme,
   ) {
     final isSelected = _selectedMethod == method;
 
@@ -366,7 +374,9 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? color.withOpacity(0.1) : const Color(0xFFF8F9FD),
+          color: isSelected
+              ? color.withOpacity(0.1)
+              : theme.scaffoldBackgroundColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: isSelected ? color : Colors.transparent,
@@ -375,14 +385,18 @@ class _PaymentRequiredPageState extends State<PaymentRequiredPage> {
         ),
         child: Column(
           children: [
-            Icon(icon, color: isSelected ? color : Colors.grey, size: 24),
+            Icon(
+              icon,
+              color: isSelected ? color : theme.disabledColor,
+              size: 24,
+            ),
             const SizedBox(height: 8),
             Text(
               label,
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
-                color: isSelected ? color : Colors.grey,
+                color: isSelected ? color : theme.disabledColor,
               ),
             ),
           ],

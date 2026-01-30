@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/teacher/teacher_topic_list_page.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class TeacherForum extends StatefulWidget {
   const TeacherForum({super.key});
@@ -44,14 +45,15 @@ class _TeacherForumState extends State<TeacherForum> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
-            const DashHeader(
-              color1: Color(0xFF6366F1),
-              color2: Color(0xFF4F46E5),
+            DashHeader(
+              color1: AppTheme.primaryColor,
+              color2: AppTheme.primaryColor,
               title: "ESPACE FORUM",
               subtitle: "Échangez avec vos étudiants",
               title1: "",
@@ -64,17 +66,17 @@ class _TeacherForumState extends State<TeacherForum> {
             Expanded(
               child: RefreshIndicator(
                 onRefresh: _loadForums,
-                color: const Color(0xFF6366F1),
+                color: AppTheme.primaryColor,
                 child: isLoading
-                    ? const Center(
+                    ? Center(
                         child: CircularProgressIndicator(
                           valueColor: AlwaysStoppedAnimation<Color>(
-                            Color(0xFF6366F1),
+                            AppTheme.primaryColor,
                           ),
                         ),
                       )
                     : forums.isEmpty
-                    ? _buildEmptyState()
+                    ? _buildEmptyState(theme)
                     : ListView.builder(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 20,
@@ -83,7 +85,7 @@ class _TeacherForumState extends State<TeacherForum> {
                         itemCount: forums.length,
                         itemBuilder: (context, index) {
                           final f = forums[index];
-                          return _buildForumCard(f);
+                          return _buildForumCard(f, theme);
                         },
                       ),
               ),
@@ -94,7 +96,7 @@ class _TeacherForumState extends State<TeacherForum> {
     );
   }
 
-  Widget _buildForumCard(dynamic forum) {
+  Widget _buildForumCard(dynamic forum, ThemeData theme) {
     final matiereNom = forum['matiere']?['nom'] ?? 'Matière inconnue';
     final classe = forum['matiere']?['classe'] ?? '';
     final titre = forum['titre'] ?? 'Forum';
@@ -103,10 +105,10 @@ class _TeacherForumState extends State<TeacherForum> {
 
     // Generate color based on forum id
     final colors = [
-      const Color(0xFF6366F1),
-      const Color(0xFF10B981),
+      AppTheme.primaryColor,
+      AppTheme.successColor,
       const Color(0xFFEC4899),
-      const Color(0xFFF59E0B),
+      AppTheme.warningColor,
       const Color(0xFF8B5CF6),
     ];
     final colorIndex = (forum['id'] ?? 0) % colors.length;
@@ -115,7 +117,7 @@ class _TeacherForumState extends State<TeacherForum> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -184,10 +186,10 @@ class _TeacherForumState extends State<TeacherForum> {
                           Expanded(
                             child: Text(
                               titre,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Color(0xFF1E293B),
+                                color: theme.textTheme.bodyLarge?.color,
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -226,8 +228,8 @@ class _TeacherForumState extends State<TeacherForum> {
                           Expanded(
                             child: Text(
                               "$matiereNom ${classe.isNotEmpty ? '($classe)' : ''}",
-                              style: const TextStyle(
-                                color: Color(0xFF64748B),
+                              style: TextStyle(
+                                color: theme.textTheme.bodyMedium?.color,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -243,14 +245,14 @@ class _TeacherForumState extends State<TeacherForum> {
                           Icon(
                             Icons.chat_bubble_outline,
                             size: 14,
-                            color: Colors.grey[400],
+                            color: theme.hintColor,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '$sujetsCount sujet${sujetsCount > 1 ? 's' : ''}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF94A3B8),
+                              color: theme.hintColor,
                             ),
                           ),
                         ],
@@ -261,7 +263,7 @@ class _TeacherForumState extends State<TeacherForum> {
                 const SizedBox(width: 8),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: const Color(0xFFCBD5E1),
+                  color: theme.dividerColor,
                   size: 24,
                 ),
               ],
@@ -272,7 +274,7 @@ class _TeacherForumState extends State<TeacherForum> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(ThemeData theme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -280,28 +282,28 @@ class _TeacherForumState extends State<TeacherForum> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.05),
+              color: AppTheme.primaryColor.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.forum_outlined,
               size: 64,
-              color: const Color(0xFF6366F1).withOpacity(0.3),
+              color: AppTheme.primaryColor.withOpacity(0.3),
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             "Aucun forum assigné",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: theme.textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             "Vos forums apparaîtront ici",
-            style: TextStyle(color: Color(0xFF64748B)),
+            style: TextStyle(color: theme.textTheme.bodyMedium?.color),
             textAlign: TextAlign.center,
           ),
         ],

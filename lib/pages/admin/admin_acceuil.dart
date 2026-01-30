@@ -10,10 +10,11 @@ import 'package:togoschool/pages/admin/admin_parameter.dart';
 import 'package:togoschool/pages/admin/admin_professeur.dart';
 import 'package:togoschool/pages/admin/admin_matiere.dart';
 import 'package:togoschool/pages/admin/admin_student_page.dart';
-import 'package:togoschool/service/api_service.dart';
-import 'package:togoschool/service/impersonation_service.dart';
+import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/services/impersonation_service.dart';
 import 'package:togoschool/pages/dashbord/teacher_dashboard_page.dart';
-import 'package:togoschool/service/token_storage.dart';
+import 'package:togoschool/services/token_storage.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class AdminAcceuil extends StatefulWidget {
   const AdminAcceuil({super.key});
@@ -91,18 +92,19 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: getTeachers,
-          color: const Color(0xFF6366F1),
+          color: theme.primaryColor,
           child: ListView(
             padding: const EdgeInsets.only(bottom: 40),
             children: [
               DashHeader(
-                color1: const Color(0xFF6366F1),
-                color2: const Color(0xFF4F46E5),
+                color1: theme.primaryColor,
+                color2: theme.primaryColorDark,
                 title: 'Bonjour Administrateur',
                 subtitle: 'Supervision du système TogoSchool',
                 title1: matieres.length.toString(),
@@ -122,12 +124,12 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildSectionTitle('ACTIONS RAPIDES'),
+                        _buildSectionTitle('ACTIONS RAPIDES', theme),
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.settings_outlined,
                             size: 24,
-                            color: Color(0xFF64748B),
+                            color: theme.unselectedWidgetColor,
                           ),
                           onPressed: () {
                             Navigator.push(
@@ -147,7 +149,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                         ButtonCard(
                           icon: FontAwesomeIcons.book,
                           title: 'Matière',
-                          color: const Color(0xFF6366F1),
+                          color: AppTheme.primaryColor,
                           onTap: () async {
                             await Navigator.push(
                               context,
@@ -161,7 +163,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                         ButtonCard(
                           icon: FontAwesomeIcons.userPlus,
                           title: 'Enseignant',
-                          color: const Color(0xFF10B981),
+                          color: AppTheme.successColor,
                           onTap: () async {
                             await Navigator.push(
                               context,
@@ -175,7 +177,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                         ButtonCard(
                           icon: FontAwesomeIcons.userGraduate,
                           title: 'Étudiants',
-                          color: const Color(0xFFF59E0B),
+                          color: AppTheme.warningColor,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -188,7 +190,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                         ButtonCard(
                           icon: FontAwesomeIcons.comments,
                           title: 'Forum',
-                          color: const Color(0xFFEC4899),
+                          color: AppTheme.accentColor,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -212,7 +214,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildSectionTitle("ENSEIGNANTS RÉCENTS"),
+                    _buildSectionTitle("ENSEIGNANTS RÉCENTS", theme),
                     if (teachers.isNotEmpty)
                       TextButton(
                         onPressed: () async {
@@ -224,10 +226,10 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                           );
                           getTeachers();
                         },
-                        child: const Text(
+                        child: Text(
                           "Voir tout",
                           style: TextStyle(
-                            color: Color(0xFF6366F1),
+                            color: theme.primaryColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -247,6 +249,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                 _buildEmptyState(
                   Icons.person_off_outlined,
                   "Aucun enseignant trouvé",
+                  theme,
                 )
               else
                 SizedBox(
@@ -267,8 +270,12 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                             }
 
                             // Appel au backend pour générer un token du prof
-                            final response = await api.create("/admin/impersonate/${teacher['id']}", {});
-                            if (response != null && response.statusCode == 200) {
+                            final response = await api.create(
+                              "/admin/impersonate/${teacher['id']}",
+                              {},
+                            );
+                            if (response != null &&
+                                response.statusCode == 200) {
                               final data = response.data;
                               final token = data['impersonation_token'];
 
@@ -276,7 +283,9 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                               await TokenStorage.saveToken(token);
 
                               // Démarrer l’impersonation côté front
-                              ImpersonationService.startImpersonation(data['teacher']);
+                              ImpersonationService.startImpersonation(
+                                data['teacher'],
+                              );
 
                               // Ouvrir le dashboard enseignant
                               await Navigator.push(
@@ -290,9 +299,12 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                               );
 
                               // Restaurer le token admin AVANT d’appeler /stop
-                              final adminTokenRestored = await TokenStorage.getAdminToken();
+                              final adminTokenRestored =
+                                  await TokenStorage.getAdminToken();
                               if (adminTokenRestored != null) {
-                                await TokenStorage.saveToken(adminTokenRestored);
+                                await TokenStorage.saveToken(
+                                  adminTokenRestored,
+                                );
                               }
 
                               // Maintenant appeler le backend pour signaler la fin d’impersonation
@@ -304,7 +316,9 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                             }
                           } catch (e) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text("Erreur impersonation: $e")),
+                              SnackBar(
+                                content: Text("Erreur impersonation: $e"),
+                              ),
                             );
                           }
                         },
@@ -312,6 +326,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                           "${teacher['name'] ?? ''} ${teacher['surname'] ?? ''}",
                           teacher['email'] ?? '',
                           index,
+                          theme,
                         ),
                       );
                     },
@@ -330,7 +345,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildSectionTitle("MATIÈRES"),
+                          _buildSectionTitle("MATIÈRES", theme),
                           TextButton(
                             onPressed: () async {
                               await Navigator.push(
@@ -341,10 +356,10 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                               );
                               getTeachers();
                             },
-                            child: const Text(
+                            child: Text(
                               "Voir tout",
                               style: TextStyle(
-                                color: Color(0xFF6366F1),
+                                color: theme.primaryColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -367,6 +382,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                             matiere['nom'] ?? '',
                             profName,
                             index,
+                            theme,
                           );
                         },
                       ),
@@ -386,7 +402,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          _buildSectionTitle("FORUMS RÉCENTS"),
+                          _buildSectionTitle("FORUMS RÉCENTS", theme),
                           TextButton(
                             onPressed: () {
                               Navigator.push(
@@ -396,10 +412,10 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                                 ),
                               );
                             },
-                            child: const Text(
+                            child: Text(
                               "Voir tout",
                               style: TextStyle(
-                                color: Color(0xFF6366F1),
+                                color: theme.primaryColor,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -410,7 +426,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                     const SizedBox(height: 16),
                     ...forums
                         .take(3)
-                        .map((forum) => _buildForumItem(forum))
+                        .map((forum) => _buildForumItem(forum, theme))
                         .toList(),
                   ],
                 ),
@@ -421,38 +437,38 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(String title, ThemeData theme) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF64748B),
+        color: theme.textTheme.bodySmall?.color,
         letterSpacing: 1.2,
       ),
     );
   }
 
-  Widget _buildEmptyState(IconData icon, String message) {
+  Widget _buildEmptyState(IconData icon, String message, ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(40),
       alignment: Alignment.center,
       child: Column(
         children: [
-          Icon(icon, size: 48, color: const Color(0xFFCBD5E1)),
+          Icon(icon, size: 48, color: theme.disabledColor),
           const SizedBox(height: 12),
-          Text(message, style: const TextStyle(color: Color(0xFF94A3B8))),
+          Text(message, style: TextStyle(color: theme.disabledColor)),
         ],
       ),
     );
   }
 
-  Widget _buildRecentCard(String name, String sub, int index) {
+  Widget _buildRecentCard(String name, String sub, int index, ThemeData theme) {
     final colors = [
-      const Color(0xFF6366F1),
-      const Color(0xFF10B981),
-      const Color(0xFFF59E0B),
-      const Color(0xFFEC4899),
+      AppTheme.primaryColor,
+      AppTheme.successColor,
+      AppTheme.warningColor,
+      AppTheme.accentColor,
     ];
     final color = colors[index % colors.length];
 
@@ -460,11 +476,11 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
       width: 150,
       margin: const EdgeInsets.only(right: 16, bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.03),
+            color: theme.shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -493,10 +509,10 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 14,
-                color: Color(0xFF1E293B),
+                color: theme.textTheme.bodyLarge?.color,
               ),
             ),
             const SizedBox(height: 4),
@@ -505,7 +521,10 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF64748B)),
+              style: TextStyle(
+                fontSize: 11,
+                color: theme.textTheme.bodySmall?.color,
+              ),
             ),
           ],
         ),
@@ -513,18 +532,23 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
     );
   }
 
-  Widget _buildMatiereCard(String title, String prof, int index) {
+  Widget _buildMatiereCard(
+    String title,
+    String prof,
+    int index,
+    ThemeData theme,
+  ) {
     final color = MatiereColors[index % MatiereColors.length];
     return Container(
       width: 180,
       margin: const EdgeInsets.only(right: 16, bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: color.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: theme.shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -549,19 +573,19 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
               title,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 15,
-                color: Color(0xFF1E293B),
+                color: theme.textTheme.bodyLarge?.color,
               ),
             ),
             const SizedBox(height: 6),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.person_outline,
                   size: 14,
-                  color: Color(0xFF64748B),
+                  color: theme.textTheme.bodySmall?.color,
                 ),
                 const SizedBox(width: 4),
                 Expanded(
@@ -569,9 +593,9 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                     prof,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: theme.textTheme.bodySmall?.color,
                     ),
                   ),
                 ),
@@ -583,16 +607,16 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
     );
   }
 
-  Widget _buildForumItem(dynamic forum) {
+  Widget _buildForumItem(dynamic forum, ThemeData theme) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 24).copyWith(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: theme.shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -603,12 +627,12 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: const Color(0xFFF59E0B).withOpacity(0.1),
+              color: AppTheme.warningColor.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Icon(
               Icons.forum_outlined,
-              color: Color(0xFFF59E0B),
+              color: AppTheme.warningColor,
               size: 20,
             ),
           ),
@@ -619,27 +643,23 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
               children: [
                 Text(
                   forum['titre'] ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
-                    color: Color(0xFF1E293B),
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
                 Text(
                   forum['matiere_nom'] ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Color(0xFF64748B),
+                    color: theme.textTheme.bodySmall?.color,
                   ),
                 ),
               ],
             ),
           ),
-          const Icon(
-            Icons.arrow_forward_ios,
-            size: 14,
-            color: Color(0xFFCBD5E1),
-          ),
+          Icon(Icons.arrow_forward_ios, size: 14, color: theme.disabledColor),
         ],
       ),
     );

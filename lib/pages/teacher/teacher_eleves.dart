@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/components/dash_header.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class TeacherEleves extends StatefulWidget {
   final VoidCallback? onBack;
@@ -92,17 +94,18 @@ class _TeacherElevesState extends State<TeacherEleves> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final onlineCount = students
         .where((s) => s['is_online'] == true || s['is_online'] == 1)
         .length;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           DashHeader(
-            color1: const Color(0xFF6366F1),
-            color2: const Color(0xFF4F46E5),
+            color1: theme.primaryColor,
+            color2: theme.primaryColorDark,
             title: "MES ÉLÈVES",
             subtitle: "Suivez l'activité et le statut de vos étudiants",
             title1: students.length.toString(),
@@ -113,22 +116,22 @@ class _TeacherElevesState extends State<TeacherEleves> {
             subtitle3: "",
             onBack: widget.onBack ?? () => Navigator.pop(context),
           ),
-          _buildSearchBar(),
+          _buildSearchBar(theme),
           Expanded(
             child: RefreshIndicator(
               onRefresh: fetchStudents,
-              color: const Color(0xFF6366F1),
+              color: theme.primaryColor,
               child: isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF6366F1),
+                          theme.primaryColor,
                         ),
                       ),
                     )
                   : filteredStudents.isEmpty
-                  ? _buildEmptyState()
-                  : _buildStudentList(),
+                  ? _buildEmptyState(theme)
+                  : _buildStudentList(theme),
             ),
           ),
         ],
@@ -136,16 +139,16 @@ class _TeacherElevesState extends State<TeacherEleves> {
     );
   }
 
-  Widget _buildSearchBar() {
+  Widget _buildSearchBar(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF6366F1).withOpacity(0.06),
+              color: theme.shadowColor.withOpacity(0.06),
               blurRadius: 15,
               offset: const Offset(0, 4),
             ),
@@ -155,10 +158,10 @@ class _TeacherElevesState extends State<TeacherEleves> {
           controller: _searchController,
           decoration: InputDecoration(
             hintText: 'Rechercher par nom, classe, email...',
-            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-            prefixIcon: const Icon(
+            hintStyle: TextStyle(color: theme.hintColor, fontSize: 14),
+            prefixIcon: Icon(
               Icons.search_rounded,
-              color: Color(0xFF6366F1),
+              color: theme.primaryColor,
               size: 22,
             ),
             border: InputBorder.none,
@@ -167,8 +170,7 @@ class _TeacherElevesState extends State<TeacherEleves> {
               vertical: 14,
             ),
           ),
-          style: const TextStyle(
-            color: Color(0xFF1E293B),
+          style: theme.textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w500,
           ),
         ),
@@ -176,19 +178,19 @@ class _TeacherElevesState extends State<TeacherEleves> {
     );
   }
 
-  Widget _buildStudentList() {
+  Widget _buildStudentList(ThemeData theme) {
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       itemCount: filteredStudents.length,
       itemBuilder: (context, index) {
         final student = filteredStudents[index];
-        return _buildStudentCard(student, index);
+        return _buildStudentCard(student, index, theme);
       },
     );
   }
 
-  Widget _buildStudentCard(dynamic student, int index) {
+  Widget _buildStudentCard(dynamic student, int index, ThemeData theme) {
     final bool isOnline =
         student['is_online'] == true || student['is_online'] == 1;
     final color = cardColors[index % cardColors.length];
@@ -196,7 +198,7 @@ class _TeacherElevesState extends State<TeacherEleves> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -232,15 +234,15 @@ class _TeacherElevesState extends State<TeacherEleves> {
                     width: 14,
                     height: 14,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: theme.cardColor,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 2),
+                      border: Border.all(color: theme.cardColor, width: 2),
                     ),
                     child: Container(
                       decoration: BoxDecoration(
                         color: isOnline
-                            ? const Color(0xFF10B981)
-                            : const Color(0xFF94A3B8),
+                            ? AppTheme.successColor
+                            : theme.disabledColor,
                         shape: BoxShape.circle,
                       ),
                     ),
@@ -255,10 +257,9 @@ class _TeacherElevesState extends State<TeacherEleves> {
                 children: [
                   Text(
                     '${student['name'] ?? ''} ${student['surname'] ?? ''}',
-                    style: const TextStyle(
+                    style: theme.textTheme.bodyLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: Color(0xFF1E293B),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -270,15 +271,15 @@ class _TeacherElevesState extends State<TeacherEleves> {
                           vertical: 2,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF1F5F9),
+                          color: theme.scaffoldBackgroundColor,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           student['classe'] ?? 'N/A',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF64748B),
+                            color: theme.textTheme.bodyMedium?.color,
                           ),
                         ),
                       ),
@@ -286,9 +287,9 @@ class _TeacherElevesState extends State<TeacherEleves> {
                       Expanded(
                         child: Text(
                           student['email'] ?? '',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 13,
-                            color: Color(0xFF94A3B8),
+                            color: theme.hintColor,
                           ),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -302,8 +303,8 @@ class _TeacherElevesState extends State<TeacherEleves> {
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: isOnline
-                    ? const Color(0xFF10B981).withOpacity(0.08)
-                    : const Color(0xFFF1F5F9),
+                    ? AppTheme.successColor.withOpacity(0.08)
+                    : theme.scaffoldBackgroundColor,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -311,9 +312,7 @@ class _TeacherElevesState extends State<TeacherEleves> {
                 style: TextStyle(
                   fontSize: 10,
                   fontWeight: FontWeight.w800,
-                  color: isOnline
-                      ? const Color(0xFF059669)
-                      : const Color(0xFF64748B),
+                  color: isOnline ? AppTheme.successColor : theme.disabledColor,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -324,7 +323,7 @@ class _TeacherElevesState extends State<TeacherEleves> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(ThemeData theme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -332,30 +331,33 @@ class _TeacherElevesState extends State<TeacherEleves> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.05),
+              color: theme.primaryColor.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.people_outline_rounded,
               size: 80,
-              color: const Color(0xFF6366F1).withOpacity(0.2),
+              color: theme.primaryColor.withOpacity(0.2),
             ),
           ),
           const SizedBox(height: 24),
-          const Text(
+          Text(
             "Aucun élève trouvé",
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: theme.textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 40),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 40),
             child: Text(
               "Les élèves apparaîtront ici une fois qu'ils ont des cours avec vous.",
-              style: TextStyle(color: Color(0xFF64748B), height: 1.5),
+              style: TextStyle(
+                color: theme.textTheme.bodyMedium?.color,
+                height: 1.5,
+              ),
               textAlign: TextAlign.center,
             ),
           ),

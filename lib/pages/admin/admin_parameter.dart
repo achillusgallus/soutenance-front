@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/utils/security_utils.dart';
-import 'package:togoschool/service/api_service.dart';
-import 'package:togoschool/service/token_storage.dart';
+import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/services/token_storage.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
 import 'package:togoschool/pages/common/legal_page.dart';
 import 'package:togoschool/pages/common/notifications_page.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class AdminParameter extends StatefulWidget {
   const AdminParameter({super.key});
@@ -112,9 +113,9 @@ class _AdminParameterState extends State<AdminParameter> {
       if (response?.statusCode == 200) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Profil mis à jour avec succès"),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text("Profil mis à jour avec succès"),
+              backgroundColor: AppTheme.successColor,
             ),
           );
           setState(() {
@@ -130,10 +131,11 @@ class _AdminParameterState extends State<AdminParameter> {
       }
     } catch (e) {
       if (mounted) {
+        final theme = Theme.of(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Échec de la mise à jour"),
-            backgroundColor: Colors.red,
+          SnackBar(
+            content: const Text("Échec de la mise à jour"),
+            backgroundColor: theme.colorScheme.error,
           ),
         );
       }
@@ -144,12 +146,15 @@ class _AdminParameterState extends State<AdminParameter> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: isLoading
           ? const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF6366F1)),
+                valueColor: AlwaysStoppedAnimation<Color>(
+                  AppTheme.primaryColor,
+                ),
               ),
             )
           : SingleChildScrollView(
@@ -173,9 +178,12 @@ class _AdminParameterState extends State<AdminParameter> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [Color(0xFF6366F1), Color(0xFF4F46E5)],
+          colors: [
+            AppTheme.primaryColor,
+            AppTheme.primaryColor.withOpacity(0.8),
+          ],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
@@ -277,24 +285,25 @@ class _AdminParameterState extends State<AdminParameter> {
   }
 
   Widget _buildProfileView() {
+    final theme = Theme.of(context);
     return Column(
       children: [
         _buildActionCard(
           title: "Modifier mes informations",
           subtitle: "Mettez à jour votre nom, email et mot de passe",
           icon: Icons.edit_note_rounded,
-          color: const Color(0xFF6366F1),
+          color: AppTheme.primaryColor,
           onTap: () => setState(() => isEditing = true),
         ),
         const SizedBox(height: 32),
-        const Align(
+        Align(
           alignment: Alignment.centerLeft,
           child: Text(
             "APPARENCE & SÉCURITÉ",
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF94A3B8),
+              color: theme.hintColor,
               letterSpacing: 1.2,
             ),
           ),
@@ -302,11 +311,11 @@ class _AdminParameterState extends State<AdminParameter> {
         const SizedBox(height: 16),
         Container(
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: theme.shadowColor.withOpacity(0.05),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),
@@ -318,21 +327,21 @@ class _AdminParameterState extends State<AdminParameter> {
                 icon: Icons.notifications_none_rounded,
                 title: 'Notifications',
                 onTap: _showNotificationSettings,
-                color: const Color(0xFFF59E0B),
+                color: AppTheme.warningColor,
               ),
               const Divider(height: 1, indent: 60),
               _buildSettingsTile(
                 icon: Icons.shield_outlined,
                 title: 'Sécurité du compte',
                 onTap: () => setState(() => isEditing = true),
-                color: const Color(0xFF10B981),
+                color: AppTheme.successColor,
               ),
               const Divider(height: 1, indent: 60),
               _buildSettingsTile(
                 icon: Icons.info_outline_rounded,
                 title: 'À propos de TogoSchool',
                 onTap: _openAbout,
-                color: const Color(0xFF8B5CF6),
+                color: AppTheme.primaryColor,
               ),
             ],
           ),
@@ -341,11 +350,11 @@ class _AdminParameterState extends State<AdminParameter> {
         Container(
           width: double.infinity,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(20),
             boxShadow: [
               BoxShadow(
-                color: const Color(0xFFEF4444).withOpacity(0.05),
+                color: AppTheme.errorColor.withOpacity(0.05),
                 blurRadius: 15,
                 offset: const Offset(0, 5),
               ),
@@ -355,7 +364,7 @@ class _AdminParameterState extends State<AdminParameter> {
             icon: Icons.logout_rounded,
             title: 'Se déconnecter',
             onTap: logout,
-            color: const Color(0xFFEF4444),
+            color: AppTheme.errorColor,
             showArrow: false,
           ),
         ),
@@ -375,7 +384,7 @@ class _AdminParameterState extends State<AdminParameter> {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
@@ -402,27 +411,27 @@ class _AdminParameterState extends State<AdminParameter> {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
-                      color: Color(0xFF1E293B),
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
-                      color: Color(0xFF64748B),
+                      color: Theme.of(context).textTheme.bodySmall?.color,
                     ),
                   ),
                 ],
               ),
             ),
-            Icon(
+            const Icon(
               Icons.arrow_forward_ios_rounded,
               size: 16,
-              color: color.withOpacity(0.5),
+              color: Colors.grey,
             ),
           ],
         ),
@@ -431,6 +440,7 @@ class _AdminParameterState extends State<AdminParameter> {
   }
 
   Widget _buildEditForm() {
+    final theme = Theme.of(context);
     return Form(
       key: _formKey,
       child: Column(
@@ -439,7 +449,7 @@ class _AdminParameterState extends State<AdminParameter> {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: theme.cardColor,
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
@@ -452,12 +462,12 @@ class _AdminParameterState extends State<AdminParameter> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   "MODIFIER MON PROFIL",
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF94A3B8),
+                    color: theme.hintColor,
                     letterSpacing: 1.2,
                   ),
                 ),
@@ -500,7 +510,7 @@ class _AdminParameterState extends State<AdminParameter> {
                       _obscurePassword
                           ? Icons.visibility_off_rounded
                           : Icons.visibility_rounded,
-                      color: const Color(0xFF94A3B8),
+                      color: theme.hintColor,
                       size: 20,
                     ),
                     onPressed: () =>
@@ -520,10 +530,10 @@ class _AdminParameterState extends State<AdminParameter> {
           Center(
             child: TextButton(
               onPressed: () => setState(() => isEditing = false),
-              child: const Text(
+              child: Text(
                 "ANNULER",
                 style: TextStyle(
-                  color: Color(0xFF94A3B8),
+                  color: theme.hintColor,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
                 ),

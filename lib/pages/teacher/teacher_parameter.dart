@@ -2,14 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:togoschool/utils/security_utils.dart';
 import 'package:togoschool/components/form_header.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:togoschool/service/api_service.dart';
-import 'package:togoschool/service/token_storage.dart';
+import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/services/token_storage.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/pages/auth/login_page.dart';
 import 'package:togoschool/pages/common/legal_page.dart';
 import 'package:togoschool/pages/common/notifications_page.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class TeacherParameter extends StatefulWidget {
   const TeacherParameter({super.key});

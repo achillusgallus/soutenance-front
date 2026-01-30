@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class StudentCalendarWidget extends StatefulWidget {
   const StudentCalendarWidget({super.key});
@@ -75,35 +76,36 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
 
   List<Map<String, dynamic>> _getEventsForDay(DateTime day) {
     final events = <Map<String, dynamic>>[];
-    
+
     // Ajouter les quiz
     for (final quiz in _quizDates) {
       if (_isSameDay(quiz['date'], day)) {
         events.add({...quiz, 'type': 'quiz'});
       }
     }
-    
+
     // Ajouter les rappels
     for (final reminder in _reminders) {
       if (_isSameDay(reminder['date'], day)) {
         events.add({...reminder, 'type': 'reminder'});
       }
     }
-    
+
     return events;
   }
 
   bool _isSameDay(DateTime date1, DateTime date2) {
     return date1.year == date2.year &&
-           date1.month == date2.month &&
-           date1.day == date2.day;
+        date1.month == date2.month &&
+        date1.day == date2.day;
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -115,21 +117,21 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
       ),
       child: Column(
         children: [
-          _buildHeader(),
-          _buildCalendar(),
+          _buildHeader(theme),
+          _buildCalendar(theme),
           const SizedBox(height: 16),
-          _buildEventsList(),
+          _buildEventsList(theme),
         ],
       ),
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(ThemeData theme) {
     return Container(
       padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF6366F1),
-        borderRadius: BorderRadius.only(
+      decoration: BoxDecoration(
+        color: theme.primaryColor,
+        borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(16),
           topRight: Radius.circular(16),
         ),
@@ -139,10 +141,7 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
         children: [
           IconButton(
             onPressed: _previousMonth,
-            icon: const Icon(
-              FontAwesomeIcons.chevronLeft,
-              color: Colors.white,
-            ),
+            icon: const Icon(FontAwesomeIcons.chevronLeft, color: Colors.white),
           ),
           Text(
             '${_getMonthName(_currentMonth.month)} ${_currentMonth.year}',
@@ -164,20 +163,20 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
     );
   }
 
-  Widget _buildCalendar() {
+  Widget _buildCalendar(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          _buildWeekdayHeaders(),
+          _buildWeekdayHeaders(theme),
           const SizedBox(height: 8),
-          _buildCalendarGrid(),
+          _buildCalendarGrid(theme),
         ],
       ),
     );
   }
 
-  Widget _buildWeekdayHeaders() {
+  Widget _buildWeekdayHeaders(ThemeData theme) {
     const weekdays = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
     return Row(
       children: weekdays.map((day) {
@@ -185,10 +184,10 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
           child: Center(
             child: Text(
               day,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF64748B),
+                color: theme.textTheme.bodyMedium?.color,
               ),
             ),
           ),
@@ -197,11 +196,21 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
     );
   }
 
-  Widget _buildCalendarGrid() {
-    final firstDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month, 1);
-    final lastDayOfMonth = DateTime(_currentMonth.year, _currentMonth.month + 1, 0);
-    final startingWeekday = firstDayOfMonth.weekday == 7 ? 0 : firstDayOfMonth.weekday;
-    
+  Widget _buildCalendarGrid(ThemeData theme) {
+    final firstDayOfMonth = DateTime(
+      _currentMonth.year,
+      _currentMonth.month,
+      1,
+    );
+    final lastDayOfMonth = DateTime(
+      _currentMonth.year,
+      _currentMonth.month + 1,
+      0,
+    );
+    final startingWeekday = firstDayOfMonth.weekday == 7
+        ? 0
+        : firstDayOfMonth.weekday;
+
     final daysInMonth = lastDayOfMonth.day;
     final daysInPrevMonth = startingWeekday;
 
@@ -210,14 +219,19 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
         return Row(
           children: List.generate(7, (dayIndex) {
             final dayNumber = weekIndex * 7 + dayIndex - daysInPrevMonth + 1;
-            
+
             if (dayNumber <= 0 || dayNumber > daysInMonth) {
               return const Expanded(child: SizedBox());
             }
 
-            final day = DateTime(_currentMonth.year, _currentMonth.month, dayNumber);
+            final day = DateTime(
+              _currentMonth.year,
+              _currentMonth.month,
+              dayNumber,
+            );
             final events = _getEventsForDay(day);
-            final isSelected = _selectedDate != null && _isSameDay(day, _selectedDate!);
+            final isSelected =
+                _selectedDate != null && _isSameDay(day, _selectedDate!);
             final isToday = _isSameDay(day, DateTime.now());
 
             return Expanded(
@@ -231,14 +245,14 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
                   margin: const EdgeInsets.all(2),
                   height: 40,
                   decoration: BoxDecoration(
-                    color: isSelected 
-                        ? const Color(0xFF6366F1)
+                    color: isSelected
+                        ? AppTheme.primaryColor
                         : isToday
-                            ? const Color(0xFF6366F1).withOpacity(0.1)
-                            : Colors.transparent,
+                        ? AppTheme.primaryColor.withOpacity(0.1)
+                        : Colors.transparent,
                     borderRadius: BorderRadius.circular(8),
                     border: isToday && !isSelected
-                        ? Border.all(color: const Color(0xFF6366F1))
+                        ? Border.all(color: AppTheme.primaryColor)
                         : null,
                   ),
                   child: Stack(
@@ -248,12 +262,14 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
                           '$dayNumber',
                           style: TextStyle(
                             fontSize: 12,
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                            color: isSelected 
-                                ? Colors.white 
+                            fontWeight: isSelected
+                                ? FontWeight.bold
+                                : FontWeight.normal,
+                            color: isSelected
+                                ? Colors.white
                                 : isToday
-                                    ? const Color(0xFF6366F1)
-                                    : const Color(0xFF1E293B),
+                                ? AppTheme.primaryColor
+                                : theme.textTheme.bodyLarge?.color,
                           ),
                         ),
                       ),
@@ -268,11 +284,13 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
                               return Container(
                                 width: 4,
                                 height: 4,
-                                margin: const EdgeInsets.symmetric(horizontal: 1),
+                                margin: const EdgeInsets.symmetric(
+                                  horizontal: 1,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: event['type'] == 'quiz' 
-                                      ? Colors.red 
-                                      : Colors.green,
+                                  color: event['type'] == 'quiz'
+                                      ? AppTheme.errorColor
+                                      : AppTheme.successColor,
                                   shape: BoxShape.circle,
                                 ),
                               );
@@ -290,11 +308,11 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
     );
   }
 
-  Widget _buildEventsList() {
+  Widget _buildEventsList(ThemeData theme) {
     if (_selectedDate == null) return const SizedBox();
 
     final events = _getEventsForDay(_selectedDate!);
-    
+
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -302,10 +320,10 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
         children: [
           Text(
             'Événements du ${_selectedDate!.day} ${_getMonthName(_selectedDate!.month)}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: theme.textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 12),
@@ -313,42 +331,37 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.grey[50],
+                color: theme.scaffoldBackgroundColor,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Center(
                 child: Text(
                   'Aucun événement ce jour-ci',
                   style: TextStyle(
-                    color: Colors.grey[600],
+                    color: theme.textTheme.bodyMedium?.color,
                     fontSize: 14,
                   ),
                 ),
               ),
             )
           else
-            ...events.map((event) => _buildEventCard(event)).toList(),
+            ...events.map((event) => _buildEventCard(event, theme)).toList(),
         ],
       ),
     );
   }
 
-  Widget _buildEventCard(Map<String, dynamic> event) {
+  Widget _buildEventCard(Map<String, dynamic> event, ThemeData theme) {
     final isQuiz = event['type'] == 'quiz';
-    
+    final color = isQuiz ? AppTheme.errorColor : AppTheme.successColor;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: isQuiz 
-            ? Colors.red.withOpacity(0.1)
-            : Colors.green.withOpacity(0.1),
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: isQuiz 
-              ? Colors.red.withOpacity(0.3)
-              : Colors.green.withOpacity(0.3),
-        ),
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         children: [
@@ -356,7 +369,7 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: isQuiz ? Colors.red : Colors.green,
+              color: color,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Icon(
@@ -372,19 +385,19 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
               children: [
                 Text(
                   event['title'] ?? '',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
-                    color: Color(0xFF1E293B),
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
                 if (isQuiz && event['course'] != null) ...[
                   const SizedBox(height: 2),
                   Text(
                     event['course'],
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: theme.textTheme.bodyMedium?.color,
                     ),
                   ),
                 ],
@@ -392,9 +405,9 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
                   const SizedBox(height: 2),
                   Text(
                     'Heure: ${event['time']}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Color(0xFF64748B),
+                      color: theme.textTheme.bodyMedium?.color,
                     ),
                   ),
                 ],
@@ -405,11 +418,7 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
             onPressed: () {
               _showAddReminderDialog();
             },
-            icon: Icon(
-              FontAwesomeIcons.plus,
-              size: 16,
-              color: isQuiz ? Colors.red : Colors.green,
-            ),
+            icon: Icon(FontAwesomeIcons.plus, size: 16, color: color),
           ),
         ],
       ),
@@ -418,7 +427,7 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
 
   void _showAddReminderDialog() {
     final TextEditingController reminderController = TextEditingController();
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -464,8 +473,18 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
 
   String _getMonthName(int month) {
     const months = [
-      'Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin',
-      'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'
+      'Janvier',
+      'Février',
+      'Mars',
+      'Avril',
+      'Mai',
+      'Juin',
+      'Juillet',
+      'Août',
+      'Septembre',
+      'Octobre',
+      'Novembre',
+      'Décembre',
     ];
     return months[month - 1];
   }

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/admin/add_matiere_page.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 
 class AdminMatiere extends StatefulWidget {
   const AdminMatiere({super.key});
@@ -15,11 +16,11 @@ class _AdminMatiereState extends State<AdminMatiere> {
   final TextEditingController _searchController = TextEditingController();
 
   final List<Color> matiereColors = [
-    const Color(0xFF6366F1), // Indigo
-    const Color(0xFF10B981), // Emerald
-    const Color(0xFFF59E0B), // Amber
+    AppTheme.primaryColor, // Indigo
+    AppTheme.successColor, // Emerald
+    AppTheme.warningColor, // Amber
     const Color(0xFF8B5CF6), // Purple
-    const Color(0xFFEF4444), // Red
+    AppTheme.errorColor, // Red
     const Color(0xFF3B82F6), // Blue
   ];
 
@@ -87,9 +88,9 @@ class _AdminMatiereState extends State<AdminMatiere> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Échec de la suppression"),
-            backgroundColor: Color(0xFFEF4444),
+          SnackBar(
+            content: const Text("Échec de la suppression"),
+            backgroundColor: AppTheme.errorColor,
           ),
         );
       }
@@ -106,13 +107,14 @@ class _AdminMatiereState extends State<AdminMatiere> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           DashHeader(
-            color1: const Color(0xFF6366F1),
-            color2: const Color(0xFF4F46E5),
+            color1: AppTheme.primaryColor,
+            color2: AppTheme.primaryColor.withOpacity(0.8),
             title: "GESTION MATIÈRES",
             subtitle: "Organisez les disciplines et les effectifs",
             title1: matieres.length.toString(),
@@ -127,12 +129,12 @@ class _AdminMatiereState extends State<AdminMatiere> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: getMatieres,
-              color: const Color(0xFF6366F1),
+              color: AppTheme.primaryColor,
               child: isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF6366F1),
+                          AppTheme.primaryColor,
                         ),
                       ),
                     )
@@ -151,7 +153,7 @@ class _AdminMatiereState extends State<AdminMatiere> {
           );
           if (result == true) getMatieres();
         },
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: AppTheme.successColor,
         elevation: 4,
         icon: const Icon(Icons.add_task_rounded, color: Colors.white),
         label: const Text(
@@ -168,15 +170,16 @@ class _AdminMatiereState extends State<AdminMatiere> {
   }
 
   Widget _buildSearchBar() {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF6366F1).withOpacity(0.06),
+              color: AppTheme.primaryColor.withOpacity(0.06),
               blurRadius: 15,
               offset: const Offset(0, 4),
             ),
@@ -186,17 +189,20 @@ class _AdminMatiereState extends State<AdminMatiere> {
           controller: _searchController,
           decoration: InputDecoration(
             hintText: 'Rechercher une matière...',
-            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-            prefixIcon: const Icon(
+            hintStyle: TextStyle(
+              color: theme.textTheme.bodySmall?.color,
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(
               Icons.search_rounded,
-              color: Color(0xFF6366F1),
+              color: AppTheme.primaryColor,
               size: 22,
             ),
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.clear_rounded,
-                      color: Color(0xFF94A3B8),
+                      color: theme.textTheme.bodySmall?.color,
                       size: 18,
                     ),
                     onPressed: () => _searchController.clear(),
@@ -214,6 +220,7 @@ class _AdminMatiereState extends State<AdminMatiere> {
   }
 
   Widget _buildMatiereList() {
+    final theme = Theme.of(context);
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
@@ -225,11 +232,11 @@ class _AdminMatiereState extends State<AdminMatiere> {
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: theme.shadowColor.withOpacity(0.03),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -270,18 +277,18 @@ class _AdminMatiereState extends State<AdminMatiere> {
                         children: [
                           Text(
                             matiere['nom'] ?? 'Sans nom',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: Color(0xFF1E293B),
+                              color: theme.textTheme.bodyLarge?.color,
                             ),
                           ),
                           const SizedBox(height: 6),
                           Text(
                             matiere['description'] ?? 'Pas de description',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 13,
-                              color: Color(0xFF64748B),
+                              color: theme.textTheme.bodySmall?.color,
                               height: 1.4,
                             ),
                             maxLines: 2,
@@ -301,13 +308,13 @@ class _AdminMatiereState extends State<AdminMatiere> {
                       label: "Prof: ${matiere['user_name'] ?? 'Non attribué'}",
                       color: matiere['user_name'] != null
                           ? color
-                          : const Color(0xFF94A3B8),
+                          : theme.disabledColor,
                     ),
                     const SizedBox(width: 8),
                     _buildInfoBadge(
                       icon: Icons.school_outlined,
                       label: "Classe: ${matiere['classe'] ?? 'N/A'}",
-                      color: const Color(0xFF6366F1),
+                      color: AppTheme.primaryColor,
                     ),
                   ],
                 ),
@@ -370,7 +377,7 @@ class _AdminMatiereState extends State<AdminMatiere> {
           value: 'edit',
           child: Row(
             children: [
-              Icon(Icons.edit_rounded, size: 18, color: Color(0xFF6366F1)),
+              Icon(Icons.edit_rounded, size: 18, color: AppTheme.primaryColor),
               SizedBox(width: 12),
               Text("Modifier", style: TextStyle(fontWeight: FontWeight.w500)),
             ],
@@ -383,13 +390,13 @@ class _AdminMatiereState extends State<AdminMatiere> {
               Icon(
                 Icons.delete_outline_rounded,
                 size: 18,
-                color: Color(0xFFEF4444),
+                color: AppTheme.errorColor,
               ),
               SizedBox(width: 12),
               Text(
                 "Supprimer",
                 style: TextStyle(
-                  color: Color(0xFFEF4444),
+                  color: AppTheme.errorColor,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -415,9 +422,9 @@ class _AdminMatiereState extends State<AdminMatiere> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text(
+            child: Text(
               "ANNULER",
-              style: TextStyle(color: Color(0xFF94A3B8)),
+              style: TextStyle(color: Theme.of(context).disabledColor),
             ),
           ),
           ElevatedButton(
@@ -426,7 +433,7 @@ class _AdminMatiereState extends State<AdminMatiere> {
               deleteMatiere(matiere['id']);
             },
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFEF4444),
+              backgroundColor: AppTheme.errorColor,
               foregroundColor: Colors.white,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),
@@ -440,6 +447,7 @@ class _AdminMatiereState extends State<AdminMatiere> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -447,7 +455,7 @@ class _AdminMatiereState extends State<AdminMatiere> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.05),
+              color: AppTheme.primaryColor.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -455,7 +463,7 @@ class _AdminMatiereState extends State<AdminMatiere> {
                   ? Icons.search_off_rounded
                   : Icons.library_books_rounded,
               size: 80,
-              color: const Color(0xFF6366F1).withOpacity(0.2),
+              color: AppTheme.primaryColor.withOpacity(0.2),
             ),
           ),
           const SizedBox(height: 24),
@@ -463,10 +471,10 @@ class _AdminMatiereState extends State<AdminMatiere> {
             _searchController.text.isNotEmpty
                 ? "Aucun résultat trouvé"
                 : "Aucune matière trouvée",
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: theme.textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -474,7 +482,7 @@ class _AdminMatiereState extends State<AdminMatiere> {
             _searchController.text.isNotEmpty
                 ? "Essayez une autre recherche."
                 : "Commencez par ajouter votre première matière.",
-            style: const TextStyle(color: Color(0xFF64748B)),
+            style: TextStyle(color: theme.textTheme.bodySmall?.color),
           ),
         ],
       ),

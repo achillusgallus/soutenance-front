@@ -64,7 +64,7 @@ class _TeacherDashboardPageState extends State<TeacherDashboardPage> {
                 right: 16,
                 child: FloatingActionButton.extended(
                   onPressed: () => Navigator.pop(context),
-                  backgroundColor: const Color(0xFF6366F1),
+                  backgroundColor: Theme.of(context).primaryColor,
                   icon: const Icon(Icons.arrow_back, color: Colors.white),
                   label: const Text(
                     'Retour Admin',

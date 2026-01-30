@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/forum/forum_topic_list_page.dart'; // To be created
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class ForumListPage extends StatefulWidget {
   const ForumListPage({super.key});
@@ -43,8 +44,11 @@ class _ForumListPageState extends State<ForumListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: isDark
+          ? Theme.of(context).scaffoldBackgroundColor
+          : const Color(0xFFF8F9FD),
       body: SafeArea(
         child: Column(
           children: [
@@ -95,6 +99,7 @@ class _ForumListPageState extends State<ForumListPage> {
   }
 
   Widget _buildForumCard(dynamic forum) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final title = forum['titre'] ?? 'Forum sans titre';
     final matiere =
         forum['matiere_nom'] ?? forum['matiere']?['nom'] ?? 'Général';
@@ -103,7 +108,7 @@ class _ForumListPageState extends State<ForumListPage> {
 
     // Generate color based on index
     final colors = [
-      const Color(0xFF6366F1),
+      AppTheme.primaryColor,
       const Color(0xFF10B981),
       const Color(0xFFEC4899),
       const Color(0xFFF59E0B),
@@ -115,11 +120,11 @@ class _ForumListPageState extends State<ForumListPage> {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDark ? Theme.of(context).cardColor : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: Colors.black.withOpacity(isDark ? 0.3 : 0.04),
             blurRadius: 12,
             offset: const Offset(0, 4),
           ),
@@ -182,10 +187,12 @@ class _ForumListPageState extends State<ForumListPage> {
                           Expanded(
                             child: Text(
                               title,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
-                                color: Color(0xFF1E293B),
+                                color: isDark
+                                    ? Colors.white
+                                    : const Color(0xFF1E293B),
                               ),
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
@@ -225,7 +232,9 @@ class _ForumListPageState extends State<ForumListPage> {
                             child: Text(
                               matiere,
                               style: TextStyle(
-                                color: const Color(0xFF64748B),
+                                color: isDark
+                                    ? Colors.white70
+                                    : const Color(0xFF64748B),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -241,14 +250,16 @@ class _ForumListPageState extends State<ForumListPage> {
                           Icon(
                             Icons.chat_bubble_outline,
                             size: 14,
-                            color: Colors.grey[400],
+                            color: isDark ? Colors.white54 : Colors.grey[400],
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '$topicsCount sujet${topicsCount > 1 ? 's' : ''}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 12,
-                              color: Color(0xFF94A3B8),
+                              color: isDark
+                                  ? Colors.white54
+                                  : const Color(0xFF94A3B8),
                             ),
                           ),
                         ],
@@ -259,7 +270,7 @@ class _ForumListPageState extends State<ForumListPage> {
                 const SizedBox(width: 8),
                 Icon(
                   Icons.chevron_right_rounded,
-                  color: const Color(0xFFCBD5E1),
+                  color: isDark ? Colors.white24 : const Color(0xFFCBD5E1),
                   size: 24,
                 ),
               ],

@@ -1,7 +1,5 @@
-import 'dart:io';
 import 'package:dio/dio.dart';
-import 'package:togoschool/service/token_storage.dart';
-import 'package:flutter/foundation.dart';
+import 'package:togoschool/services/token_storage.dart';
 
 class ApiService {
   late Dio dio;
@@ -12,19 +10,6 @@ class ApiService {
     // URL DE PRODUCTION (Render)
     // Pour tester en local avec le serveur distant, décommentez la ligne suivante et commentez le bloc if/else
     baseUrl = "https://backend-togoschool.onrender.com/api";
-
-    /* 
-    // SERVER LOCAL DEV
-    if (kIsWeb) {
-      baseUrl = "https://backend-togoschool.onrender.com/api";
-    } else if (Platform.isAndroid) {
-      baseUrl = "http://10.0.2.2:8000/api";
-    } else if (Platform.isIOS) {
-      baseUrl = "http://localhost:8000/api";
-    } else {
-      baseUrl = "http://localhost:8000/api";
-    } 
-    */
 
     dio = Dio(
       BaseOptions(
@@ -48,15 +33,12 @@ class ApiService {
           if (token != null) {
             options.headers["Authorization"] = "Bearer $token";
           }
-          // Tu peux modifier la requête ici si besoin
           return handler.next(options);
         },
         onResponse: (response, handler) {
-          // Tu peux transformer la réponse ici si besoin
           return handler.next(response);
         },
         onError: (DioException e, handler) {
-          // Gestion centralisée des erreurs
           print("Erreur interceptée: ${e.message}");
           return handler.next(e);
         },
@@ -64,14 +46,11 @@ class ApiService {
     );
   }
 
-  // Méthode pour gérer les erreurs proprement
   String handleError(DioException error) {
     String message = "";
     if (error.response?.data != null && error.response?.data is Map) {
       message =
-          error.response?.data['message'] ??
-          error.response?.data['error'] ??
-          "";
+          error.response?.data['message'] ?? error.response?.data['error'] ?? "";
     }
 
     if (error.type == DioExceptionType.connectionTimeout) {
@@ -87,7 +66,6 @@ class ApiService {
     }
   }
 
-  // CREATE
   Future<Response?> create(String endpoint, dynamic data) async {
     try {
       return await dio.post(endpoint, data: data);
@@ -96,7 +74,6 @@ class ApiService {
     }
   }
 
-  // READ
   Future<Response?> read(String endpoint) async {
     try {
       return await dio.get(endpoint);
@@ -105,7 +82,6 @@ class ApiService {
     }
   }
 
-  // UPDATE
   Future<Response?> update(String endpoint, dynamic data) async {
     try {
       return await dio.put(endpoint, data: data);
@@ -114,7 +90,6 @@ class ApiService {
     }
   }
 
-  // DELETE
   Future<Response?> delete(String endpoint) async {
     try {
       return await dio.delete(endpoint);
@@ -123,13 +98,12 @@ class ApiService {
     }
   }
 
-  // Récupérer l’URL sécurisée d’un fichier via l’API backend
   Future<String?> getFileUrl(String filePath) async {
     try {
       final response = await dio.get("/student/file/$filePath");
 
       if (response.statusCode == 200 && response.data != null) {
-        return response.data['url']; // L’URL complète renvoyée par le backend
+        return response.data['url'];
       } else {
         return null;
       }

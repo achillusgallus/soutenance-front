@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/components/dash_header.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class AdminFinance extends StatefulWidget {
   const AdminFinance({super.key});
@@ -64,20 +65,19 @@ class _AdminFinanceState extends State<AdminFinance> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: isLoading
-          ? const Center(
-              child: CircularProgressIndicator(color: Color(0xFF6366F1)),
-            )
+          ? Center(child: CircularProgressIndicator(color: theme.primaryColor))
           : RefreshIndicator(
               onRefresh: _loadFinanceData,
               child: CustomScrollView(
                 slivers: [
                   SliverToBoxAdapter(
                     child: DashHeader(
-                      color1: const Color(0xFF6366F1),
-                      color2: const Color(0xFF4F46E5),
+                      color1: theme.primaryColor,
+                      color2: theme.primaryColorDark,
                       title: "GESTION FINANCIÈRE",
                       subtitle: "Suivez les revenus et paiements",
                       title1: "$totalRevenue F",
@@ -94,10 +94,10 @@ class _AdminFinanceState extends State<AdminFinance> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text(
+                          Text(
                             "RAPPORT DES REVENUS (30 Jours)",
                             style: TextStyle(
-                              color: Color(0xFF64748B),
+                              color: theme.textTheme.bodySmall?.color,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                               letterSpacing: 1.2,
@@ -106,10 +106,10 @@ class _AdminFinanceState extends State<AdminFinance> {
                           const SizedBox(height: 16),
                           _buildChartContainer(),
                           const SizedBox(height: 32),
-                          const Text(
+                          Text(
                             "DERNIÈRES TRANSACTIONS",
                             style: TextStyle(
-                              color: Color(0xFF64748B),
+                              color: theme.textTheme.bodySmall?.color,
                               fontWeight: FontWeight.bold,
                               fontSize: 13,
                               letterSpacing: 1.2,
@@ -128,16 +128,17 @@ class _AdminFinanceState extends State<AdminFinance> {
   }
 
   Widget _buildChartContainer() {
+    final theme = Theme.of(context);
     // Ideally use a chart library here. For now, visual placeholder or simple bar builder.
     return Container(
       height: 200,
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: theme.shadowColor.withOpacity(0.05),
             blurRadius: 15,
             offset: const Offset(0, 5),
           ),
@@ -164,14 +165,17 @@ class _AdminFinanceState extends State<AdminFinance> {
                       width: 20,
                       height: h.toDouble(),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF6366F1),
+                        color: theme.primaryColor,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       d['date'].toString().split('-').last, // Day
-                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                      style: TextStyle(
+                        fontSize: 10,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
                     ),
                   ],
                 );
@@ -190,19 +194,20 @@ class _AdminFinanceState extends State<AdminFinance> {
   }
 
   Widget _buildTransactionCard(dynamic p) {
+    final theme = Theme.of(context);
     final status = p['status'] ?? 'pending';
     final isCompleted = status == 'completed';
-    final color = isCompleted ? Colors.green : Colors.orange;
+    final color = isCompleted ? AppTheme.successColor : AppTheme.warningColor;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: theme.shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -231,14 +236,17 @@ class _AdminFinanceState extends State<AdminFinance> {
                   p['user'] != null
                       ? "${p['user']['name']} ${p['user']['surname']}"
                       : "Utilisateur inconnu",
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
+                    color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
                 Text(
                   "${p['method']} • ${p['created_at'].toString().substring(0, 16)}",
-                  style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.textTheme.bodySmall?.color,
+                  ),
                 ),
               ],
             ),
@@ -248,10 +256,10 @@ class _AdminFinanceState extends State<AdminFinance> {
             children: [
               Text(
                 "${p['amount']} FCFA",
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
-                  color: Color(0xFF1E293B),
+                  color: theme.textTheme.bodyLarge?.color,
                 ),
               ),
               Text(

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/teacher/add_course_page.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 
 class TeachCours extends StatefulWidget {
   final int? filterSubjectId;
@@ -67,6 +67,7 @@ class _TeachCoursState extends State<TeachCours> {
   }
 
   Future<bool?> _showDeleteConfirmation() {
+    final theme = Theme.of(context);
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -79,17 +80,17 @@ class _TeachCoursState extends State<TeachCours> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
+            child: Text(
               "ANNULER",
-              style: TextStyle(color: Color(0xFF64748B)),
+              style: TextStyle(color: theme.textTheme.bodySmall?.color),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
+            child: Text(
               "SUPPRIMER",
               style: TextStyle(
-                color: Color(0xFFEF4444),
+                color: theme.colorScheme.error,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -101,13 +102,14 @@ class _TeachCoursState extends State<TeachCours> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           DashHeader(
-            color1: const Color(0xFF6366F1),
-            color2: const Color(0xFF4F46E5),
+            color1: theme.primaryColor,
+            color2: theme.primaryColorDark,
             title: (widget.filterSubjectName ?? "GESTION DES COURS")
                 .toUpperCase(),
             subtitle: 'Organisez et publiez vos supports pédagogiques',
@@ -122,16 +124,16 @@ class _TeachCoursState extends State<TeachCours> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadData,
-              color: const Color(0xFF6366F1),
+              color: theme.primaryColor,
               child: isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF6366F1),
+                          theme.primaryColor,
                         ),
                       ),
                     )
-                  : _buildGroupedCourseList(),
+                  : _buildGroupedCourseList(theme),
             ),
           ),
         ],
@@ -149,7 +151,7 @@ class _TeachCoursState extends State<TeachCours> {
           );
           if (result == true) _loadData();
         },
-        backgroundColor: const Color(0xFF6366F1),
+        backgroundColor: theme.primaryColor,
         elevation: 4,
         icon: const Icon(Icons.add_rounded, color: Colors.white),
         label: const Text(
@@ -161,7 +163,7 @@ class _TeachCoursState extends State<TeachCours> {
     );
   }
 
-  Widget _buildGroupedCourseList() {
+  Widget _buildGroupedCourseList(ThemeData theme) {
     final displaySubjects = widget.filterSubjectId != null
         ? subjects.where((s) => s['id'] == widget.filterSubjectId).toList()
         : subjects;
@@ -174,13 +176,13 @@ class _TeachCoursState extends State<TeachCours> {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withOpacity(0.05),
+                color: theme.primaryColor.withOpacity(0.05),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.school_outlined,
                 size: 80,
-                color: const Color(0xFF6366F1).withOpacity(0.2),
+                color: theme.primaryColor.withOpacity(0.2),
               ),
             ),
             const SizedBox(height: 24),
@@ -188,7 +190,7 @@ class _TeachCoursState extends State<TeachCours> {
               widget.filterSubjectId != null
                   ? "Matière non trouvée"
                   : "Aucune matière affectée",
-              style: const TextStyle(color: Color(0xFF64748B), fontSize: 16),
+              style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 16),
             ),
           ],
         ),
@@ -206,20 +208,20 @@ class _TeachCoursState extends State<TeachCours> {
               (c) => c['matiere_id'].toString() == subject['id'].toString(),
             )
             .toList();
-        return _buildSubjectCard(subject, subjectCourses);
+        return _buildSubjectCard(subject, subjectCourses, theme);
       },
     );
   }
 
-  Widget _buildSubjectCard(dynamic subject, List<dynamic> subjectCourses) {
+  Widget _buildSubjectCard(dynamic subject, List<dynamic> subjectCourses, ThemeData theme) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: theme.shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -228,12 +230,12 @@ class _TeachCoursState extends State<TeachCours> {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(24),
         child: Theme(
-          data: ThemeData(dividerColor: Colors.transparent),
+          data: theme.copyWith(dividerColor: Colors.transparent),
           child: ExpansionTile(
-            backgroundColor: Colors.white,
-            collapsedBackgroundColor: Colors.white,
-            iconColor: const Color(0xFF6366F1),
-            collapsedIconColor: const Color(0xFF94A3B8),
+            backgroundColor: theme.cardColor,
+            collapsedBackgroundColor: theme.cardColor,
+            iconColor: theme.primaryColor,
+            collapsedIconColor: theme.unselectedWidgetColor,
             tilePadding: const EdgeInsets.symmetric(
               horizontal: 20,
               vertical: 8,
@@ -242,37 +244,37 @@ class _TeachCoursState extends State<TeachCours> {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: const Color(0xFF6366F1).withOpacity(0.08),
+                color: theme.primaryColor.withOpacity(0.08),
                 borderRadius: BorderRadius.circular(14),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.book_rounded,
-                color: Color(0xFF6366F1),
+                color: theme.primaryColor,
                 size: 24,
               ),
             ),
             title: Text(
               subject['nom'] ?? 'Sans nom',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 17,
-                color: Color(0xFF1E293B),
+                color: theme.textTheme.bodyLarge?.color,
               ),
             ),
             subtitle: Text(
               "${subjectCourses.length} cours publié(s)",
-              style: const TextStyle(color: Color(0xFF64748B), fontSize: 13),
+              style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 13),
             ),
             children: [
               Container(
                 height: 1,
-                color: const Color(0xFFF1F5F9),
+                color: theme.dividerColor,
                 margin: const EdgeInsets.symmetric(horizontal: 20),
               ),
               if (subjectCourses.isEmpty)
-                padding_placeholder()
+                padding_placeholder(theme)
               else
-                ...subjectCourses.map((c) => _buildCourseItem(c)).toList(),
+                ...subjectCourses.map((c) => _buildCourseItem(c, theme)).toList(),
               const SizedBox(height: 12),
             ],
           ),
@@ -281,13 +283,13 @@ class _TeachCoursState extends State<TeachCours> {
     );
   }
 
-  Widget padding_placeholder() {
+  Widget padding_placeholder(ThemeData theme) {
     return Padding(
       padding: const EdgeInsets.all(24.0),
       child: Text(
         "Aucun cours disponible",
         style: TextStyle(
-          color: Colors.grey[400],
+          color: theme.disabledColor,
           fontStyle: FontStyle.italic,
           fontSize: 14,
         ),
@@ -295,7 +297,7 @@ class _TeachCoursState extends State<TeachCours> {
     );
   }
 
-  Widget _buildCourseItem(dynamic course) {
+  Widget _buildCourseItem(dynamic course, ThemeData theme) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -308,13 +310,13 @@ class _TeachCoursState extends State<TeachCours> {
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF8F9FD),
+                  color: theme.scaffoldBackgroundColor,
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.description_outlined,
                   size: 20,
-                  color: Color(0xFF64748B),
+                  color: theme.iconTheme.color,
                 ),
               ),
               const SizedBox(width: 16),
@@ -324,10 +326,10 @@ class _TeachCoursState extends State<TeachCours> {
                   children: [
                     Text(
                       course['titre'] ?? 'Sans titre',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 15,
-                        color: Color(0xFF1E293B),
+                        color: theme.textTheme.bodyLarge?.color,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -337,15 +339,15 @@ class _TeachCoursState extends State<TeachCours> {
                           'Pas de contenu',
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: Color(0xFF94A3B8),
+                      style: TextStyle(
+                        color: theme.textTheme.bodySmall?.color,
                         fontSize: 12,
                       ),
                     ),
                   ],
                 ),
               ),
-              _buildCourseActions(course),
+              _buildCourseActions(course, theme),
             ],
           ),
         ),
@@ -353,12 +355,12 @@ class _TeachCoursState extends State<TeachCours> {
     );
   }
 
-  Widget _buildCourseActions(dynamic course) {
+  Widget _buildCourseActions(dynamic course, ThemeData theme) {
     return PopupMenuButton<String>(
       padding: EdgeInsets.zero,
-      icon: const Icon(
+      icon: Icon(
         Icons.more_vert_rounded,
-        color: Color(0xFFCBD5E1),
+        color: theme.disabledColor,
         size: 20,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -387,13 +389,13 @@ class _TeachCoursState extends State<TeachCours> {
             ],
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
           child: Row(
             children: [
-              Icon(Icons.delete_rounded, size: 18, color: Colors.red),
+              Icon(Icons.delete_rounded, size: 18, color: theme.colorScheme.error),
               SizedBox(width: 12),
-              Text("Supprimer", style: TextStyle(color: Colors.red)),
+              Text("Supprimer", style: TextStyle(color: theme.colorScheme.error)),
             ],
           ),
         ),

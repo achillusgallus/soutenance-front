@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/forum/forum_chat_page.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class TeacherTopicListPage extends StatefulWidget {
   final int forumId;
@@ -51,14 +52,15 @@ class _TeacherTopicListPageState extends State<TeacherTopicListPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
             DashHeader(
-              color1: const Color(0xFF6366F1),
-              color2: const Color(0xFF4F46E5),
+              color1: AppTheme.primaryColor,
+              color2: AppTheme.primaryColor,
               title: widget.forumTitle,
               subtitle: 'Questions des élèves',
               title1: topics.length.toString(),
@@ -76,13 +78,13 @@ class _TeacherTopicListPageState extends State<TeacherTopicListPage> {
                 child: isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : topics.isEmpty
-                    ? _buildEmptyState()
+                    ? _buildEmptyState(theme)
                     : ListView.builder(
                         padding: const EdgeInsets.all(20),
                         itemCount: topics.length,
                         itemBuilder: (context, index) {
                           final topic = topics[index];
-                          return _buildTopicCard(topic);
+                          return _buildTopicCard(topic, theme);
                         },
                       ),
               ),
@@ -93,12 +95,12 @@ class _TeacherTopicListPageState extends State<TeacherTopicListPage> {
     );
   }
 
-  Widget _buildTopicCard(dynamic topic) {
+  Widget _buildTopicCard(dynamic topic, ThemeData theme) {
     return Card(
       margin: const EdgeInsets.only(bottom: 16),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       elevation: 0,
-      color: Colors.white,
+      color: theme.cardColor,
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 20,
@@ -106,7 +108,10 @@ class _TeacherTopicListPageState extends State<TeacherTopicListPage> {
         ),
         title: Text(
           topic['titre'] ?? 'Sujet sans titre',
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: theme.textTheme.bodyLarge?.color,
+          ),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -114,19 +119,25 @@ class _TeacherTopicListPageState extends State<TeacherTopicListPage> {
             const SizedBox(height: 8),
             Row(
               children: [
-                const Icon(Icons.person_outline, size: 14, color: Colors.grey),
+                Icon(Icons.person_outline, size: 14, color: theme.hintColor),
                 const SizedBox(width: 4),
                 Text(
                   topic['auteur']?['name'] ?? topic['user_name'] ?? 'Élève',
-                  style: const TextStyle(fontSize: 12),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
                 ),
                 const Spacer(),
-                const Icon(Icons.access_time, size: 14, color: Colors.grey),
+                Icon(Icons.access_time, size: 14, color: theme.hintColor),
                 const SizedBox(width: 4),
                 // Handling potential missing created_at_human if sticking to raw student endpoint
                 Text(
                   topic['created_at_human'] ?? 'Récemment',
-                  style: const TextStyle(fontSize: 12),
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: theme.textTheme.bodyMedium?.color,
+                  ),
                 ),
               ],
             ),
@@ -136,7 +147,7 @@ class _TeacherTopicListPageState extends State<TeacherTopicListPage> {
                 topic['contenu'],
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+                style: TextStyle(fontSize: 12, color: theme.hintColor),
               ),
             ],
           ],
@@ -144,13 +155,13 @@ class _TeacherTopicListPageState extends State<TeacherTopicListPage> {
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.blueAccent.withOpacity(0.1),
+            color: AppTheme.primaryColor.withOpacity(0.1),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: const Text(
+          child: Text(
             "Répondre",
             style: TextStyle(
-              color: Colors.blueAccent,
+              color: AppTheme.primaryColor,
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
@@ -172,7 +183,7 @@ class _TeacherTopicListPageState extends State<TeacherTopicListPage> {
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildEmptyState(ThemeData theme) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -180,12 +191,12 @@ class _TeacherTopicListPageState extends State<TeacherTopicListPage> {
           Icon(
             Icons.question_answer_outlined,
             size: 64,
-            color: Colors.grey[300],
+            color: theme.disabledColor,
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             "Aucune question pour le moment",
-            style: TextStyle(color: Colors.grey),
+            style: TextStyle(color: theme.disabledColor),
           ),
         ],
       ),

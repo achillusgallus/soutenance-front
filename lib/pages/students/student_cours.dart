@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/components/dash_header.dart';
-import 'package:togoschool/service/api_service.dart';
-import 'package:togoschool/service/download_service.dart';
-import 'package:togoschool/service/paygate_service.dart';
-import 'package:togoschool/service/progress_service.dart';
+import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/services/download_service.dart';
+import 'package:togoschool/services/paygate_service.dart';
+import 'package:togoschool/services/progress_service.dart';
 import 'package:togoschool/pages/students/payment_required_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:togoschool/pages/common/video_player_page.dart';
 import 'package:togoschool/pages/common/pdf_viewer_page.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class StudentCours extends StatefulWidget {
   final int? matiereId; // Optional: filter by specific subject
@@ -74,7 +75,9 @@ class _StudentCoursState extends State<StudentCours> {
       final favorites = await _progressService.getFavorites();
       if (mounted) {
         setState(() {
-          _favoriteCourseIds = favorites.map<int>((fav) => fav['id'] ?? 0).toSet();
+          _favoriteCourseIds = favorites
+              .map<int>((fav) => fav['id'] ?? 0)
+              .toSet();
         });
       }
     } catch (e) {
@@ -193,15 +196,16 @@ class _StudentCoursState extends State<StudentCours> {
   @override
   Widget build(BuildContext context) {
     final headerTitle = widget.matiereName ?? "Mes Cours";
+    final theme = Theme.of(context);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           children: [
             DashHeader(
-              color1: const Color(0xFF6366F1),
-              color2: const Color(0xFF4F46E5),
+              color1: theme.primaryColor,
+              color2: theme.primaryColorDark,
               title: headerTitle,
               subtitle: widget.matiereId != null
                   ? 'Contenu de votre formation'
@@ -224,7 +228,7 @@ class _StudentCoursState extends State<StudentCours> {
                   });
                   await _fetchCourses();
                 },
-                color: const Color(0xFF6366F1),
+                color: theme.primaryColor,
                 child: isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : courses.isEmpty
@@ -272,22 +276,22 @@ class _StudentCoursState extends State<StudentCours> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF6366F1).withOpacity(0.1),
+                  color: Theme.of(context).primaryColor.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   FontAwesomeIcons.tag,
-                  color: Color(0xFF6366F1),
+                  color: Theme.of(context).primaryColor,
                   size: 14,
                 ),
               ),
               const SizedBox(width: 12),
               Text(
                 matiereName.toUpperCase(),
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF64748B),
+                  color: Theme.of(context).hintColor,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -301,6 +305,7 @@ class _StudentCoursState extends State<StudentCours> {
   }
 
   Widget _buildCourseCard(dynamic course) {
+    final theme = Theme.of(context);
     final hasFile = course['fichier'] != null;
     final courseId = course['id'] ?? 0;
     final isFavorite = _favoriteCourseIds.contains(courseId);
@@ -369,15 +374,15 @@ class _StudentCoursState extends State<StudentCours> {
                       ),
                     ),
                     if (hasFile)
-                      const Icon(
+                      Icon(
                         Icons.attachment_rounded,
                         size: 18,
-                        color: Color(0xFF10B981),
+                        color: AppTheme.successColor,
                       ),
                     const SizedBox(width: 8),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right_rounded,
-                      color: Color(0xFFCBD5E1),
+                      color: theme.dividerColor,
                     ),
                   ],
                 ),
@@ -411,19 +416,22 @@ class _StudentCoursState extends State<StudentCours> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(40.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.book_outlined, size: 64, color: const Color(0xFFCBD5E1)),
+            Icon(Icons.book_outlined, size: 64, color: theme.disabledColor),
             const SizedBox(height: 16),
             Text(
               widget.matiereId != null
                   ? "Aucun cours disponible pour cette matière"
                   : "Aucun cours disponible pour le moment",
-              style: const TextStyle(color: Color(0xFF94A3B8), fontSize: 16),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.textTheme.bodySmall?.color,
+              ),
               textAlign: TextAlign.center,
             ),
           ],
@@ -433,6 +441,7 @@ class _StudentCoursState extends State<StudentCours> {
   }
 
   void _showCourseDetail(dynamic course) {
+    final theme = Theme.of(context);
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -442,9 +451,9 @@ class _StudentCoursState extends State<StudentCours> {
         minChildSize: 0.6,
         maxChildSize: 0.95,
         builder: (_, controller) => Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
+          decoration: BoxDecoration(
+            color: theme.cardColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
           ),
           padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
           child: Column(
@@ -456,7 +465,7 @@ class _StudentCoursState extends State<StudentCours> {
                   height: 4,
                   margin: const EdgeInsets.only(bottom: 24),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFE2E8F0),
+                    color: theme.dividerColor,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -470,25 +479,23 @@ class _StudentCoursState extends State<StudentCours> {
                       children: [
                         Text(
                           course['titre'] ?? 'Sans titre',
-                          style: const TextStyle(
-                            fontSize: 22,
+                          style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF1E293B),
+                            fontSize: 22,
                           ),
                         ),
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.person_outline,
                               size: 14,
-                              color: Color(0xFF94A3B8),
+                              color: theme.textTheme.bodySmall?.color,
                             ),
                             const SizedBox(width: 4),
                             Text(
                               course['professeur']?['name'] ?? 'Professeur',
-                              style: const TextStyle(
-                                color: Color(0xFF94A3B8),
+                              style: theme.textTheme.bodySmall?.copyWith(
                                 fontSize: 13,
                               ),
                             ),
@@ -503,13 +510,13 @@ class _StudentCoursState extends State<StudentCours> {
                       vertical: 5,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF6366F1).withOpacity(0.1),
+                      color: theme.primaryColor.withOpacity(0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       course['matiere']?['nom'] ?? '',
-                      style: const TextStyle(
-                        color: Color(0xFF6366F1),
+                      style: TextStyle(
+                        color: theme.primaryColor,
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
                       ),
@@ -517,16 +524,15 @@ class _StudentCoursState extends State<StudentCours> {
                   ),
                 ],
               ),
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 20),
-                child: Divider(color: Color(0xFFF1F5F9)),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Divider(color: theme.dividerColor),
               ),
-              const Text(
+              Text(
                 "Description du cours",
-                style: TextStyle(
-                  fontSize: 16,
+                style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
+                  fontSize: 16,
                 ),
               ),
               const SizedBox(height: 12),
@@ -538,10 +544,9 @@ class _StudentCoursState extends State<StudentCours> {
                     children: [
                       Text(
                         course['contenu'] ?? 'Pas de description.',
-                        style: const TextStyle(
+                        style: theme.textTheme.bodyMedium?.copyWith(
                           fontSize: 15,
                           height: 1.6,
-                          color: Color(0xFF475569),
                         ),
                       ),
                       const SizedBox(height: 32),
@@ -569,9 +574,11 @@ class _StudentCoursState extends State<StudentCours> {
     if (result != true) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Vous devez payer pour télécharger plus de cours"),
-            backgroundColor: Color(0xFFEF4444),
+          SnackBar(
+            content: const Text(
+              "Vous devez payer pour télécharger plus de cours",
+            ),
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -579,7 +586,11 @@ class _StudentCoursState extends State<StudentCours> {
     return result;
   }
 
-  Future<void> _downloadAndOpenFile(String fileUrl, String fileName) async {
+  Future<void> _downloadAndOpenFile(
+    String fileUrl,
+    String fileName,
+    int courseId,
+  ) async {
     try {
       // 1. Vérifier si l'utilisateur peut télécharger (Priorité serveur)
       final paygateService = PaygateService();
@@ -654,8 +665,11 @@ class _StudentCoursState extends State<StudentCours> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) =>
-                VideoPlayerPage(videoUrl: fullUrl!, title: fileName),
+            builder: (_) => VideoPlayerPage(
+              videoUrl: fullUrl!,
+              title: fileName,
+              courseId: courseId,
+            ),
           ),
         );
         return;
@@ -666,7 +680,11 @@ class _StudentCoursState extends State<StudentCours> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (_) => PdfViewerPage(pdfUrl: fullUrl!, title: fileName),
+            builder: (_) => PdfViewerPage(
+              pdfUrl: fullUrl!,
+              title: fileName,
+              courseId: courseId,
+            ),
           ),
         );
         return;
@@ -757,7 +775,8 @@ class _StudentCoursState extends State<StudentCours> {
             ),
           ),
           ElevatedButton(
-            onPressed: () => _downloadAndOpenFile(fileUrl, fileName),
+            onPressed: () =>
+                _downloadAndOpenFile(fileUrl, fileName, course['id'] ?? 0),
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF10B981),
               foregroundColor: Colors.white,

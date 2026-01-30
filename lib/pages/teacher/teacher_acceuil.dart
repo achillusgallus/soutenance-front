@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
+// ensure legacy package imports resolve via barrel
+import 'package:togoschool/theme/app_theme.dart';
 import 'package:togoschool/components/button_card.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
@@ -7,7 +10,7 @@ import 'package:togoschool/pages/teacher/teach_cours.dart';
 import 'package:togoschool/pages/teacher/teacher_quiz.dart';
 import 'package:togoschool/pages/teacher/teacher_forum.dart';
 import 'package:togoschool/pages/teacher/teacher_parameter.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 
 class TeacherAcceuil extends StatefulWidget {
   final Map<String, dynamic>? teacherData;
@@ -111,18 +114,20 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
   @override
   Widget build(BuildContext context) {
     String profName = profileData?['name'] ?? 'Enseignant';
+    final theme = Theme.of(context);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: _refreshData,
-          color: const Color(0xFF6366F1),
+          color: theme.primaryColor,
           child: ListView(
             padding: const EdgeInsets.only(bottom: 40),
             children: [
               DashHeader(
-                color1: const Color(0xFF6366F1),
-                color2: const Color(0xFF4F46E5),
+                color1: theme.primaryColor,
+                color2: theme.primaryColorDark,
                 title: 'Bonjour, $profName',
                 subtitle: 'Gérez vos cours et quiz aujourd\'hui',
                 title1: matieres.length.toString(),
@@ -144,9 +149,9 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
                       children: [
                         _buildSectionTitle('ACTIONS RAPIDES'),
                         IconButton(
-                          icon: const Icon(
+                          icon: Icon(
                             Icons.settings_outlined,
-                            color: Color(0xFF64748B),
+                            color: theme.hintColor,
                             size: 24,
                           ),
                           onPressed: () {
@@ -167,7 +172,7 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
                         ButtonCard(
                           icon: FontAwesomeIcons.plus,
                           title: 'Nouveau',
-                          color: const Color(0xFF6366F1),
+                          color: theme.primaryColor,
                           onTap: () async {
                             await Navigator.push(
                               context,
@@ -182,7 +187,7 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
                         ButtonCard(
                           icon: FontAwesomeIcons.book,
                           title: 'Cours',
-                          color: const Color(0xFF10B981),
+                          color: AppTheme.successColor,
                           onTap: () async {
                             await Navigator.push(
                               context,
@@ -196,7 +201,7 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
                         ButtonCard(
                           icon: FontAwesomeIcons.vial,
                           title: 'Quiz',
-                          color: const Color(0xFFF59E0B),
+                          color: AppTheme.warningColor,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -209,7 +214,7 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
                         ButtonCard(
                           icon: FontAwesomeIcons.comments,
                           title: 'Forum',
-                          color: const Color(0xFFEC4899),
+                          color: AppTheme.accentColor,
                           onTap: () {
                             Navigator.push(
                               context,
@@ -259,34 +264,32 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
   }
 
   Widget _buildSectionTitle(String title) {
+    final theme = Theme.of(context);
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF64748B),
+        color: theme.hintColor,
         letterSpacing: 1.2,
       ),
     );
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(48.0),
         child: Column(
           children: [
-            Icon(
-              Icons.school_outlined,
-              size: 64,
-              color: const Color(0xFFCBD5E1),
-            ),
+            Icon(Icons.school_outlined, size: 64, color: theme.disabledColor),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               'Aucune matière affectée pour le moment.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                color: Color(0xFF94A3B8),
+                color: theme.hintColor,
                 fontSize: 16,
                 fontWeight: FontWeight.w500,
               ),
@@ -299,10 +302,11 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
 
   Widget _buildMatiereCard(Map<String, dynamic> matiere, int index) {
     final color = MatiereColors[index % MatiereColors.length];
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
@@ -348,10 +352,10 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
                     children: [
                       Text(
                         matiere['nom'] ?? 'Sans nom',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
+                          color: theme.textTheme.bodyLarge?.color,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -366,20 +370,17 @@ class _TeacherAcceuilState extends State<TeacherAcceuil> {
                       const SizedBox(height: 6),
                       Text(
                         matiere['description'] ?? 'Aucune description',
-                        style: const TextStyle(
-                          fontSize: 13,
-                          color: Color(0xFF64748B),
-                        ),
+                        style: TextStyle(fontSize: 13, color: theme.hintColor),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
                   ),
                 ),
-                const Icon(
+                Icon(
                   Icons.arrow_forward_ios,
                   size: 14,
-                  color: Color(0xFFCBD5E1),
+                  color: theme.dividerColor,
                 ),
               ],
             ),

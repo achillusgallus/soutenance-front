@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/admin/add_student.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 
 class AdminStudentPage extends StatefulWidget {
   const AdminStudentPage({super.key});
@@ -15,12 +16,12 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
   final TextEditingController _searchController = TextEditingController();
 
   final List<Color> cardColors = [
-    Color(0xFF6366F1), // Indigo
-    Color(0xFF8B5CF6), // Purple
-    Color(0xFFEC4899), // Pink
-    Color(0xFF10B981), // Emerald
-    Color(0xFF3B82F6), // Blue
-    Color(0xFFF59E0B), // Amber
+    AppTheme.primaryColor, // Indigo
+    const Color(0xFF8B5CF6), // Purple
+    const Color(0xFFEC4899), // Pink
+    AppTheme.successColor, // Emerald
+    const Color(0xFF3B82F6), // Blue
+    AppTheme.warningColor, // Amber
   ];
 
   bool isLoading = true;
@@ -77,35 +78,46 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
   }
 
   Future<void> _confirmDelete(int id, String name) async {
+    final theme = Theme.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.orange, size: 28),
-            SizedBox(width: 12),
-            Text('Confirmation'),
+            Icon(
+              Icons.warning_amber_rounded,
+              color: AppTheme.warningColor,
+              size: 28,
+            ),
+            const SizedBox(width: 12),
+            const Text('Confirmation'),
           ],
         ),
         content: Text(
           'Êtes-vous sûr de vouloir supprimer l\'élève "$name" ?',
-          style: TextStyle(fontSize: 16),
+          style: const TextStyle(fontSize: 16),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: Text('Annuler', style: TextStyle(color: Colors.grey[600])),
+            child: Text(
+              'Annuler',
+              style: TextStyle(color: theme.textTheme.bodySmall?.color),
+            ),
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
+              backgroundColor: AppTheme.errorColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: Text('Supprimer', style: TextStyle(color: Colors.white)),
+            child: const Text(
+              'Supprimer',
+              style: TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
@@ -118,12 +130,12 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
           SnackBar(
             content: Row(
               children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
-                Text('Élève supprimé avec succès'),
+                const Icon(Icons.check_circle, color: Colors.white),
+                const SizedBox(width: 12),
+                const Text('Élève supprimé avec succès'),
               ],
             ),
-            backgroundColor: Colors.green,
+            backgroundColor: AppTheme.successColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -147,12 +159,12 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
           SnackBar(
             content: Row(
               children: [
-                Icon(Icons.error, color: Colors.white),
-                SizedBox(width: 12),
-                Text('Erreur lors de la suppression'),
+                const Icon(Icons.error, color: Colors.white),
+                const SizedBox(width: 12),
+                const Text('Erreur lors de la suppression'),
               ],
             ),
-            backgroundColor: Colors.red,
+            backgroundColor: AppTheme.errorColor,
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
@@ -187,13 +199,14 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           DashHeader(
-            color1: const Color(0xFF6366F1),
-            color2: const Color(0xFF4F46E5),
+            color1: AppTheme.primaryColor,
+            color2: AppTheme.primaryColor.withOpacity(0.8),
             title: "GESTION ÉLÈVES",
             subtitle: "Supervisez et gérez l'ensemble des étudiants",
             title1: students.length.toString(),
@@ -208,12 +221,12 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: getTeachers,
-              color: const Color(0xFF6366F1),
+              color: AppTheme.primaryColor,
               child: isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF6366F1),
+                          AppTheme.primaryColor,
                         ),
                       ),
                     )
@@ -226,7 +239,7 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _addNewStudent,
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: AppTheme.successColor,
         elevation: 4,
         icon: const Icon(Icons.person_add_rounded, color: Colors.white),
         label: const Text(
@@ -243,15 +256,16 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
   }
 
   Widget _buildSearchBar() {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: theme.cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: const Color(0xFF6366F1).withOpacity(0.06),
+              color: AppTheme.primaryColor.withOpacity(0.06),
               blurRadius: 15,
               offset: const Offset(0, 4),
             ),
@@ -261,17 +275,20 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
           controller: _searchController,
           decoration: InputDecoration(
             hintText: 'Rechercher un élève...',
-            hintStyle: const TextStyle(color: Color(0xFF94A3B8), fontSize: 14),
-            prefixIcon: const Icon(
+            hintStyle: TextStyle(
+              color: theme.textTheme.bodySmall?.color,
+              fontSize: 14,
+            ),
+            prefixIcon: Icon(
               Icons.search_rounded,
-              color: Color(0xFF6366F1),
+              color: AppTheme.primaryColor,
               size: 22,
             ),
             suffixIcon: _searchController.text.isNotEmpty
                 ? IconButton(
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.clear_rounded,
-                      color: Color(0xFF94A3B8),
+                      color: theme.textTheme.bodySmall?.color,
                       size: 18,
                     ),
                     onPressed: () => _searchController.clear(),
@@ -289,6 +306,7 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
   }
 
   Widget _buildStudentList() {
+    final theme = Theme.of(context);
     return ListView.builder(
       physics: const BouncingScrollPhysics(),
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 100),
@@ -300,11 +318,11 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
         return Container(
           margin: const EdgeInsets.only(bottom: 16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: theme.cardColor,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: theme.shadowColor.withOpacity(0.05),
                 blurRadius: 10,
                 offset: const Offset(0, 4),
               ),
@@ -334,27 +352,27 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
                     children: [
                       Text(
                         "${student['name'] ?? ''} ${student['surname'] ?? ''}",
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
-                          color: Color(0xFF1E293B),
+                          color: theme.textTheme.bodyLarge?.color,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.email_outlined,
                             size: 12,
-                            color: Color(0xFF94A3B8),
+                            color: theme.textTheme.bodySmall?.color,
                           ),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
                               student['email'] ?? '',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 13,
-                                color: Color(0xFF94A3B8),
+                                color: theme.textTheme.bodySmall?.color,
                               ),
                               overflow: TextOverflow.ellipsis,
                             ),
@@ -379,13 +397,13 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
       children: [
         IconButton(
           onPressed: () => updateStudent(student),
-          icon: const Icon(
+          icon: Icon(
             Icons.edit_rounded,
-            color: Color(0xFF6366F1),
+            color: AppTheme.primaryColor,
             size: 20,
           ),
           style: IconButton.styleFrom(
-            backgroundColor: const Color(0xFF6366F1).withOpacity(0.05),
+            backgroundColor: AppTheme.primaryColor.withOpacity(0.05),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -397,13 +415,13 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
             student['id'],
             "${student['name']} ${student['surname']}",
           ),
-          icon: const Icon(
+          icon: Icon(
             Icons.delete_outline_rounded,
-            color: Color(0xFFEF4444),
+            color: AppTheme.errorColor,
             size: 20,
           ),
           style: IconButton.styleFrom(
-            backgroundColor: const Color(0xFFEF4444).withOpacity(0.05),
+            backgroundColor: AppTheme.errorColor.withOpacity(0.05),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(10),
             ),
@@ -414,6 +432,7 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -421,7 +440,7 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
           Container(
             padding: const EdgeInsets.all(32),
             decoration: BoxDecoration(
-              color: const Color(0xFF6366F1).withOpacity(0.05),
+              color: AppTheme.primaryColor.withOpacity(0.05),
               shape: BoxShape.circle,
             ),
             child: Icon(
@@ -429,7 +448,7 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
                   ? Icons.search_off_rounded
                   : Icons.person_off_rounded,
               size: 80,
-              color: const Color(0xFF6366F1).withOpacity(0.2),
+              color: AppTheme.primaryColor.withOpacity(0.2),
             ),
           ),
           const SizedBox(height: 24),
@@ -437,10 +456,10 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
             _searchController.text.isNotEmpty
                 ? "Aucun résultat trouvé"
                 : "Aucun élève trouvé",
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF1E293B),
+              color: theme.textTheme.bodyLarge?.color,
             ),
           ),
           const SizedBox(height: 8),
@@ -448,7 +467,7 @@ class _AdminStudentPageState extends State<AdminStudentPage> {
             _searchController.text.isNotEmpty
                 ? "Essayez une autre recherche."
                 : "Commencez par ajouter votre premier élève.",
-            style: const TextStyle(color: Color(0xFF64748B)),
+            style: TextStyle(color: theme.textTheme.bodySmall?.color),
           ),
         ],
       ),

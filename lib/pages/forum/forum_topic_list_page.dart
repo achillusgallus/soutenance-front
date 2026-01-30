@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/components/primary_button.dart';
 import 'package:togoschool/pages/forum/forum_chat_page.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 import 'package:togoschool/utils/security_utils.dart';
 
 class ForumTopicListPage extends StatefulWidget {
@@ -113,8 +114,8 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
         child: Column(
           children: [
             DashHeader(
-              color1: const Color(0xFFF59E0B),
-              color2: const Color(0xFFD97706),
+              color1: AppTheme.primaryColor,
+              color2: const Color(0xFF4F46E5),
               title: widget.forumTitle.toUpperCase(),
               subtitle: 'Discussions en cours',
               title1: topics.length.toString(),
@@ -175,7 +176,7 @@ class _ForumTopicListPageState extends State<ForumTopicListPage> {
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _showAddTopicDialog,
-        backgroundColor: const Color(0xFFF59E0B),
+        backgroundColor: AppTheme.primaryColor,
         elevation: 4,
         highlightElevation: 8,
         icon: const Icon(Icons.add_comment_rounded, color: Colors.white),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/teacher/add_quiz_page.dart';
 import 'package:togoschool/pages/teacher/quiz_questions_page.dart';
-import 'package:togoschool/service/api_service.dart';
+import 'package:togoschool/services/api_service.dart';
 
 class TeacherQuiz extends StatefulWidget {
   const TeacherQuiz({super.key});
@@ -84,6 +84,7 @@ class _TeacherQuizState extends State<TeacherQuiz> {
   }
 
   Future<bool?> _showDeleteConfirmation() {
+    final theme = Theme.of(context);
     return showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -98,17 +99,17 @@ class _TeacherQuizState extends State<TeacherQuiz> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx, false),
-            child: const Text(
+            child: Text(
               "ANNULER",
-              style: TextStyle(color: Color(0xFF64748B)),
+              style: TextStyle(color: theme.textTheme.bodySmall?.color),
             ),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
+            child: Text(
               "SUPPRIMER",
               style: TextStyle(
-                color: Color(0xFFEF4444),
+                color: theme.colorScheme.error,
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -120,13 +121,14 @@ class _TeacherQuizState extends State<TeacherQuiz> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: const Color(0xFFF8F9FD),
+      backgroundColor: theme.scaffoldBackgroundColor,
       body: Column(
         children: [
           DashHeader(
-            color1: const Color(0xFF10B981),
-            color2: const Color(0xFF059669),
+            color1: theme.primaryColor,
+            color2: theme.primaryColorDark,
             title: "GESTION DES QUIZ",
             subtitle: 'Créez et gérez vos évaluations interactives',
             title1: quizzes.length.toString(),
@@ -142,16 +144,16 @@ class _TeacherQuizState extends State<TeacherQuiz> {
           Expanded(
             child: RefreshIndicator(
               onRefresh: _loadData,
-              color: const Color(0xFF10B981),
+              color: theme.primaryColor,
               child: isLoading
-                  ? const Center(
+                  ? Center(
                       child: CircularProgressIndicator(
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          Color(0xFF10B981),
+                          theme.primaryColor,
                         ),
                       ),
                     )
-                  : _buildQuizList(),
+                  : _buildQuizList(theme),
             ),
           ),
         ],
@@ -166,7 +168,7 @@ class _TeacherQuizState extends State<TeacherQuiz> {
           );
           if (res == true) _loadData();
         },
-        backgroundColor: const Color(0xFF10B981),
+        backgroundColor: theme.primaryColor,
         elevation: 4,
         icon: const Icon(Icons.add_task_rounded, color: Colors.white),
         label: const Text(
@@ -178,7 +180,7 @@ class _TeacherQuizState extends State<TeacherQuiz> {
     );
   }
 
-  Widget _buildQuizList() {
+  Widget _buildQuizList(ThemeData theme) {
     if (quizzes.isEmpty) {
       return Center(
         child: Column(
@@ -187,19 +189,19 @@ class _TeacherQuizState extends State<TeacherQuiz> {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: const Color(0xFF10B981).withOpacity(0.05),
+                color: theme.primaryColor.withOpacity(0.05),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 Icons.quiz_outlined,
                 size: 80,
-                color: const Color(0xFF10B981).withOpacity(0.2),
+                color: theme.primaryColor.withOpacity(0.2),
               ),
             ),
             const SizedBox(height: 24),
-            const Text(
+            Text(
               "Aucun quiz créé pour le moment",
-              style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
+              style: TextStyle(color: theme.textTheme.bodySmall?.color, fontSize: 16),
             ),
           ],
         ),
@@ -212,23 +214,23 @@ class _TeacherQuizState extends State<TeacherQuiz> {
       itemCount: quizzes.length,
       itemBuilder: (context, index) {
         final q = quizzes[index];
-        return _buildQuizCard(q);
+        return _buildQuizCard(q, theme);
       },
     );
   }
 
-  Widget _buildQuizCard(dynamic quiz) {
+  Widget _buildQuizCard(dynamic quiz, ThemeData theme) {
     final int quizId = quiz['id'];
     final int? questionCount = _questionCounts[quizId];
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.cardColor,
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.04),
+            color: theme.shadowColor.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -244,8 +246,8 @@ class _TeacherQuizState extends State<TeacherQuiz> {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [Color(0xFF10B981), Color(0xFF059669)],
+                    gradient: LinearGradient(
+                      colors: [theme.primaryColor, theme.primaryColorDark],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -264,25 +266,25 @@ class _TeacherQuizState extends State<TeacherQuiz> {
                     children: [
                       Text(
                         quiz['titre'] ?? 'Sans titre',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 17,
-                          color: Color(0xFF1E293B),
+                          color: theme.textTheme.bodyLarge?.color,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Row(
                         children: [
-                          const Icon(
+                          Icon(
                             Icons.bookmark_outline_rounded,
                             size: 14,
-                            color: Color(0xFF94A3B8),
+                            color: theme.iconTheme.color,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             quiz['matiere']?['nom'] ?? 'Matière non définie',
-                            style: const TextStyle(
-                              color: Color(0xFF64748B),
+                            style: TextStyle(
+                              color: theme.textTheme.bodySmall?.color,
                               fontSize: 13,
                             ),
                           ),
@@ -291,13 +293,13 @@ class _TeacherQuizState extends State<TeacherQuiz> {
                     ],
                   ),
                 ),
-                _buildQuizActions(quiz),
+                _buildQuizActions(quiz, theme),
               ],
             ),
           ),
           Container(
             height: 1,
-            color: const Color(0xFFF1F5F9),
+            color: theme.dividerColor,
             margin: const EdgeInsets.symmetric(horizontal: 20),
           ),
           Padding(
@@ -311,8 +313,8 @@ class _TeacherQuizState extends State<TeacherQuiz> {
                       Icons.format_list_bulleted_rounded,
                       size: 16,
                       color: (questionCount ?? 0) > 0
-                          ? const Color(0xFF10B981)
-                          : const Color(0xFF94A3B8),
+                          ? theme.primaryColor
+                          : theme.disabledColor,
                     ),
                     const SizedBox(width: 6),
                     Text(
@@ -321,8 +323,8 @@ class _TeacherQuizState extends State<TeacherQuiz> {
                           : "Chargement...",
                       style: TextStyle(
                         color: (questionCount ?? 0) > 0
-                            ? const Color(0xFF1E293B)
-                            : const Color(0xFF64748B),
+                            ? theme.textTheme.bodyLarge?.color
+                            : theme.textTheme.bodySmall?.color,
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
                       ),
@@ -337,8 +339,8 @@ class _TeacherQuizState extends State<TeacherQuiz> {
                     ),
                   ).then((_) => _loadData()),
                   style: TextButton.styleFrom(
-                    backgroundColor: const Color(0xFF10B981).withOpacity(0.08),
-                    foregroundColor: const Color(0xFF059669),
+                    backgroundColor: theme.primaryColor.withOpacity(0.08),
+                    foregroundColor: theme.primaryColor,
                     padding: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 8,
@@ -369,12 +371,12 @@ class _TeacherQuizState extends State<TeacherQuiz> {
     );
   }
 
-  Widget _buildQuizActions(dynamic quiz) {
+  Widget _buildQuizActions(dynamic quiz, ThemeData theme) {
     return PopupMenuButton<String>(
       padding: EdgeInsets.zero,
-      icon: const Icon(
+      icon: Icon(
         Icons.more_vert_rounded,
-        color: Color(0xFFCBD5E1),
+        color: theme.disabledColor,
         size: 20,
       ),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -402,13 +404,13 @@ class _TeacherQuizState extends State<TeacherQuiz> {
             ],
           ),
         ),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
           child: Row(
             children: [
-              Icon(Icons.delete_rounded, size: 18, color: Colors.red),
+              Icon(Icons.delete_rounded, size: 18, color: theme.colorScheme.error),
               SizedBox(width: 12),
-              Text("Supprimer", style: TextStyle(color: Colors.red)),
+              Text("Supprimer", style: TextStyle(color: theme.colorScheme.error)),
             ],
           ),
         ),
