@@ -583,6 +583,52 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
 
   Widget _buildMatieresList() {
     final theme = Theme.of(context);
+    if (studentClasse.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: theme.primaryColor.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: theme.primaryColor.withValues(alpha: 0.2)),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.info_outline_rounded,
+              color: theme.primaryColor,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "Classe non définie",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              "Veuillez choisir votre classe dans votre profil pour voir vos matières et vos forums.",
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14),
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const StudentProfil()),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: theme.primaryColor,
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+              child: const Text("COMPLÉTER MON PROFIL"),
+            ),
+          ],
+        ),
+      );
+    }
+
     if (filteredMatieres.isEmpty) {
       return Center(
         child: Padding(

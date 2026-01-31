@@ -39,6 +39,17 @@ class _StudentProfilState extends State<StudentProfil> {
   bool isSaving = false;
   bool _obscurePassword = true;
   bool _notificationsEnabled = true;
+  String? _selectedClasse;
+
+  final List<Map<String, String>> _classes = [
+    {'value': 'tle_D', 'label': 'Terminale D'},
+    {'value': 'tle_A4', 'label': 'Terminale A4'},
+    {'value': 'tle_C', 'label': 'Terminale C'},
+    {'value': 'pre_D', 'label': 'Première D'},
+    {'value': 'pre_A4', 'label': 'Première A4'},
+    {'value': 'pre_C', 'label': 'Première C'},
+    {'value': 'troisieme', 'label': 'Troisième'},
+  ];
 
   final ProgressService _progressService = ProgressService();
   int quizCount = 0;
@@ -125,6 +136,7 @@ class _StudentProfilState extends State<StudentProfil> {
             _nameController.text = profileData!['name'] ?? '';
             _surnameController.text = profileData!['surname'] ?? '';
             _emailController.text = profileData!['email'] ?? '';
+            _selectedClasse = profileData!['classe'];
           }
           isLoading = false;
         });
@@ -172,6 +184,7 @@ class _StudentProfilState extends State<StudentProfil> {
         "name": safeName,
         "surname": safeSurname,
         "email": safeEmail,
+        "classe": _selectedClasse,
       };
       if (_passwordController.text.isNotEmpty) {
         data["password"] = _passwordController.text.trim();
@@ -334,10 +347,28 @@ class _StudentProfilState extends State<StudentProfil> {
           Text(
             profileData?['email'] ?? 'votre@ecole.com',
             style: TextStyle(
-              color: Colors.white.withOpacity(0.8),
+              color: Colors.white.withValues(alpha: 0.8),
               fontSize: 14,
             ),
           ),
+          if (profileData?['classe'] != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Text(
+                "Classe : ${profileData!['classe']}",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -528,6 +559,7 @@ class _StudentProfilState extends State<StudentProfil> {
 
   Widget _buildEditForm() {
     final theme = Theme.of(context);
+    final color = theme.primaryColor;
     return Form(
       key: _formKey,
       child: Column(
@@ -568,6 +600,39 @@ class _StudentProfilState extends State<StudentProfil> {
             prefixIcon: Icons.email_outlined,
             controller: _emailController,
             validator: (v) => (v == null || v.isEmpty) ? "Champ requis" : null,
+          ),
+          const SizedBox(height: 20),
+          _buildFieldLabel("Classe"),
+          DropdownButtonFormField<String>(
+            value: _selectedClasse,
+            decoration: InputDecoration(
+              prefixIcon: Icon(
+                FontAwesomeIcons.graduationCap,
+                size: 18,
+                color: color,
+              ),
+              filled: true,
+              fillColor: theme.cardColor,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: theme.dividerColor),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: theme.dividerColor),
+              ),
+            ),
+            items: _classes.map((c) {
+              return DropdownMenuItem(
+                value: c['value'],
+                child: Text(c['label']!),
+              );
+            }).toList(),
+            onChanged: (val) {
+              setState(() => _selectedClasse = val);
+            },
+            validator: (v) =>
+                (v == null) ? "Veuillez choisir une classe" : null,
           ),
           const SizedBox(height: 20),
           _buildFieldLabel("Sécurité"),
