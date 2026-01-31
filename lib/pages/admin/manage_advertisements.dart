@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:togoschool/models/advertisement.dart';
@@ -60,12 +61,22 @@ class _ManageAdvertisementsState extends State<ManageAdvertisements> {
     );
 
     if (confirmed == true) {
-      final success = await _adService.deleteAdvertisement(id);
-      if (success) {
-        _loadAds();
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text("Publicité supprimée")));
+      try {
+        final success = await _adService.deleteAdvertisement(id);
+        if (success) {
+          _loadAds();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Publicité supprimée")),
+            );
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text("Erreur : ${e.toString()}")));
+        }
       }
     }
   }
@@ -196,6 +207,8 @@ class _AdFormSheetState extends State<AdFormSheet> {
   late TextEditingController _orderController;
   late bool _isActive;
   File? _selectedImage;
+  Uint8List? _webImage;
+  String? _selectedFileName;
   bool _isSaving = false;
 
   @override
@@ -221,16 +234,29 @@ class _AdFormSheetState extends State<AdFormSheet> {
 
   Future<void> _pickImage() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result != null && result.files.single.path != null) {
+    if (result != null && result.files.single.bytes != null) {
+      setState(() {
+        _webImage = result.files.single.bytes;
+        _selectedFileName = result.files.single.name;
+        // On n'utilise File que si on n'est pas sur le Web
+        if (!kIsWeb && result.files.single.path != null) {
+          _selectedImage = File(result.files.single.path!);
+        } else {
+          _selectedImage = null; // Ensure _selectedImage is null if using bytes
+        }
+      });
+    } else if (result != null && result.files.single.path != null) {
       setState(() {
         _selectedImage = File(result.files.single.path!);
+        _selectedFileName = result.files.single.name;
+        _webImage = null; // Ensure _webImage is null if using File
       });
     }
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-    if (widget.ad == null && _selectedImage == null) {
+    if (widget.ad == null && _selectedImage == null && _webImage == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Veuillez sélectionner une image")),
       );
@@ -246,7 +272,9 @@ class _AdFormSheetState extends State<AdFormSheet> {
         success = await service.createAdvertisement(
           title: _titleController.text,
           description: _descController.text,
-          imageFile: _selectedImage!,
+          imageFile: _selectedImage,
+          imageBytes: _webImage,
+          fileName: _selectedFileName,
           linkUrl: _linkController.text,
           order: int.tryParse(_orderController.text) ?? 0,
           isActive: _isActive,
@@ -257,6 +285,8 @@ class _AdFormSheetState extends State<AdFormSheet> {
           title: _titleController.text,
           description: _descController.text,
           imageFile: _selectedImage,
+          imageBytes: _webImage,
+          fileName: _selectedFileName,
           linkUrl: _linkController.text,
           isActive: _isActive,
           order: int.tryParse(_orderController.text) ?? 0,
@@ -376,7 +406,12 @@ class _AdFormSheetState extends State<AdFormSheet> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: Colors.grey[400]!),
                   ),
-                  child: _selectedImage != null
+                  child: _webImage != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(10),
+                          child: Image.memory(_webImage!, fit: BoxFit.cover),
+                        )
+                      : _selectedImage != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(10),
                           child: Image.file(_selectedImage!, fit: BoxFit.cover),

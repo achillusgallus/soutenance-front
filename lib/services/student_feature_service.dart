@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:togoschool/services/service_api.dart';
 
@@ -94,15 +95,22 @@ class StudentFeatureService {
     required String content,
     int? matiereId,
     File? image,
+    Uint8List? imageBytes,
+    String? fileName,
   }) async {
     try {
       Map<String, dynamic> data = {'title': title, 'content': content};
       if (matiereId != null) data['matiere_id'] = matiereId;
-      if (image != null) {
-        String fileName = p.basename(image.path);
+
+      if (kIsWeb && imageBytes != null) {
+        data['image'] = MultipartFile.fromBytes(
+          imageBytes,
+          filename: fileName ?? 'news.jpg',
+        );
+      } else if (image != null) {
         data['image'] = await MultipartFile.fromFile(
           image.path,
-          filename: fileName,
+          filename: fileName ?? p.basename(image.path),
         );
       }
 

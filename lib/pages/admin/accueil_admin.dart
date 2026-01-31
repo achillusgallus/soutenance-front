@@ -18,6 +18,7 @@ import 'package:togoschool/pages/tableau_de_bord/teacher_dashboard_page.dart';
 import 'package:togoschool/services/stockage_jeton.dart';
 import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/pages/common/page_notifications.dart';
+import 'package:togoschool/pages/forum/forum_topic_list_page.dart';
 
 class AdminAcceuil extends StatefulWidget {
   const AdminAcceuil({super.key});
@@ -325,7 +326,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                 )
               else
                 SizedBox(
-                  height: 170,
+                  height: 180,
                   child: ListView.builder(
                     scrollDirection: Axis.horizontal,
                     padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -441,7 +442,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                     ),
                     const SizedBox(height: 16),
                     SizedBox(
-                      height: 150,
+                      height: 180,
                       child: ListView.builder(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -496,10 +497,18 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    ...forums
-                        .take(3)
-                        .map((forum) => _buildForumItem(forum, theme))
-                        .toList(),
+                    SizedBox(
+                      height: 160,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        itemCount: forums.length > 5 ? 5 : forums.length,
+                        itemBuilder: (context, index) {
+                          final forum = forums[index];
+                          return _buildForumCard(forum, index, theme);
+                        },
+                      ),
+                    ),
                   ],
                 ),
             ],
@@ -651,15 +660,22 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                 color: theme.textTheme.bodyLarge?.color,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Row(
               children: [
-                Icon(
-                  Icons.person_outline,
-                  size: 14,
-                  color: theme.textTheme.bodySmall?.color,
+                CircleAvatar(
+                  radius: 10,
+                  backgroundColor: color.withOpacity(0.1),
+                  child: Text(
+                    prof.isNotEmpty ? prof[0].toUpperCase() : "?",
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.bold,
+                      color: color,
+                    ),
+                  ),
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     prof,
@@ -667,6 +683,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                     overflow: TextOverflow.ellipsis,
                     style: TextStyle(
                       fontSize: 12,
+                      fontWeight: FontWeight.w500,
                       color: theme.textTheme.bodySmall?.color,
                     ),
                   ),
@@ -679,13 +696,22 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
     );
   }
 
-  Widget _buildForumItem(dynamic forum, ThemeData theme) {
+  Widget _buildForumCard(dynamic forum, int index, ThemeData theme) {
+    final colors = [
+      const Color(0xFF6366F1), // Indigo
+      const Color(0xFFF59E0B), // Amber
+      const Color(0xFF10B981), // Emerald
+      const Color(0xFFF43F5E), // Rose
+    ];
+    final color = colors[index % colors.length];
+
     return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 24).copyWith(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      width: 180,
+      margin: const EdgeInsets.only(right: 16, bottom: 8),
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: color.withOpacity(0.1)),
         boxShadow: [
           BoxShadow(
             color: theme.shadowColor.withOpacity(0.05),
@@ -694,45 +720,66 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
           ),
         ],
       ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: AppTheme.warningColor.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: const Icon(
-              Icons.forum_outlined,
-              color: AppTheme.warningColor,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(24),
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ForumTopicListPage(
+                  forumId: forum['id'],
+                  forumTitle: forum['titre'] ?? 'Forum',
+                ),
+              ),
+            );
+          },
+          child: Padding(
+            padding: const EdgeInsets.all(20.0),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(Icons.forum_rounded, color: color, size: 18),
+                ),
+                const SizedBox(height: 16),
                 Text(
                   forum['titre'] ?? '',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 14,
+                    fontSize: 15,
                     color: theme.textTheme.bodyLarge?.color,
                   ),
                 ),
-                Text(
-                  forum['matiere_nom'] ?? '',
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: theme.textTheme.bodySmall?.color,
-                  ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Text(
+                      forum['matiere_nom'] ?? 'Général',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: theme.textTheme.bodySmall?.color,
+                      ),
+                    ),
+                    const Spacer(),
+                    Icon(Icons.arrow_forward, size: 12, color: color),
+                  ],
                 ),
               ],
             ),
           ),
-          Icon(Icons.arrow_forward_ios, size: 14, color: theme.disabledColor),
-        ],
+        ),
       ),
     );
   }

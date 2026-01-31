@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as p;
 import 'package:togoschool/models/advertisement.dart';
 import 'package:togoschool/services/service_api.dart';
@@ -45,28 +46,39 @@ class AdvertisementService {
     }
   }
 
-  /// Crée une publicité avec upload d'image
+  /// Crée une publicité avec upload d'image (Compatible Web/Mobile)
   Future<bool> createAdvertisement({
     required String title,
     String? description,
-    required File imageFile,
+    File? imageFile,
+    Uint8List? imageBytes,
+    String? fileName,
     String? linkUrl,
     bool isActive = true,
     int order = 0,
   }) async {
     try {
-      String fileName = p.basename(imageFile.path);
-      FormData formData = FormData.fromMap({
+      Map<String, dynamic> dataMap = {
         "title": title,
         "description": description,
-        "image": await MultipartFile.fromFile(
-          imageFile.path,
-          filename: fileName,
-        ),
         "link_url": linkUrl,
         "is_active": isActive ? 1 : 0,
         "order": order,
-      });
+      };
+
+      if (kIsWeb && imageBytes != null) {
+        dataMap["image"] = MultipartFile.fromBytes(
+          imageBytes,
+          filename: fileName ?? 'upload.jpg',
+        );
+      } else if (imageFile != null) {
+        dataMap["image"] = await MultipartFile.fromFile(
+          imageFile.path,
+          filename: fileName ?? p.basename(imageFile.path),
+        );
+      }
+
+      FormData formData = FormData.fromMap(dataMap);
 
       final response = await _api.dio.post(
         '/admin/advertisements',
@@ -80,12 +92,14 @@ class AdvertisementService {
     }
   }
 
-  /// Met à jour une publicité existante (incluant potentiellement une image)
+  /// Met à jour une publicité existante (Compatible Web/Mobile)
   Future<bool> updateAdvertisement(
     int id, {
     String? title,
     String? description,
     File? imageFile,
+    Uint8List? imageBytes,
+    String? fileName,
     String? linkUrl,
     bool? isActive,
     int? order,
@@ -98,11 +112,15 @@ class AdvertisementService {
       if (isActive != null) dataMap["is_active"] = isActive ? 1 : 0;
       if (order != null) dataMap["order"] = order;
 
-      if (imageFile != null) {
-        String fileName = p.basename(imageFile.path);
+      if (kIsWeb && imageBytes != null) {
+        dataMap["image"] = MultipartFile.fromBytes(
+          imageBytes,
+          filename: fileName ?? 'upload.jpg',
+        );
+      } else if (imageFile != null) {
         dataMap["image"] = await MultipartFile.fromFile(
           imageFile.path,
-          filename: fileName,
+          filename: fileName ?? p.basename(imageFile.path),
         );
       }
 

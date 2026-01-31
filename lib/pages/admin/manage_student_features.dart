@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:togoschool/services/student_feature_service.dart';
@@ -324,11 +326,15 @@ class _DiscoveryFormSheetState extends State<DiscoveryFormSheet> {
       } catch (e) {
         setState(() => _isSaving = false);
         if (mounted) {
+          String errorMsg = e.toString().replaceFirst('Exception: ', '');
+          if (errorMsg.contains('already been taken')) {
+            errorMsg =
+                "Une découverte existe déjà pour cette date. Choisissez une autre date.";
+          }
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text(
-                "Erreur : ${e.toString().replaceFirst('Exception: ', '')}",
-              ),
+              content: Text("Erreur : $errorMsg"),
+              backgroundColor: Colors.red,
             ),
           );
         }
@@ -356,12 +362,28 @@ class _NewsFormSheetState extends State<NewsFormSheet> {
   final _contentController = TextEditingController();
   int? _selectedMatiereId;
   File? _imageFile;
+  Uint8List? _webImage;
+  String? _selectedFileName;
   bool _isSaving = false;
 
   Future<void> _pickImage() async {
     final result = await FilePicker.platform.pickFiles(type: FileType.image);
-    if (result != null && result.files.single.path != null) {
-      setState(() => _imageFile = File(result.files.single.path!));
+    if (result != null && result.files.single.bytes != null) {
+      setState(() {
+        _webImage = result.files.single.bytes;
+        _selectedFileName = result.files.single.name;
+        if (!kIsWeb && result.files.single.path != null) {
+          _imageFile = File(result.files.single.path!);
+        } else {
+          _imageFile = null;
+        }
+      });
+    } else if (result != null && result.files.single.path != null) {
+      setState(() {
+        _imageFile = File(result.files.single.path!);
+        _selectedFileName = result.files.single.name;
+        _webImage = null;
+      });
     }
   }
 
@@ -434,7 +456,12 @@ class _NewsFormSheetState extends State<NewsFormSheet> {
                     border: Border.all(color: Colors.grey[400]!),
                     borderRadius: BorderRadius.circular(5),
                   ),
-                  child: _imageFile != null
+                  child: _webImage != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: Image.memory(_webImage!, fit: BoxFit.cover),
+                        )
+                      : _imageFile != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(5),
                           child: Image.file(_imageFile!, fit: BoxFit.cover),
@@ -480,6 +507,8 @@ class _NewsFormSheetState extends State<NewsFormSheet> {
           content: _contentController.text,
           matiereId: _selectedMatiereId,
           image: _imageFile,
+          imageBytes: _webImage,
+          fileName: _selectedFileName,
         );
         setState(() => _isSaving = false);
         if (success) {

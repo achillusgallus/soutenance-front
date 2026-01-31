@@ -9,6 +9,7 @@ import 'package:togoschool/utils/security_utils.dart';
 import 'package:togoschool/models/advertisement.dart';
 import 'package:togoschool/services/advertisement_service.dart';
 import 'package:togoschool/services/student_feature_service.dart';
+import 'package:togoschool/pages/forum/forum_topic_list_page.dart';
 
 class StudentAcceuil extends StatefulWidget {
   final VoidCallback? toggleTheme;
@@ -26,8 +27,8 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
   String studentClasse = "";
   List<dynamic> matieres = [];
   List<dynamic> filteredMatieres = [];
+  List<dynamic> forums = [];
   int quizCount = 0;
-  int forumCount = 0;
   int favoriteCount = 0;
   List<Advertisement> advertisements = [];
   int _currentAdIndex = 0;
@@ -137,9 +138,9 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
           // Forums
           final forumsRes = results[2]?.data;
           if (forumsRes is List) {
-            forumCount = forumsRes.length;
+            forums = forumsRes;
           } else if (forumsRes is Map && forumsRes.containsKey('data')) {
-            forumCount = (forumsRes['data'] as List).length;
+            forums = forumsRes['data'] ?? [];
           }
 
           isLoading = false;
@@ -235,20 +236,28 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const SizedBox(height: 12),
                           _buildAdsSection(),
                           const SizedBox(height: 24),
-                          _buildDiscoveryCard(),
-                          const SizedBox(height: 32),
-                          _buildLeaderboard(),
-                          const SizedBox(height: 32),
-                          _buildSearchBar(),
-                          const SizedBox(height: 32),
                           _buildSectionHeader(
                             "Mes Matières",
                             filteredMatieres.length,
                           ),
                           const SizedBox(height: 16),
                           _buildMatieresList(),
+                          const SizedBox(height: 32),
+                          if (forums.isNotEmpty) ...[
+                            _buildSectionHeader(
+                              "Forums de Discussion",
+                              forums.length,
+                            ),
+                            const SizedBox(height: 16),
+                            _buildForumsSection(),
+                            const SizedBox(height: 32),
+                          ],
+                          _buildDiscoveryCard(),
+                          const SizedBox(height: 32),
+                          _buildLeaderboard(),
                           const SizedBox(height: 32),
                           _buildEduNewsFeed(),
                           const SizedBox(height: 100), // Bottom padding
@@ -273,7 +282,10 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
         background: Container(
           decoration: BoxDecoration(
             gradient: LinearGradient(
-              colors: [theme.primaryColor, theme.primaryColor.withOpacity(0.8)],
+              colors: [
+                theme.primaryColor,
+                theme.primaryColor.withValues(alpha: 0.8),
+              ],
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
             ),
@@ -281,61 +293,46 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
           child: Stack(
             children: [
               Positioned(
-                right: -50,
-                top: -50,
+                right: -30,
+                top: -30,
                 child: Container(
-                  width: 200,
-                  height: 200,
+                  width: 150,
+                  height: 150,
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                 ),
               ),
               Positioned(
                 left: 24,
-                bottom: 40,
+                top: 60,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Bienvenue sur togoschool,",
+                      "Bonjour,",
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.8),
-                        fontSize: 16,
+                        color: Colors.white.withValues(alpha: 0.8),
+                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 4),
                     Text(
                       studentName,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 28,
+                        fontSize: 24,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    if (studentClasse.isNotEmpty)
-                      Container(
-                        margin: const EdgeInsets.only(top: 8),
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(20),
-                        ),
-                        child: Text(
-                          "Classe : $studentClasse",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
                   ],
                 ),
+              ),
+              Positioned(
+                left: 20,
+                right: 20,
+                bottom: 20,
+                child: _buildSearchBar(),
               ),
             ],
           ),
@@ -615,10 +612,10 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
       itemCount: filteredMatieres.length,
       padding: EdgeInsets.zero,
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 0.85,
+        crossAxisCount: 2,
+        crossAxisSpacing: 16,
+        mainAxisSpacing: 16,
+        childAspectRatio: 1.3,
       ),
       itemBuilder: (context, index) {
         return _buildMatiereCard(filteredMatieres[index], index);
@@ -628,7 +625,6 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
 
   Widget _buildMatiereCard(dynamic matiere, int index) {
     final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
 
     final List<Color> cardColors = [
       const Color(0xFF6366F1), // Indigo
@@ -646,16 +642,16 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? color.withOpacity(0.15) : color.withOpacity(0.08),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.2), width: 1),
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(isDark ? 0.05 : 0.1),
+            color: color.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
+        border: Border.all(color: color.withValues(alpha: 0.1)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -671,17 +667,18 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
               ),
             );
           },
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(24),
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+            padding: const EdgeInsets.all(16),
             child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.15),
-                    shape: BoxShape.circle,
+                    color: color.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(
                     FontAwesomeIcons.bookOpen,
@@ -689,17 +686,37 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                     size: 16,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 12),
                 Text(
                   matiere['nom'] ?? '...',
-                  textAlign: TextAlign.center,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 11,
+                  style: const TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: isDark ? Colors.white : color.withOpacity(0.9),
+                    fontSize: 15,
                   ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    Icon(
+                      Icons.person_outline,
+                      size: 12,
+                      color: theme.textTheme.bodySmall?.color,
+                    ),
+                    const SizedBox(width: 4),
+                    Expanded(
+                      child: Text(
+                        matiere['user_name'] ?? 'Non attribué',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 11,
+                          color: theme.textTheme.bodySmall?.color,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
@@ -999,6 +1016,128 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildForumsSection() {
+    final theme = Theme.of(context);
+    return SizedBox(
+      height: 160,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: forums.length,
+        itemBuilder: (context, index) {
+          final forum = forums[index];
+          final color = [
+            const Color(0xFF6366F1),
+            const Color(0xFFF59E0B),
+            const Color(0xFF10B981),
+            const Color(0xFFF43F5E),
+          ][index % 4];
+          final msgCount = forum['messages_count'] ?? 0;
+
+          return Container(
+            width: 170,
+            margin: const EdgeInsets.only(right: 16, bottom: 8),
+            decoration: BoxDecoration(
+              color: theme.cardColor,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: color.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(24),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ForumTopicListPage(
+                        forumId: forum['id'],
+                        forumTitle: forum['titre'] ?? 'Forum',
+                      ),
+                    ),
+                  );
+                },
+                child: Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(20.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: color.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.forum_rounded,
+                              color: color,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            forum['titre'] ?? '',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            forum['matiere']?['nom'] ?? 'Général',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: theme.textTheme.bodySmall?.color,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (msgCount > 0)
+                      Positioned(
+                        top: 15,
+                        right: 15,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.redAccent,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Text(
+                            "$msgCount",
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      ),
     );
   }
 }
