@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:togoschool/services/student_feature_service.dart';
 import 'package:togoschool/services/service_api.dart';
@@ -29,17 +31,26 @@ class _ManageStudentFeaturesState extends State<ManageStudentFeatures>
 
   Future<void> _loadAll() async {
     setState(() => _isLoading = true);
-    final results = await Future.wait([
-      _featureService.getAllDiscoveryAdmin(),
-      _featureService.getAllNewsAdmin(),
-      _api.read('/admin/matieres'),
-    ]);
-    setState(() {
-      _discoveryResources = results[0] as List<dynamic>;
-      _educationalNews = results[1] as List<dynamic>;
-      _matieres = (results[2] as dynamic)?.data ?? [];
-      _isLoading = false;
-    });
+    try {
+      final results = await Future.wait([
+        _featureService.getAllDiscoveryAdmin(),
+        _featureService.getAllNewsAdmin(),
+        _api.read('/admin/matieres'),
+      ]);
+      setState(() {
+        _discoveryResources = results[0] as List<dynamic>;
+        _educationalNews = results[1] as List<dynamic>;
+        _matieres = (results[2] as dynamic)?.data ?? [];
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Erreur de chargement: $e")));
+      }
+    }
   }
 
   void _showDiscoveryForm() {
@@ -63,7 +74,6 @@ class _ManageStudentFeaturesState extends State<ManageStudentFeatures>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text("Gestion des contenus"),
@@ -93,8 +103,9 @@ class _ManageStudentFeaturesState extends State<ManageStudentFeatures>
   }
 
   Widget _buildDiscoveryList() {
-    if (_discoveryResources.isEmpty)
+    if (_discoveryResources.isEmpty) {
       return const Center(child: Text("Aucune ressource"));
+    }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _discoveryResources.length,
@@ -116,8 +127,9 @@ class _ManageStudentFeaturesState extends State<ManageStudentFeatures>
   }
 
   Widget _buildNewsList() {
-    if (_educationalNews.isEmpty)
+    if (_educationalNews.isEmpty) {
       return const Center(child: Text("Aucune actualité"));
+    }
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: _educationalNews.length,
@@ -126,12 +138,7 @@ class _ManageStudentFeaturesState extends State<ManageStudentFeatures>
         return Card(
           child: ListTile(
             leading: item['image_url'] != null
-                ? Image.network(
-                    item['image_url'],
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                  )
+                ? CircleAvatar(backgroundImage: NetworkImage(item['image_url']))
                 : const Icon(Icons.article),
             title: Text(item['title']),
             subtitle: Text(item['matiere_nom'] ?? "Général"),
@@ -159,11 +166,27 @@ class _ManageStudentFeaturesState extends State<ManageStudentFeatures>
   }
 
   Future<void> _deleteDiscovery(int id) async {
-    if (await _featureService.deleteDiscovery(id)) _loadAll();
+    try {
+      if (await _featureService.deleteDiscovery(id)) _loadAll();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Erreur de suppression: $e")));
+      }
+    }
   }
 
   Future<void> _deleteNews(int id) async {
-    if (await _featureService.deleteNews(id)) _loadAll();
+    try {
+      if (await _featureService.deleteNews(id)) _loadAll();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Erreur de suppression: $e")));
+      }
+    }
   }
 }
 
@@ -181,9 +204,11 @@ class _DiscoveryFormSheetState extends State<DiscoveryFormSheet> {
   final _contentController = TextEditingController();
   String _type = 'tip';
   DateTime _selectedDate = DateTime.now();
+  bool _isSaving = false;
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(
         20,
@@ -196,16 +221,23 @@ class _DiscoveryFormSheetState extends State<DiscoveryFormSheet> {
         key: _formKey,
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
               "Nouvelle Découverte",
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             TextFormField(
               controller: _titleController,
-              decoration: const InputDecoration(labelText: "Titre"),
+              decoration: const InputDecoration(
+                labelText: "Titre",
+                border: OutlineInputBorder(),
+              ),
+              validator: (v) => v?.isEmpty ?? true ? "Champ requis" : null,
             ),
+            const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: _type,
               items: [
@@ -214,16 +246,27 @@ class _DiscoveryFormSheetState extends State<DiscoveryFormSheet> {
                 'anecdote',
               ].map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
               onChanged: (v) => setState(() => _type = v!),
-              decoration: const InputDecoration(labelText: "Type"),
+              decoration: const InputDecoration(
+                labelText: "Type",
+                border: OutlineInputBorder(),
+              ),
             ),
+            const SizedBox(height: 12),
             TextFormField(
               controller: _contentController,
               decoration: const InputDecoration(
                 labelText: "Contenu (Texte ou URL Vidéo)",
+                border: OutlineInputBorder(),
               ),
               maxLines: 3,
+              validator: (v) => v?.isEmpty ?? true ? "Champ requis" : null,
             ),
+            const SizedBox(height: 12),
             ListTile(
+              shape: RoundedRectangleBorder(
+                side: BorderSide(color: Colors.grey[400]!),
+                borderRadius: BorderRadius.circular(5),
+              ),
               title: Text(
                 "Date d'affichage : ${_selectedDate.toLocal().toString().split(' ')[0]}",
               ),
@@ -232,35 +275,65 @@ class _DiscoveryFormSheetState extends State<DiscoveryFormSheet> {
                 final date = await showDatePicker(
                   context: context,
                   initialDate: _selectedDate,
-                  firstDate: DateTime.now(),
+                  firstDate: DateTime.now().subtract(const Duration(days: 30)),
                   lastDate: DateTime.now().add(const Duration(days: 365)),
                 );
                 if (date != null) setState(() => _selectedDate = date);
               },
             ),
+            const SizedBox(height: 20),
             ElevatedButton(
-              onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  final service = StudentFeatureService();
-                  if (await service.createDiscovery(
-                    title: _titleController.text,
-                    type: _type,
-                    content: _contentController.text,
-                    displayDate: _selectedDate.toLocal().toString().split(
-                      ' ',
-                    )[0],
-                  )) {
-                    widget.onSaved();
-                    Navigator.pop(context);
-                  }
-                }
-              },
-              child: const Text("Enregistrer"),
+              style: ElevatedButton.styleFrom(
+                padding: const EdgeInsets.all(16),
+                backgroundColor: theme.primaryColor,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: _isSaving ? null : _save,
+              child: _isSaving
+                  ? const CircularProgressIndicator(color: Colors.white)
+                  : const Text("ENREGISTRER"),
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _save() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isSaving = true);
+      try {
+        final service = StudentFeatureService();
+        final success = await service.createDiscovery(
+          title: _titleController.text,
+          type: _type,
+          content: _contentController.text,
+          displayDate: _selectedDate.toLocal().toString().split(' ')[0],
+        );
+        setState(() => _isSaving = false);
+        if (success) {
+          widget.onSaved();
+          if (mounted) Navigator.pop(context);
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Échec de l'enregistrement")),
+            );
+          }
+        }
+      } catch (e) {
+        setState(() => _isSaving = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "Erreur : ${e.toString().replaceFirst('Exception: ', '')}",
+              ),
+            ),
+          );
+        }
+      }
+    }
   }
 }
 
@@ -282,9 +355,19 @@ class _NewsFormSheetState extends State<NewsFormSheet> {
   final _titleController = TextEditingController();
   final _contentController = TextEditingController();
   int? _selectedMatiereId;
+  File? _imageFile;
+  bool _isSaving = false;
+
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
+    if (result != null && result.files.single.path != null) {
+      setState(() => _imageFile = File(result.files.single.path!));
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: EdgeInsets.all(
         20,
@@ -295,58 +378,132 @@ class _NewsFormSheetState extends State<NewsFormSheet> {
       ),
       child: Form(
         key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              "Nouvelle Actualité",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(labelText: "Titre"),
-            ),
-            TextFormField(
-              controller: _contentController,
-              decoration: const InputDecoration(labelText: "Contenu"),
-              maxLines: 5,
-            ),
-            DropdownButtonFormField<int>(
-              value: _selectedMatiereId,
-              items: widget.matieres
-                  .map(
-                    (e) => DropdownMenuItem<int>(
-                      value: e['id'],
-                      child: Text(e['nom']),
-                    ),
-                  )
-                  .toList(),
-              onChanged: (v) => setState(() => _selectedMatiereId = v),
-              decoration: const InputDecoration(
-                labelText: "Matière (Optionnel)",
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                "Nouvelle Actualité",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
               ),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                if (_formKey.currentState!.validate()) {
-                  final service = StudentFeatureService();
-                  if (await service.createNews(
-                    title: _titleController.text,
-                    content: _contentController.text,
-                    matiereId: _selectedMatiereId,
-                  )) {
-                    widget.onSaved();
-                    Navigator.pop(context);
-                  }
-                }
-              },
-              child: const Text("Enregistrer"),
-            ),
-          ],
+              const SizedBox(height: 16),
+              TextFormField(
+                controller: _titleController,
+                decoration: const InputDecoration(
+                  labelText: "Titre",
+                  border: OutlineInputBorder(),
+                ),
+                validator: (v) => v?.isEmpty ?? true ? "Champ requis" : null,
+              ),
+              const SizedBox(height: 12),
+              TextFormField(
+                controller: _contentController,
+                decoration: const InputDecoration(
+                  labelText: "Contenu",
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 5,
+                validator: (v) => v?.isEmpty ?? true ? "Champ requis" : null,
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<int>(
+                value: _selectedMatiereId,
+                items: widget.matieres
+                    .map(
+                      (e) => DropdownMenuItem<int>(
+                        value: e['id'],
+                        child: Text(e['nom']),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (v) => setState(() => _selectedMatiereId = v),
+                decoration: const InputDecoration(
+                  labelText: "Matière (Optionnel)",
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              GestureDetector(
+                onTap: _pickImage,
+                child: Container(
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    border: Border.all(color: Colors.grey[400]!),
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: _imageFile != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(5),
+                          child: Image.file(_imageFile!, fit: BoxFit.cover),
+                        )
+                      : const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.add_a_photo, color: Colors.grey),
+                            Text(
+                              "Ajouter une image (Optionnel)",
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.all(16),
+                  backgroundColor: theme.primaryColor,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: _isSaving ? null : _save,
+                child: _isSaving
+                    ? const CircularProgressIndicator(color: Colors.white)
+                    : const Text("ENREGISTRER"),
+              ),
+            ],
+          ),
         ),
       ),
     );
+  }
+
+  Future<void> _save() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isSaving = true);
+      try {
+        final service = StudentFeatureService();
+        final success = await service.createNews(
+          title: _titleController.text,
+          content: _contentController.text,
+          matiereId: _selectedMatiereId,
+          image: _imageFile,
+        );
+        setState(() => _isSaving = false);
+        if (success) {
+          widget.onSaved();
+          if (mounted) Navigator.pop(context);
+        } else {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text("Échec de l'enregistrement")),
+            );
+          }
+        }
+      } catch (e) {
+        setState(() => _isSaving = false);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                "Erreur : ${e.toString().replaceFirst('Exception: ', '')}",
+              ),
+            ),
+          );
+        }
+      }
+    }
   }
 }

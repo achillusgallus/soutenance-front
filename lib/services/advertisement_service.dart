@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:path/path.dart' as p;
 import 'package:togoschool/models/advertisement.dart';
 import 'package:togoschool/services/service_api.dart';
 
@@ -54,7 +55,7 @@ class AdvertisementService {
     int order = 0,
   }) async {
     try {
-      String fileName = imageFile.path.split('/').last;
+      String fileName = p.basename(imageFile.path);
       FormData formData = FormData.fromMap({
         "title": title,
         "description": description,
@@ -72,9 +73,10 @@ class AdvertisementService {
         data: formData,
       );
       return response.statusCode == 201;
+    } on DioException catch (e) {
+      throw Exception(_api.handleError(e));
     } catch (e) {
-      print('Erreur lors de la création de la publicité: $e');
-      return false;
+      throw Exception("Erreur inconnue: $e");
     }
   }
 
@@ -97,7 +99,7 @@ class AdvertisementService {
       if (order != null) dataMap["order"] = order;
 
       if (imageFile != null) {
-        String fileName = imageFile.path.split('/').last;
+        String fileName = p.basename(imageFile.path);
         dataMap["image"] = await MultipartFile.fromFile(
           imageFile.path,
           filename: fileName,
@@ -106,15 +108,15 @@ class AdvertisementService {
 
       FormData formData = FormData.fromMap(dataMap);
 
-      // On utilise POST car certains serveurs/frameworks ont du mal avec multipart sur PUT/PATCH
       final response = await _api.dio.post(
         '/admin/advertisements/$id',
         data: formData,
       );
       return response.statusCode == 200;
+    } on DioException catch (e) {
+      throw Exception(_api.handleError(e));
     } catch (e) {
-      print('Erreur lors de la mise à jour de la publicité: $e');
-      return false;
+      throw Exception("Erreur inconnue: $e");
     }
   }
 
@@ -123,9 +125,10 @@ class AdvertisementService {
     try {
       final response = await _api.delete('/admin/advertisements/$id');
       return response?.statusCode == 200;
+    } on DioException catch (e) {
+      throw Exception(_api.handleError(e));
     } catch (e) {
-      print('Erreur lors de la suppression de la publicité: $e');
-      return false;
+      throw Exception("Erreur inconnue: $e");
     }
   }
 }

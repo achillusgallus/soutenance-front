@@ -8,18 +8,18 @@ class ApiService {
     String baseUrl;
 
     // URL DE PRODUCTION (Render)
-    // Pour tester en local avec le serveur distant, décommentez la ligne suivante et commentez le bloc if/else
     baseUrl = "https://backend-togoschool.onrender.com/api";
+
+    // URL DE DÉVELOPPEMENT LOCAL (décommentez pour tester en local)
+    // baseUrl = "http://localhost:8000/api"; // Pour Web / iOS
+    // baseUrl = "http://10.0.2.2:8000/api"; // Pour Android Emulator
 
     dio = Dio(
       BaseOptions(
         baseUrl: baseUrl,
         connectTimeout: const Duration(seconds: 10),
         receiveTimeout: const Duration(seconds: 60),
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-        },
+        headers: {"Accept": "application/json"},
       ),
     );
 

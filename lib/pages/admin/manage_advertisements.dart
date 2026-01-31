@@ -237,39 +237,56 @@ class _AdFormSheetState extends State<AdFormSheet> {
       return;
     }
 
-    setState(() => _isSaving = true);
-    final service = AdvertisementService();
-    bool success;
+    try {
+      setState(() => _isSaving = true);
+      final service = AdvertisementService();
+      bool success;
 
-    if (widget.ad == null) {
-      success = await service.createAdvertisement(
-        title: _titleController.text,
-        description: _descController.text,
-        imageFile: _selectedImage!,
-        linkUrl: _linkController.text,
-        order: int.tryParse(_orderController.text) ?? 0,
-        isActive: _isActive,
-      );
-    } else {
-      success = await service.updateAdvertisement(
-        widget.ad!.id,
-        title: _titleController.text,
-        description: _descController.text,
-        imageFile: _selectedImage,
-        linkUrl: _linkController.text,
-        isActive: _isActive,
-        order: int.tryParse(_orderController.text) ?? 0,
-      );
-    }
+      if (widget.ad == null) {
+        success = await service.createAdvertisement(
+          title: _titleController.text,
+          description: _descController.text,
+          imageFile: _selectedImage!,
+          linkUrl: _linkController.text,
+          order: int.tryParse(_orderController.text) ?? 0,
+          isActive: _isActive,
+        );
+      } else {
+        success = await service.updateAdvertisement(
+          widget.ad!.id,
+          title: _titleController.text,
+          description: _descController.text,
+          imageFile: _selectedImage,
+          linkUrl: _linkController.text,
+          isActive: _isActive,
+          order: int.tryParse(_orderController.text) ?? 0,
+        );
+      }
 
-    setState(() => _isSaving = false);
-    if (success) {
-      widget.onSaved();
-      Navigator.pop(context);
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Erreur lors de l'enregistrement")),
-      );
+      setState(() => _isSaving = false);
+      if (success) {
+        widget.onSaved();
+        if (mounted) Navigator.pop(context);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text("Échec de l'enregistrement sur le serveur"),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      setState(() => _isSaving = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "Erreur : ${e.toString().replaceFirst('Exception: ', '')}",
+            ),
+          ),
+        );
+      }
     }
   }
 

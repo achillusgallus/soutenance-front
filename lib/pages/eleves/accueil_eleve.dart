@@ -412,7 +412,7 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
           "À la une",
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 20),
         SizedBox(
           height: 80,
           child: PageView.builder(
@@ -427,7 +427,7 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                 child: Container(
                   margin: const EdgeInsets.only(right: 16),
                   decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(5),
                     image: DecorationImage(
                       image: NetworkImage(ad.imageUrl),
                       fit: BoxFit.cover,

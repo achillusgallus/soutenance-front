@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:dio/dio.dart';
+import 'package:path/path.dart' as p;
 import 'package:togoschool/services/service_api.dart';
 
 class StudentFeatureService {
@@ -60,8 +61,10 @@ class StudentFeatureService {
         'display_date': displayDate,
       });
       return response?.statusCode == 201;
+    } on DioException catch (e) {
+      throw Exception(_api.handleError(e));
     } catch (e) {
-      return false;
+      throw Exception("Erreur inconnue: $e");
     }
   }
 
@@ -69,8 +72,10 @@ class StudentFeatureService {
     try {
       final response = await _api.delete('/admin/discovery/$id');
       return response?.statusCode == 200;
+    } on DioException catch (e) {
+      throw Exception(_api.handleError(e));
     } catch (e) {
-      return false;
+      throw Exception("Erreur inconnue: $e");
     }
   }
 
@@ -94,7 +99,7 @@ class StudentFeatureService {
       Map<String, dynamic> data = {'title': title, 'content': content};
       if (matiereId != null) data['matiere_id'] = matiereId;
       if (image != null) {
-        String fileName = image.path.split('/').last;
+        String fileName = p.basename(image.path);
         data['image'] = await MultipartFile.fromFile(
           image.path,
           filename: fileName,
@@ -104,8 +109,10 @@ class StudentFeatureService {
       FormData formData = FormData.fromMap(data);
       final response = await _api.dio.post('/admin/news', data: formData);
       return response.statusCode == 201;
+    } on DioException catch (e) {
+      throw Exception(_api.handleError(e));
     } catch (e) {
-      return false;
+      throw Exception("Erreur inconnue: $e");
     }
   }
 
@@ -113,8 +120,10 @@ class StudentFeatureService {
     try {
       final response = await _api.delete('/admin/news/$id');
       return response?.statusCode == 200;
+    } on DioException catch (e) {
+      throw Exception(_api.handleError(e));
     } catch (e) {
-      return false;
+      throw Exception("Erreur inconnue: $e");
     }
   }
 }
