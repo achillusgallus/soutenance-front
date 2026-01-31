@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/core/theme/app_theme.dart';
+import 'package:togoschool/services/advertisement_service.dart';
 
 class StudentCalendarWidget extends StatefulWidget {
   const StudentCalendarWidget({super.key});
@@ -14,52 +15,53 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
   DateTime? _selectedDate;
   List<Map<String, dynamic>> _quizDates = [];
   List<Map<String, dynamic>> _reminders = [];
+  final AdvertisementService _adService = AdvertisementService();
+  bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
     _currentMonth = DateTime.now();
     _selectedDate = DateTime.now();
-    _loadMockData();
+    _loadEvents();
   }
 
-  void _loadMockData() {
-    // Données de démonstration pour les quiz
-    setState(() {
-      _quizDates = [
-        {
-          'date': DateTime(2026, 1, 28),
-          'title': 'Quiz Mathématiques',
-          'course': 'Algèbre',
-          'time': '14:00',
-        },
-        {
-          'date': DateTime(2026, 1, 30),
-          'title': 'Quiz Physique',
-          'course': 'Mécanique',
-          'time': '10:00',
-        },
-        {
-          'date': DateTime(2026, 2, 2),
-          'title': 'Quiz Chimie',
-          'course': 'Organique',
-          'time': '16:00',
-        },
-      ];
+  Future<void> _loadEvents() async {
+    setState(() => _isLoading = true);
 
-      _reminders = [
-        {
-          'date': DateTime(2026, 1, 26),
-          'title': 'Réviser chapitre 5',
-          'type': 'study',
-        },
-        {
-          'date': DateTime(2026, 1, 27),
-          'title': 'Exercices pratiques',
-          'type': 'practice',
-        },
-      ];
-    });
+    // Garder les données mock locales (quiz) pour l'instant ou les remplacer par des vrais quiz si disponible
+    _quizDates = [
+      // Gardons quelques exemples de quiz ou chargeons-les depuis l'API Quiz si possible
+    ];
+
+    try {
+      final ads = await _adService.getAdvertisements();
+      // Filtrer les publicités de type 'event'
+      // Note: Assurons-nous que le modèle Advertisement a un champ 'type' ou utilise 'title' pour filtrer
+      // Si le backend n'a pas de champ 'type', on considère toutes les pubs avec une date comme événement ou on ajoute un champ 'type' dans l'admin
+
+      final events = ads
+          .where((ad) => ad.type == 'event' || ad.startDate != null)
+          .map((ad) {
+            return {
+              'date':
+                  ad.startDate ??
+                  DateTime.now(), // Utiliser startDate de la pub
+              'title': ad.title,
+              'type': 'event',
+              'description': ad.description,
+            };
+          })
+          .toList();
+
+      setState(() {
+        _reminders = events;
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint("Erreur chargement événements: $e");
+      setState(() => _isLoading = false);
+    }
   }
 
   void _previousMonth() {
@@ -489,5 +491,3 @@ class _StudentCalendarWidgetState extends State<StudentCalendarWidget> {
     return months[month - 1];
   }
 }
-
-

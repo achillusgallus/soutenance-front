@@ -19,6 +19,7 @@ import 'package:togoschool/services/stockage_jeton.dart';
 import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/pages/common/page_notifications.dart';
 import 'package:togoschool/pages/forum/forum_topic_list_page.dart';
+import 'package:togoschool/pages/admin/manage_learning_content.dart';
 
 class AdminAcceuil extends StatefulWidget {
   const AdminAcceuil({super.key});
@@ -243,6 +244,7 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                       ],
                     ),
                     const SizedBox(height: 12),
+
                     Row(
                       children: [
                         ButtonCard(
@@ -269,6 +271,21 @@ class _AdminAcceuilState extends State<AdminAcceuil> {
                               MaterialPageRoute(
                                 builder: (context) =>
                                     const ManageStudentFeatures(),
+                              ),
+                            );
+                          },
+                        ),
+                        const SizedBox(width: 8),
+                        ButtonCard(
+                          icon: FontAwesomeIcons.brain,
+                          title: 'Révisions',
+                          color: Colors.indigo,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    const ManageLearningContent(),
                               ),
                             );
                           },

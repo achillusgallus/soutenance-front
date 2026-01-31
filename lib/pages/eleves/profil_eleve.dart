@@ -12,9 +12,6 @@ import 'package:togoschool/pages/common/page_notifications.dart';
 import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/services/service_paygate.dart';
 import 'package:url_launcher/url_launcher.dart';
-import 'package:togoschool/pages/eleves/cours_eleve.dart';
-import 'package:togoschool/pages/eleves/forum_eleve.dart';
-import 'package:togoschool/pages/eleves/page_quiz_eleve.dart';
 import 'package:togoschool/pages/eleves/page_progres_eleve.dart';
 import 'package:togoschool/pages/eleves/page_favoris_eleve.dart';
 import 'package:togoschool/pages/eleves/page_notes_eleve.dart';
@@ -502,33 +499,6 @@ class _StudentProfilState extends State<StudentProfil> {
           ),
         ),
         const SizedBox(height: 16),
-        _buildSettingsTile(
-          icon: FontAwesomeIcons.bookOpen,
-          title: "Mes Cours",
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const StudentCours()),
-          ),
-          color: theme.primaryColor,
-        ),
-        _buildSettingsTile(
-          icon: FontAwesomeIcons.vial,
-          title: "Mes Quiz",
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const StudentQuizPage()),
-          ),
-          color: const Color(0xFF10B981),
-        ),
-        _buildSettingsTile(
-          icon: FontAwesomeIcons.comments,
-          title: "Forums de discussion",
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => const StudentForum()),
-          ),
-          color: const Color(0xFFF59E0B),
-        ),
         _buildSettingsTile(
           icon: FontAwesomeIcons.chartLine,
           title: "Suivi de Progression",

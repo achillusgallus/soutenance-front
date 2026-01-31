@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/services/service_progres.dart';
+import 'package:togoschool/services/service_api.dart';
 
 class StudentNotesPage extends StatefulWidget {
   final int? courseId;
@@ -14,17 +15,20 @@ class StudentNotesPage extends StatefulWidget {
 
 class _StudentNotesPageState extends State<StudentNotesPage> {
   final ProgressService _progressService = ProgressService();
+  final ApiService _api = ApiService();
   final TextEditingController _noteController = TextEditingController();
   final TextEditingController _searchController = TextEditingController();
   bool _isLoading = true;
   List<dynamic> _notes = [];
   List<dynamic> _filteredNotes = [];
+  List<dynamic> _availableCourses = [];
   int? _editingNoteId;
+  int? _selectedCourseId;
 
   @override
   void initState() {
     super.initState();
-    _loadNotes();
+    _loadNotesAndCourses();
     _searchController.addListener(_filterNotes);
   }
 
@@ -35,23 +39,39 @@ class _StudentNotesPageState extends State<StudentNotesPage> {
     super.dispose();
   }
 
-  Future<void> _loadNotes() async {
+  Future<void> _loadNotesAndCourses() async {
     setState(() => _isLoading = true);
     try {
       final courseId = widget.courseId;
+
       if (courseId != null) {
         final notes = await _progressService.getNotes(courseId);
         if (mounted) {
           setState(() {
             _notes = notes;
             _filteredNotes = notes;
-            _isLoading = false;
           });
         }
       } else {
-        // Charger toutes les notes si aucun cours spécifique
-        if (mounted) setState(() => _isLoading = false);
+        // Logique pour charger toutes les notes si API existante
       }
+
+      if (courseId == null) {
+        final response = await _api.read('/student/matieres');
+        if (mounted && response?.data != null) {
+          final data = response!.data;
+          if (data is List) {
+            setState(() => _availableCourses = data);
+          } else if (data is Map && data['data'] is List) {
+            setState(() => _availableCourses = data['data']);
+          }
+          if (_availableCourses.isNotEmpty) {
+            setState(() => _selectedCourseId = _availableCourses.first['id']);
+          }
+        }
+      }
+
+      if (mounted) setState(() => _isLoading = false);
     } catch (e) {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -71,16 +91,22 @@ class _StudentNotesPageState extends State<StudentNotesPage> {
   Future<void> _saveNote() async {
     if (_noteController.text.trim().isEmpty) return;
 
+    final courseIdToUse = widget.courseId ?? _selectedCourseId;
+    if (courseIdToUse == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez sélectionner un cours/matière')),
+      );
+      return;
+    }
+
     try {
-      final courseId = widget.courseId ?? 1; // ID par défaut si aucun cours
       final success = await _progressService.saveNote(
-        courseId,
+        courseIdToUse,
         _noteController.text,
       );
 
       if (success) {
         if (_editingNoteId != null) {
-          // Mode édition
           setState(() {
             final index = _notes.indexWhere(
               (note) => note['id'] == _editingNoteId,
@@ -92,38 +118,55 @@ class _StudentNotesPageState extends State<StudentNotesPage> {
             _editingNoteId = null;
           });
         } else {
-          // Mode ajout
+          String courseName = widget.courseName ?? 'Note';
+          if (widget.courseId == null && _availableCourses.isNotEmpty) {
+            final course = _availableCourses.firstWhere(
+              (c) => c['id'] == _selectedCourseId,
+              orElse: () => null,
+            );
+            if (course != null) {
+              courseName = course['nom'] ?? course['titre'] ?? 'Matière';
+            }
+          }
+
           setState(() {
             _notes.insert(0, {
               'id': DateTime.now().millisecondsSinceEpoch,
               'content': _noteController.text,
-              'course_id': courseId,
-              'course_name': widget.courseName ?? 'Note',
+              'course_id': courseIdToUse,
+              'course_name': courseName,
               'created_at': DateTime.now().toIso8601String(),
               'updated_at': DateTime.now().toIso8601String(),
             });
+            _filteredNotes = _notes;
           });
         }
 
         _noteController.clear();
         _filterNotes();
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              _editingNoteId != null ? 'Note mise à jour' : 'Note enregistrée',
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                _editingNoteId != null
+                    ? 'Note mise à jour'
+                    : 'Note enregistrée',
+              ),
+              backgroundColor: Colors.green,
             ),
-            backgroundColor: Colors.green,
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Erreur lors de l\'enregistrement de la note'),
+            backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erreur lors de l\'enregistrement de la note'),
-          backgroundColor: Colors.red,
-        ),
-      );
     }
   }
 
@@ -168,6 +211,7 @@ class _StudentNotesPageState extends State<StudentNotesPage> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -200,7 +244,37 @@ class _StudentNotesPageState extends State<StudentNotesPage> {
       padding: const EdgeInsets.all(16),
       color: Colors.white,
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (widget.courseId == null && _availableCourses.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: DropdownButtonFormField<int>(
+                value: _selectedCourseId,
+                decoration: InputDecoration(
+                  labelText: 'Choisir la matière',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                ),
+                items: _availableCourses.map<DropdownMenuItem<int>>((course) {
+                  return DropdownMenuItem<int>(
+                    value: course['id'] as int,
+                    child: Text(
+                      course['nom'] ?? course['titre'] ?? 'Matière sans nom',
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  setState(() => _selectedCourseId = val);
+                },
+              ),
+            ),
           Row(
             children: [
               Expanded(

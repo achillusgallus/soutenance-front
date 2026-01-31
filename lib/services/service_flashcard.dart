@@ -21,6 +21,24 @@ class FlashcardService {
     }
   }
 
+  Future<bool> createFlashcard(
+    int courseId,
+    String question,
+    String answer,
+  ) async {
+    try {
+      final response = await _api.create('/admin/flashcards', {
+        'course_id': courseId,
+        'question': question,
+        'answer': answer,
+      });
+      return response?.statusCode == 201;
+    } catch (e) {
+      print('Erreur création flashcard: $e');
+      return false;
+    }
+  }
+
   List<Flashcard> _getMockFlashcards(int courseId) {
     return [
       Flashcard(

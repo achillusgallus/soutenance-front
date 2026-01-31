@@ -56,6 +56,8 @@ class AdvertisementService {
     String? linkUrl,
     bool isActive = true,
     int order = 0,
+    String type = 'general',
+    DateTime? startDate,
   }) async {
     try {
       Map<String, dynamic> dataMap = {
@@ -64,6 +66,8 @@ class AdvertisementService {
         "link_url": linkUrl,
         "is_active": isActive ? 1 : 0,
         "order": order,
+        "type": type,
+        "start_date": startDate?.toIso8601String(),
       };
 
       if (kIsWeb && imageBytes != null) {
@@ -103,6 +107,8 @@ class AdvertisementService {
     String? linkUrl,
     bool? isActive,
     int? order,
+    String? type,
+    DateTime? startDate,
   }) async {
     try {
       Map<String, dynamic> dataMap = {};
@@ -111,6 +117,9 @@ class AdvertisementService {
       if (linkUrl != null) dataMap["link_url"] = linkUrl;
       if (isActive != null) dataMap["is_active"] = isActive ? 1 : 0;
       if (order != null) dataMap["order"] = order;
+      if (type != null) dataMap["type"] = type;
+      if (startDate != null)
+        dataMap["start_date"] = startDate.toIso8601String();
 
       if (kIsWeb && imageBytes != null) {
         dataMap["image"] = MultipartFile.fromBytes(

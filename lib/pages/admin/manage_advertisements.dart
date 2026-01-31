@@ -205,11 +205,21 @@ class _AdFormSheetState extends State<AdFormSheet> {
   late TextEditingController _descController;
   late TextEditingController _linkController;
   late TextEditingController _orderController;
+  late TextEditingController
+  _startDateController; // Contrôleur pour l'affichage de la date
   late bool _isActive;
   File? _selectedImage;
   Uint8List? _webImage;
   String? _selectedFileName;
   bool _isSaving = false;
+  String _selectedType = 'general';
+  DateTime? _selectedDate;
+
+  final List<Map<String, String>> _types = [
+    {'value': 'general', 'label': 'Général'},
+    {'value': 'event', 'label': 'Événement'},
+    {'value': 'promo', 'label': 'Promotion'},
+  ];
 
   @override
   void initState() {
@@ -221,6 +231,15 @@ class _AdFormSheetState extends State<AdFormSheet> {
       text: widget.ad?.order.toString() ?? "0",
     );
     _isActive = widget.ad?.isActive ?? true;
+    _selectedType = widget.ad?.type ?? 'general';
+    _selectedDate = widget.ad?.startDate;
+    _startDateController = TextEditingController(
+      text: _selectedDate != null ? _formatDate(_selectedDate!) : '',
+    );
+  }
+
+  String _formatDate(DateTime date) {
+    return "${date.day}/${date.month}/${date.year}";
   }
 
   @override
@@ -229,6 +248,7 @@ class _AdFormSheetState extends State<AdFormSheet> {
     _descController.dispose();
     _linkController.dispose();
     _orderController.dispose();
+    _startDateController.dispose();
     super.dispose();
   }
 
@@ -242,14 +262,29 @@ class _AdFormSheetState extends State<AdFormSheet> {
         if (!kIsWeb && result.files.single.path != null) {
           _selectedImage = File(result.files.single.path!);
         } else {
-          _selectedImage = null; // Ensure _selectedImage is null if using bytes
+          _selectedImage = null;
         }
       });
     } else if (result != null && result.files.single.path != null) {
       setState(() {
         _selectedImage = File(result.files.single.path!);
         _selectedFileName = result.files.single.name;
-        _webImage = null; // Ensure _webImage is null if using File
+        _webImage = null;
+      });
+    }
+  }
+
+  Future<void> _pickDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate ?? DateTime.now(),
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+        _startDateController.text = _formatDate(picked);
       });
     }
   }
@@ -278,6 +313,8 @@ class _AdFormSheetState extends State<AdFormSheet> {
           linkUrl: _linkController.text,
           order: int.tryParse(_orderController.text) ?? 0,
           isActive: _isActive,
+          type: _selectedType,
+          startDate: _selectedDate,
         );
       } else {
         success = await service.updateAdvertisement(
@@ -290,6 +327,8 @@ class _AdFormSheetState extends State<AdFormSheet> {
           linkUrl: _linkController.text,
           isActive: _isActive,
           order: int.tryParse(_orderController.text) ?? 0,
+          type: _selectedType,
+          startDate: _selectedDate,
         );
       }
 
@@ -349,6 +388,26 @@ class _AdFormSheetState extends State<AdFormSheet> {
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 20),
+
+              // Type Dropdown
+              DropdownButtonFormField<String>(
+                value: _selectedType,
+                decoration: const InputDecoration(
+                  labelText: "Type de publicité",
+                  border: OutlineInputBorder(),
+                ),
+                items: _types.map((type) {
+                  return DropdownMenuItem(
+                    value: type['value'],
+                    child: Text(type['label']!),
+                  );
+                }).toList(),
+                onChanged: (val) {
+                  if (val != null) setState(() => _selectedType = val);
+                },
+              ),
+              const SizedBox(height: 16),
+
               TextFormField(
                 controller: _titleController,
                 decoration: const InputDecoration(
@@ -359,6 +418,25 @@ class _AdFormSheetState extends State<AdFormSheet> {
                     v == null || v.isEmpty ? "Champ requis" : null,
               ),
               const SizedBox(height: 16),
+
+              if (_selectedType == 'event') ...[
+                TextFormField(
+                  controller: _startDateController,
+                  readOnly: true,
+                  onTap: _pickDate,
+                  decoration: const InputDecoration(
+                    labelText: "Date de l'événement",
+                    border: OutlineInputBorder(),
+                    suffixIcon: Icon(Icons.calendar_today),
+                  ),
+                  validator: (v) =>
+                      _selectedType == 'event' && (v == null || v.isEmpty)
+                      ? "Date requise pour un événement"
+                      : null,
+                ),
+                const SizedBox(height: 16),
+              ],
+
               TextFormField(
                 controller: _descController,
                 decoration: const InputDecoration(

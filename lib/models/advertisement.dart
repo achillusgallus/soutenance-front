@@ -6,6 +6,8 @@ class Advertisement {
   final String? linkUrl;
   final bool isActive;
   final int order;
+  final String type;
+  final DateTime? startDate;
 
   Advertisement({
     required this.id,
@@ -15,6 +17,8 @@ class Advertisement {
     this.linkUrl,
     this.isActive = true,
     this.order = 0,
+    this.type = 'general',
+    this.startDate,
   });
 
   factory Advertisement.fromJson(Map<String, dynamic> json) {
@@ -26,6 +30,10 @@ class Advertisement {
       linkUrl: json['link_url'],
       isActive: json['is_active'] == true || json['is_active'] == 1,
       order: json['order'] ?? 0,
+      type: json['type'] ?? 'general',
+      startDate: json['start_date'] != null
+          ? DateTime.tryParse(json['start_date'])
+          : null,
     );
   }
 }

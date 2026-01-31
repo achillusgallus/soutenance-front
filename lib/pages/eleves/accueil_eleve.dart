@@ -142,11 +142,13 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
 
           // Forums
           final forumsRes = results[2]?.data;
+          debugPrint("Forums API Response: $forumsRes");
           if (forumsRes is List) {
             forums = forumsRes;
           } else if (forumsRes is Map && forumsRes.containsKey('data')) {
             forums = forumsRes['data'] ?? [];
           }
+          debugPrint("Forums count: ${forums.length}");
 
           isLoading = false;
         });
@@ -251,15 +253,13 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                           const SizedBox(height: 16),
                           _buildMatieresList(),
                           const SizedBox(height: 32),
-                          if (forums.isNotEmpty) ...[
-                            _buildSectionHeader(
-                              "Forums de Discussion",
-                              forums.length,
-                            ),
-                            const SizedBox(height: 16),
-                            _buildForumsSection(),
-                            const SizedBox(height: 32),
-                          ],
+                          _buildSectionHeader(
+                            "Forums de Discussion",
+                            forums.length,
+                          ),
+                          const SizedBox(height: 16),
+                          _buildForumsSection(),
+                          const SizedBox(height: 32),
                           _buildDiscoveryCard(),
                           const SizedBox(height: 32),
                           _buildLeaderboard(),
@@ -1105,6 +1105,55 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
 
   Widget _buildForumsSection() {
     final theme = Theme.of(context);
+
+    if (forums.isEmpty) {
+      return Container(
+        height: 160,
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: theme.cardColor,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: theme.dividerColor,
+            width: 2,
+            strokeAlign: BorderSide.strokeAlignInside,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.forum_outlined, size: 48, color: theme.disabledColor),
+            const SizedBox(height: 12),
+            Text(
+              studentClasse.isEmpty
+                  ? "Définissez votre classe dans votre profil"
+                  : "Aucun forum disponible pour votre classe",
+              style: TextStyle(
+                fontSize: 14,
+                color: theme.hintColor,
+                fontWeight: FontWeight.w500,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            if (studentClasse.isEmpty) ...[
+              const SizedBox(height: 16),
+              TextButton.icon(
+                onPressed: () => Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const StudentProfil()),
+                ),
+                icon: const Icon(Icons.arrow_forward, size: 16),
+                label: const Text("Aller au profil"),
+                style: TextButton.styleFrom(
+                  foregroundColor: theme.primaryColor,
+                ),
+              ),
+            ],
+          ],
+        ),
+      );
+    }
+
     return SizedBox(
       height: 160,
       child: ListView.builder(
