@@ -3,8 +3,8 @@ import 'package:togoschool/core/theme/app_theme.dart';
 import 'package:togoschool/components/custom_text_form_field.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/components/primary_button.dart';
-import 'package:togoschool/pages/forum/forum_chat_page.dart';
-import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/pages/forum/page_message_forums.dart';
+import 'package:togoschool/services/service_api.dart';
 import 'package:togoschool/utils/security_utils.dart';
 
 class ForumTopicListPage extends StatefulWidget {

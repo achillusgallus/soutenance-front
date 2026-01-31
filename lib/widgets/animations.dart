@@ -514,3 +514,5 @@ class _BounceInAnimationState extends State<BounceInAnimation>
     );
   }
 }
+
+

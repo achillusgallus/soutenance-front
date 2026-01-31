@@ -4,6 +4,8 @@ class Advertisement {
   final String? description;
   final String imageUrl;
   final String? linkUrl;
+  final bool isActive;
+  final int order;
 
   Advertisement({
     required this.id,
@@ -11,6 +13,8 @@ class Advertisement {
     this.description,
     required this.imageUrl,
     this.linkUrl,
+    this.isActive = true,
+    this.order = 0,
   });
 
   factory Advertisement.fromJson(Map<String, dynamic> json) {
@@ -20,6 +24,8 @@ class Advertisement {
       description: json['description'],
       imageUrl: json['image_url'] ?? '',
       linkUrl: json['link_url'],
+      isActive: json['is_active'] == true || json['is_active'] == 1,
+      order: json['order'] ?? 0,
     );
   }
 }

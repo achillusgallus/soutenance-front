@@ -23,3 +23,5 @@ class SecurityUtils {
     return value.replaceAll("'", "''").replaceAll(";", "");
   }
 }
+
+

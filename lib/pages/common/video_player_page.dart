@@ -1,7 +1,7 @@
 import 'package:chewie/chewie.dart';
 import 'package:flutter/material.dart';
-import 'package:togoschool/services/token_storage.dart';
-import 'package:togoschool/services/progress_service.dart';
+import 'package:togoschool/services/stockage_jeton.dart';
+import 'package:togoschool/services/service_progres.dart';
 import 'package:video_player/video_player.dart';
 
 class VideoPlayerPage extends StatefulWidget {

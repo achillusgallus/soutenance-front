@@ -12,6 +12,8 @@ class DashHeader extends StatelessWidget {
   final String subtitle2;
   final String subtitle3;
   final VoidCallback? onBack;
+  final VoidCallback? onNotificationTap;
+  final int notificationCount;
 
   const DashHeader({
     super.key,
@@ -26,6 +28,8 @@ class DashHeader extends StatelessWidget {
     required this.subtitle2,
     required this.subtitle3,
     this.onBack,
+    this.onNotificationTap,
+    this.notificationCount = 0,
   });
 
   Widget _buildAnimatedText(String text) {
@@ -156,15 +160,50 @@ class DashHeader extends StatelessWidget {
                         ],
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.notifications_none,
-                        color: Colors.white,
+                    GestureDetector(
+                      onTap: onNotificationTap,
+                      child: Stack(
+                        clipBehavior: Clip.none,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.notifications_none,
+                              color: Colors.white,
+                            ),
+                          ),
+                          if (notificationCount > 0)
+                            Positioned(
+                              right: -2,
+                              top: -2,
+                              child: Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                constraints: const BoxConstraints(
+                                  minWidth: 16,
+                                  minHeight: 16,
+                                ),
+                                child: Text(
+                                  notificationCount > 9
+                                      ? '9+'
+                                      : '$notificationCount',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 8,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                   ],
@@ -216,3 +255,5 @@ class DashHeader extends StatelessWidget {
     );
   }
 }
+
+

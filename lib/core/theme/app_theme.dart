@@ -235,3 +235,5 @@ class AppSpacing {
   static const double xl = 32.0;
   static const double xxl = 48.0;
 }
+
+

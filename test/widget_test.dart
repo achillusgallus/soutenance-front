@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:togoschool/main.dart';
-import 'package:togoschool/pages/dashbord/admin_dashboard_page.dart';
-import 'package:togoschool/pages/dashbord/student_dashboard_page.dart';
-import 'package:togoschool/pages/dashbord/teacher_dashboard_page.dart';
-import 'package:togoschool/pages/auth/login_page.dart';
+import 'package:togoschool/pages/tableau_de_bord/admin_dashboard_page.dart';
+import 'package:togoschool/pages/tableau_de_bord/student_dashboard_page.dart';
+import 'package:togoschool/pages/tableau_de_bord/teacher_dashboard_page.dart';
+import 'package:togoschool/pages/auth/page_connexion.dart';
 
 void main() {
   testWidgets('Connexion page is shown when not logged in', (

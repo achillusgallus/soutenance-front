@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
-import 'package:togoschool/services/token_storage.dart';
-import 'package:togoschool/services/progress_service.dart';
+import 'package:togoschool/services/stockage_jeton.dart';
+import 'package:togoschool/services/service_progres.dart';
 import 'dart:typed_data';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -18,7 +18,12 @@ class PdfViewerPage extends StatefulWidget {
   final String title;
   final int? courseId;
 
-  const PdfViewerPage({super.key, required this.pdfUrl, required this.title, this.courseId});
+  const PdfViewerPage({
+    super.key,
+    required this.pdfUrl,
+    required this.title,
+    this.courseId,
+  });
 
   @override
   State<PdfViewerPage> createState() => _PdfViewerPageState();

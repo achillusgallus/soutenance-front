@@ -234,3 +234,5 @@ class ApiStateBuilder<T> extends StatelessWidget {
            const EmptyStateWidget(message: 'Aucune donnée disponible');
   }
 }
+
+

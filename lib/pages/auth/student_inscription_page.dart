@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/core/theme/app_theme.dart';
-import 'package:togoschool/pages/auth/login_page.dart';
-import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/pages/auth/page_connexion.dart';
+import 'package:togoschool/services/service_api.dart';
 import 'package:togoschool/utils/security_utils.dart';
 import 'package:togoschool/pages/common/legal_page.dart';
 

@@ -25,3 +25,5 @@ class ForumModel {
         'author_id': authorId,
       };
 }
+
+

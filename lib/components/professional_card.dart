@@ -315,3 +315,5 @@ class _ShimmerCardState extends State<ShimmerCard>
     );
   }
 }
+
+

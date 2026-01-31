@@ -10,3 +10,5 @@ class PaygateConfig {
   /// Longueur de l'identifiant de transaction (par défaut 20)
   static const int identifierLength = 20;
 }
+
+

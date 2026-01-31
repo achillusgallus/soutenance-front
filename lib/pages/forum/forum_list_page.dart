@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/components/dash_header.dart';
 import 'package:togoschool/pages/forum/forum_topic_list_page.dart'; // To be created
-import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/services/service_api.dart';
 import 'package:togoschool/core/theme/app_theme.dart';
 
 class ForumListPage extends StatefulWidget {

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:togoschool/core/theme/app_theme.dart';
-import 'package:togoschool/services/api_service.dart';
+import 'package:togoschool/services/service_api.dart';
 import 'package:togoschool/utils/security_utils.dart';
 
 class ForgotPasswordPage extends StatefulWidget {
