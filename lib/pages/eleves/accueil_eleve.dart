@@ -10,6 +10,7 @@ import 'package:togoschool/models/advertisement.dart';
 import 'package:togoschool/services/advertisement_service.dart';
 import 'package:togoschool/services/student_feature_service.dart';
 import 'package:togoschool/pages/forum/forum_topic_list_page.dart';
+import 'package:togoschool/pages/eleves/page_paiement_requis.dart';
 
 class StudentAcceuil extends StatefulWidget {
   final VoidCallback? toggleTheme;
@@ -40,6 +41,8 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
   List<dynamic> leaderboard = [];
   List<dynamic> eduNews = [];
   int unreadNotifCount = 0;
+  bool hasPaid = false;
+  Set<int> favoriteMatiereIds = {};
 
   @override
   void initState() {
@@ -72,19 +75,21 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
 
   Future<void> _loadFavorites() async {
     try {
-      final favorites = await _progressService.getFavorites();
+      final results = await Future.wait([
+        _progressService.getFavorites(),
+        _progressService.getMatiereFavorites(),
+      ]);
+
       if (mounted) {
         setState(() {
-          favoriteCount = favorites.length;
+          favoriteCount = results[0].length;
+          favoriteMatiereIds = results[1]
+              .map<int>((fav) => fav['id'] ?? 0)
+              .toSet();
         });
       }
     } catch (e) {
-      // En cas d'erreur, on garde 0
-      if (mounted) {
-        setState(() {
-          favoriteCount = 0;
-        });
-      }
+      debugPrint("Erreur chargement favoris: $e");
     }
   }
 
@@ -103,14 +108,15 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
               ? (userData['name'] ?? "Étudiant")
               : "Étudiant";
           studentClasse = userData is Map ? (userData['classe'] ?? "") : "";
+          hasPaid = userData is Map ? (userData['has_paid'] ?? false) : false;
         });
       }
 
-      // 2. Data
+      // 2. Data with safety: even if one fails, we continue
       final results = await Future.wait([
-        api.read("/student/matieres"),
-        api.read("/quiz"),
-        api.read("/forums"),
+        api.read("/student/matieres").catchError((e) => null),
+        api.read("/quiz").catchError((e) => null),
+        api.read("/forums").catchError((e) => null),
       ]);
 
       if (mounted) {
@@ -126,7 +132,6 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
 
           // Quiz
           final quizRes = results[1]?.data;
-          // Handle potential pagination wrapper
           if (quizRes is Map && quizRes.containsKey('total')) {
             quizCount = quizRes['total'] ?? 0;
           } else if (quizRes is List) {
@@ -686,6 +691,9 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
     final int colorId = matiere['id'] ?? index;
     final color = cardColors[colorId % cardColors.length];
 
+    final matiereId = matiere['id'] ?? 0;
+    final isFavorite = favoriteMatiereIds.contains(matiereId);
+
     return Container(
       decoration: BoxDecoration(
         color: theme.cardColor,
@@ -714,58 +722,88 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
             );
           },
           borderRadius: BorderRadius.circular(24),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    FontAwesomeIcons.bookOpen,
-                    color: color,
-                    size: 16,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  matiere['nom'] ?? '...',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 15,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
+          child: Stack(
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.person_outline,
-                      size: 12,
-                      color: theme.textTheme.bodySmall?.color,
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        FontAwesomeIcons.bookOpen,
+                        color: color,
+                        size: 16,
+                      ),
                     ),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        matiere['user_name'] ?? 'Non attribué',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
+                    const SizedBox(height: 12),
+                    Text(
+                      matiere['nom'] ?? '...',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.person_outline,
+                          size: 12,
                           color: theme.textTheme.bodySmall?.color,
                         ),
-                      ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            matiere['user_name'] ?? 'Non attribué',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: theme.textTheme.bodySmall?.color,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
+              ),
+              Positioned(
+                top: 8,
+                right: 8,
+                child: IconButton(
+                  icon: Icon(
+                    isFavorite ? Icons.favorite : Icons.favorite_border,
+                    color: isFavorite
+                        ? Colors.red
+                        : theme.hintColor.withValues(alpha: 0.5),
+                    size: 18,
+                  ),
+                  onPressed: () async {
+                    final success = await _progressService
+                        .toggleMatiereFavorite(matiereId);
+                    if (success && mounted) {
+                      setState(() {
+                        if (isFavorite) {
+                          favoriteMatiereIds.remove(matiereId);
+                        } else {
+                          favoriteMatiereIds.add(matiereId);
+                        }
+                      });
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -800,14 +838,14 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         gradient: LinearGradient(
-          colors: [color.withOpacity(0.8), color],
+          colors: [color.withValues(alpha: 0.7), color],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: color.withOpacity(0.3),
+            color: color.withValues(alpha: 0.3),
             blurRadius: 15,
             offset: const Offset(0, 8),
           ),
@@ -818,7 +856,7 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: Colors.white, size: 24),
@@ -829,7 +867,7 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                  "SURPRISE DU JOUR",
+                  "LE SAVIEZ-VOUS ?",
                   style: TextStyle(
                     color: Colors.white70,
                     fontSize: 10,
@@ -852,7 +890,7 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
-                    color: Colors.white.withOpacity(0.9),
+                    color: Colors.white.withValues(alpha: 0.9),
                     fontSize: 12,
                   ),
                 ),
@@ -1101,6 +1139,10 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
               child: InkWell(
                 borderRadius: BorderRadius.circular(24),
                 onTap: () {
+                  if (!hasPaid) {
+                    _showPaymentRequired();
+                    return;
+                  }
                   Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -1126,7 +1168,9 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Icon(
-                              Icons.forum_rounded,
+                              hasPaid
+                                  ? Icons.forum_rounded
+                                  : Icons.lock_rounded,
                               color: color,
                               size: 20,
                             ),
@@ -1154,7 +1198,7 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                         ],
                       ),
                     ),
-                    if (msgCount > 0)
+                    if (hasPaid && msgCount > 0)
                       Positioned(
                         top: 15,
                         right: 15,
@@ -1164,11 +1208,20 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                             vertical: 4,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.redAccent,
+                            color: const Color(0xFFF43F5E),
                             borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(
+                                  0xFFF43F5E,
+                                ).withValues(alpha: 0.3),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
                           child: Text(
-                            "$msgCount",
+                            msgCount > 99 ? '99+' : msgCount.toString(),
                             style: const TextStyle(
                               color: Colors.white,
                               fontSize: 10,
@@ -1177,12 +1230,31 @@ class _StudentAcceuilState extends State<StudentAcceuil> {
                           ),
                         ),
                       ),
+                    if (!hasPaid)
+                      Positioned(
+                        top: 15,
+                        right: 15,
+                        child: Icon(
+                          Icons.lock_rounded,
+                          size: 16,
+                          color: color.withValues(alpha: 0.5),
+                        ),
+                      ),
                   ],
                 ),
               ),
             ),
           );
         },
+      ),
+    );
+  }
+
+  void _showPaymentRequired() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const PaymentRequiredPage(reason: 'forum'),
       ),
     );
   }

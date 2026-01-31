@@ -10,7 +10,7 @@ import 'package:togoschool/pages/auth/page_connexion.dart';
 import 'package:togoschool/pages/common/legal_page.dart';
 import 'package:togoschool/pages/common/page_notifications.dart';
 import 'package:togoschool/core/theme/app_theme.dart';
-import 'package:togoschool/theme/app_theme.dart';
+import 'package:togoschool/services/service_paygate.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:togoschool/pages/eleves/cours_eleve.dart';
 import 'package:togoschool/pages/eleves/forum_eleve.dart';
@@ -22,6 +22,7 @@ import 'package:togoschool/pages/eleves/page_calendrier_eleve.dart';
 import 'package:togoschool/pages/eleves/page_flashcards_eleve.dart';
 import 'package:togoschool/pages/eleves/page_questions_eleve.dart';
 import 'package:togoschool/pages/eleves/page_succes_eleve.dart';
+import 'package:togoschool/pages/eleves/page_historique_paiements.dart';
 import 'package:togoschool/services/service_progres.dart';
 
 class StudentProfil extends StatefulWidget {
@@ -40,6 +41,9 @@ class _StudentProfilState extends State<StudentProfil> {
   bool _obscurePassword = true;
   bool _notificationsEnabled = true;
   String? _selectedClasse;
+  bool hasPaid = false;
+  int totalPaid = 0;
+  final _paygateService = PaygateService();
 
   final List<Map<String, String>> _classes = [
     {'value': 'tle_D', 'label': 'Terminale D'},
@@ -68,6 +72,26 @@ class _StudentProfilState extends State<StudentProfil> {
     super.initState();
     getProfile();
     _loadStats();
+    _checkPremiumStatus();
+  }
+
+  Future<void> _checkPremiumStatus() async {
+    try {
+      final status = await _paygateService.getAccessStatus();
+      if (mounted && status != null) {
+        setState(() {
+          hasPaid = status['has_paid'] ?? false;
+        });
+      }
+      final total = await _paygateService.getTotalPaid();
+      if (mounted) {
+        setState(() {
+          totalPaid = total;
+        });
+      }
+    } catch (e) {
+      debugPrint("Erreur statut premium: $e");
+    }
   }
 
   Future<void> _loadStats() async {
@@ -320,7 +344,7 @@ class _StudentProfilState extends State<StudentProfil> {
             decoration: BoxDecoration(
               shape: BoxShape.circle,
               border: Border.all(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 width: 3,
               ),
             ),
@@ -358,20 +382,70 @@ class _StudentProfilState extends State<StudentProfil> {
               decoration: BoxDecoration(
                 color: Colors.white.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.3)),
               ),
-              child: Text(
-                "Classe : ${profileData!['classe']}",
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    FontAwesomeIcons.graduationCap,
+                    size: 12,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    "Classe : ${_getClassName(profileData!['classe'])}",
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
               ),
             ),
           ],
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+            decoration: BoxDecoration(
+              color: hasPaid
+                  ? Colors.amber.withValues(alpha: 0.9)
+                  : Colors.white.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  hasPaid ? Icons.star_rounded : Icons.person_outline,
+                  size: 14,
+                  color: hasPaid ? Colors.brown : Colors.white,
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  hasPaid ? "COMPTE PREMIUM" : "COMPTE GRATUIT",
+                  style: TextStyle(
+                    color: hasPaid ? Colors.brown : Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  String _getClassName(String code) {
+    final found = _classes.firstWhere(
+      (c) => c['value'] == code,
+      orElse: () => {'label': code},
+    );
+    return found['label'] ?? code;
   }
 
   Widget _buildProfileView() {
@@ -406,6 +480,16 @@ class _StudentProfilState extends State<StudentProfil> {
           title: 'Sécurité & Mot de passe',
           onTap: () => setState(() => isEditing = true),
           color: AppTheme.successColor,
+        ),
+        _buildSettingsTile(
+          icon: FontAwesomeIcons.creditCard,
+          title: 'Mon abonnement & Paiements',
+          subtitle: hasPaid ? 'Premium Activé' : 'Passer au Premium',
+          onTap: _showSubscriptionInfo,
+          color: Colors.amber,
+          trailing: hasPaid
+              ? const Icon(Icons.check_circle, color: Colors.green, size: 18)
+              : null,
         ),
         const SizedBox(height: 32),
         Text(
@@ -542,7 +626,7 @@ class _StudentProfilState extends State<StudentProfil> {
               style: TextStyle(fontWeight: FontWeight.bold, letterSpacing: 1),
             ),
             style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.errorColor.withOpacity(0.1),
+              backgroundColor: AppTheme.errorColor.withValues(alpha: 0.1),
               foregroundColor: AppTheme.errorColor,
               elevation: 0,
               padding: const EdgeInsets.symmetric(vertical: 18),
@@ -694,8 +778,10 @@ class _StudentProfilState extends State<StudentProfil> {
   Widget _buildSettingsTile({
     required IconData icon,
     required String title,
+    String? subtitle,
     required VoidCallback onTap,
     required Color color,
+    Widget? trailing,
   }) {
     final theme = Theme.of(context);
     return Container(
@@ -705,7 +791,7 @@ class _StudentProfilState extends State<StudentProfil> {
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.02),
+            color: Colors.black.withValues(alpha: 0.02),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -716,7 +802,7 @@ class _StudentProfilState extends State<StudentProfil> {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Icon(icon, color: color, size: 20),
@@ -729,7 +815,15 @@ class _StudentProfilState extends State<StudentProfil> {
             color: theme.textTheme.bodyLarge?.color,
           ),
         ),
-        trailing: Icon(Icons.chevron_right_rounded, color: theme.dividerColor),
+        subtitle: subtitle != null
+            ? Text(
+                subtitle,
+                style: TextStyle(fontSize: 12, color: theme.hintColor),
+              )
+            : null,
+        trailing:
+            trailing ??
+            Icon(Icons.chevron_right_rounded, color: theme.dividerColor),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         onTap: onTap,
       ),
@@ -882,6 +976,109 @@ TogoSchool est une initiative visant à numériser l'éducation au Togo. Nous fo
               "Contacter",
               style: TextStyle(color: Colors.white),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSubscriptionInfo() {
+    final theme = Theme.of(context);
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: BoxDecoration(
+          color: theme.scaffoldBackgroundColor,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+        ),
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          children: [
+            Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: theme.dividerColor,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Icon(
+              hasPaid ? Icons.verified_user_rounded : Icons.stars_rounded,
+              size: 60,
+              color: hasPaid ? AppTheme.successColor : Colors.amber,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              hasPaid ? "Compte Premium Actif" : "Devenez Membre Premium",
+              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              hasPaid
+                  ? "Vous profitez de l'accès illimité à tous nos services."
+                  : "Débloquez les forums, les téléchargements illimités et bien plus encore.",
+              textAlign: TextAlign.center,
+              style: TextStyle(color: theme.hintColor),
+            ),
+            const Divider(height: 40),
+            _buildInfoRow(
+              "Montant total investi",
+              "$totalPaid FCFA",
+              Icons.payments_outlined,
+            ),
+            _buildInfoRow(
+              "Statut de l'accès",
+              hasPaid ? "Illimité" : "Restreint",
+              Icons.lock_open_rounded,
+            ),
+            const SizedBox(height: 16),
+            TextButton.icon(
+              onPressed: () {
+                Navigator.pop(context);
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const PaymentHistoryPage()),
+                );
+              },
+              icon: const Icon(Icons.history, size: 18),
+              label: const Text("Voir l'historique des paiements"),
+            ),
+            const Spacer(),
+            if (!hasPaid)
+              PrimaryButton(
+                text: "PASSER AU PREMIUM",
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            const SizedBox(height: 16),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("Fermer"),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value, IconData icon) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: theme.primaryColor),
+          const SizedBox(width: 12),
+          Text(label, style: const TextStyle(fontSize: 15)),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
         ],
       ),

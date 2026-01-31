@@ -387,24 +387,28 @@ class _StudentCoursState extends State<StudentCours> {
                   ],
                 ),
               ),
-              // Icône de favori en haut à droite
               Positioned(
                 top: 8,
                 right: 8,
                 child: IconButton(
                   icon: Icon(
                     isFavorite ? Icons.favorite : Icons.favorite_border,
-                    color: Colors.red,
+                    color: isFavorite ? Colors.red : const Color(0xFF94A3B8),
+                    size: 20,
                   ),
                   onPressed: () async {
-                    await _progressService.toggleFavorite(courseId);
-                    setState(() {
-                      if (isFavorite) {
-                        _favoriteCourseIds.remove(courseId);
-                      } else {
-                        _favoriteCourseIds.add(courseId);
-                      }
-                    });
+                    final success = await _progressService.toggleFavorite(
+                      courseId,
+                    );
+                    if (success && mounted) {
+                      setState(() {
+                        if (isFavorite) {
+                          _favoriteCourseIds.remove(courseId);
+                        } else {
+                          _favoriteCourseIds.add(courseId);
+                        }
+                      });
+                    }
                   },
                 ),
               ),

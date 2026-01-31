@@ -83,6 +83,33 @@ class ProgressService {
     }
   }
 
+  Future<bool> toggleMatiereFavorite(int matiereId) async {
+    try {
+      final response = await _api.create('/student/favorites/matiere/toggle', {
+        'matiere_id': matiereId,
+      });
+      return response?.statusCode == 200;
+    } catch (e) {
+      print('Erreur toggle favori matière: $e');
+      return false;
+    }
+  }
+
+  Future<List<dynamic>> getMatiereFavorites() async {
+    try {
+      final response = await _api.read('/student/favorites/matieres');
+      if (response?.data is List) {
+        return response!.data;
+      } else if (response?.data is Map && response!.data.containsKey('data')) {
+        return response.data['data'];
+      }
+      return [];
+    } catch (e) {
+      print('Erreur récupération favoris matières: $e');
+      return [];
+    }
+  }
+
   Future<bool> saveNote(int courseId, String content) async {
     try {
       final response = await _api.create('/student/notes', {

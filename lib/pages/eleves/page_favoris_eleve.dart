@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:togoschool/services/service_progres.dart';
 import 'package:togoschool/pages/eleves/cours_eleve.dart';
+import 'package:togoschool/core/theme/app_theme.dart';
 
 class StudentFavoritesPage extends StatefulWidget {
   const StudentFavoritesPage({super.key});
@@ -10,24 +11,39 @@ class StudentFavoritesPage extends StatefulWidget {
   State<StudentFavoritesPage> createState() => _StudentFavoritesPageState();
 }
 
-class _StudentFavoritesPageState extends State<StudentFavoritesPage> {
+class _StudentFavoritesPageState extends State<StudentFavoritesPage>
+    with SingleTickerProviderStateMixin {
   final ProgressService _progressService = ProgressService();
   bool _isLoading = true;
-  List<dynamic> _favorites = [];
+  List<dynamic> _favoriteCourses = [];
+  List<dynamic> _favoriteMatieres = [];
+  late TabController _tabController;
 
   @override
   void initState() {
     super.initState();
-    _loadFavorites();
+    _tabController = TabController(length: 2, vsync: this);
+    _loadAllFavorites();
   }
 
-  Future<void> _loadFavorites() async {
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadAllFavorites() async {
     setState(() => _isLoading = true);
     try {
-      final favorites = await _progressService.getFavorites();
+      final results = await Future.wait([
+        _progressService.getFavorites(),
+        _progressService.getMatiereFavorites(),
+      ]);
+
       if (mounted) {
         setState(() {
-          _favorites = favorites;
+          _favoriteCourses = results[0];
+          _favoriteMatieres = results[1];
           _isLoading = false;
         });
       }
@@ -36,187 +52,225 @@ class _StudentFavoritesPageState extends State<StudentFavoritesPage> {
     }
   }
 
-  Future<void> _removeFavorite(int courseId) async {
+  Future<void> _removeCourseFavorite(int courseId) async {
     try {
       final success = await _progressService.toggleFavorite(courseId);
       if (success) {
         setState(() {
-          _favorites.removeWhere((course) => course['id'] == courseId);
+          _favoriteCourses.removeWhere((c) => c['id'] == courseId);
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Cours retiré des favoris'),
-            backgroundColor: Colors.green,
-          ),
-        );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Erreur lors du retrait des favoris'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    }
+    } catch (e) {}
   }
 
-  void _navigateToCourse(Map<String, dynamic> course) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => StudentCours(
-          matiereId: course['category_id'] ?? 1,
-          matiereName: course['category_name'] ?? 'Cours',
-        ),
-      ),
-    );
+  Future<void> _removeMatiereFavorite(int matiereId) async {
+    try {
+      final success = await _progressService.toggleMatiereFavorite(matiereId);
+      if (success) {
+        setState(() {
+          _favoriteMatieres.removeWhere((m) => m['id'] == matiereId);
+        });
+      }
+    } catch (e) {}
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Mes Favoris', style: TextStyle(color: Colors.white)),
-        backgroundColor: const Color(0xFFEC4899),
+        title: const Text(
+          'Mes Favoris',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: AppTheme.accentColor,
         elevation: 0,
+        bottom: TabBar(
+          controller: _tabController,
+          indicatorColor: Colors.white,
+          indicatorWeight: 3,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          tabs: const [
+            Tab(text: "Cours", icon: Icon(FontAwesomeIcons.bookOpen, size: 16)),
+            Tab(
+              text: "Matières",
+              icon: Icon(FontAwesomeIcons.layerGroup, size: 16),
+            ),
+          ],
+        ),
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : _favorites.isEmpty
-          ? _buildEmptyState()
-          : RefreshIndicator(
-              onRefresh: _loadFavorites,
-              child: ListView.builder(
-                padding: const EdgeInsets.all(16),
-                itemCount: _favorites.length,
-                itemBuilder: (context, index) {
-                  final course = _favorites[index];
-                  return _buildFavoriteCard(course);
-                },
-              ),
+          : TabBarView(
+              controller: _tabController,
+              children: [_buildCoursesList(), _buildMatieresList()],
             ),
     );
   }
 
-  Widget _buildEmptyState() {
+  Widget _buildCoursesList() {
+    if (_favoriteCourses.isEmpty) {
+      return _buildEmptyState("Aucun cours favori", FontAwesomeIcons.book);
+    }
+    return RefreshIndicator(
+      onRefresh: _loadAllFavorites,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _favoriteCourses.length,
+        itemBuilder: (context, index) {
+          final course = _favoriteCourses[index];
+          return _buildCourseCard(course);
+        },
+      ),
+    );
+  }
+
+  Widget _buildMatieresList() {
+    if (_favoriteMatieres.isEmpty) {
+      return _buildEmptyState(
+        "Aucune matière favorite",
+        FontAwesomeIcons.layerGroup,
+      );
+    }
+    return RefreshIndicator(
+      onRefresh: _loadAllFavorites,
+      child: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: _favoriteMatieres.length,
+        itemBuilder: (context, index) {
+          final matiere = _favoriteMatieres[index];
+          return _buildMatiereCard(matiere);
+        },
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(String message, IconData icon) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(FontAwesomeIcons.heart, size: 80, color: Colors.grey[400]),
+          Icon(icon, size: 60, color: Colors.grey.withValues(alpha: 0.3)),
           const SizedBox(height: 16),
           Text(
-            'Aucun cours favori',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w600,
-              color: Colors.grey[600],
+            message,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.grey,
             ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Ajoutez des cours à vos favoris pour les retrouver facilement',
-            style: TextStyle(fontSize: 14, color: Colors.grey[500]),
-            textAlign: TextAlign.center,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFavoriteCard(Map<String, dynamic> course) {
+  Widget _buildCourseCard(Map<String, dynamic> course) {
+    final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
-      child: InkWell(
-        onTap: () => _navigateToCourse(course),
-        borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEC4899).withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Icon(
-                  FontAwesomeIcons.book,
-                  color: const Color(0xFFEC4899),
-                  size: 24,
-                ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      course['course_name'] ?? 'Cours',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1E293B),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      course['category_name'] ?? 'Catégorie',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                    if (course['progress'] != null) ...[
-                      const SizedBox(height: 8),
-                      LinearProgressIndicator(
-                        value: (course['progress'] ?? 0) / 100,
-                        backgroundColor: const Color(0xFFE2E8F0),
-                        valueColor: const AlwaysStoppedAnimation<Color>(
-                          Color(0xFFEC4899),
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              Column(
-                children: [
-                  IconButton(
-                    onPressed: () => _removeFavorite(course['id']),
-                    icon: const Icon(
-                      FontAwesomeIcons.heart,
-                      color: Colors.red,
-                      size: 20,
-                    ),
-                  ),
-                  if (course['progress'] != null)
-                    Text(
-                      '${course['progress']}%',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w500,
-                        color: Color(0xFF64748B),
-                      ),
-                    ),
-                ],
-              ),
-            ],
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppTheme.primaryColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            FontAwesomeIcons.book,
+            color: AppTheme.primaryColor,
+            size: 20,
           ),
         ),
+        title: Text(
+          course['titre'] ?? 'Cours',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text(course['matiere']?['nom'] ?? 'Matière'),
+        trailing: IconButton(
+          icon: const Icon(Icons.favorite, color: Colors.red),
+          onPressed: () => _removeCourseFavorite(course['id']),
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StudentCours(
+                matiereId: course['matiere_id'] ?? 0,
+                matiereName: course['matiere']?['nom'] ?? 'Cours',
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMatiereCard(Map<String, dynamic> matiere) {
+    final theme = Theme.of(context);
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: theme.cardColor,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.all(16),
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppTheme.accentColor.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            FontAwesomeIcons.layerGroup,
+            color: AppTheme.accentColor,
+            size: 20,
+          ),
+        ),
+        title: Text(
+          matiere['nom'] ?? 'Matière',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        subtitle: Text("${matiere['classe'] ?? ''}"),
+        trailing: IconButton(
+          icon: const Icon(Icons.favorite, color: Colors.red),
+          onPressed: () => _removeMatiereFavorite(matiere['id']),
+        ),
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (context) => StudentCours(
+                matiereId: matiere['id'],
+                matiereName: matiere['nom'] ?? 'Cours',
+              ),
+            ),
+          );
+        },
       ),
     );
   }
